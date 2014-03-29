@@ -59,7 +59,20 @@ const AP_Param::GroupInfo AC_AttitudeControl::var_info[] PROGMEM = {
     // @Values: 0:Disabled, 1:Enabled
     // @User: Advanced
     AP_GROUPINFO("RATE_FF_ENAB", 5, AC_AttitudeControl, _rate_bf_ff_enabled, AC_ATTITUDE_CONTROL_RATE_BF_FF_DEFAULT),
+    
+    // @Param: ATC_Y_LEAD
+    // @DisplayName: Yaw lead-lag lead time constant
+    // @Description: The yaw lead-lag filter compensates for the spike of torque at the beginning of a yaw impulse, caused by the inertia of the motor's rotor and prop. The lag term cuts the spike off, but also adds delay. The lead term quickens the response back up.
+    // @Values: 0:Disabled, 1:Enabled
+    // @User: Advanced
+    AP_GROUPINFO("Y_LEAD",  6, AC_AttitudeControl, _yaw_leadtime, .05),
 
+    // @Param: ATC_Y_LAG
+    // @DisplayName: Yaw lead-lag lead time constant
+    // @Description: The yaw lead-lag filter compensates for the spike of torque at the beginning of a yaw impulse, caused by the inertia of the motor's rotor and prop. The lag term cuts the spike off, but also adds delay. The lead term quickens the response back up.
+    // @Values: 0:Disabled, 1:Enabled
+    // @User: Advanced
+    AP_GROUPINFO("Y_LAG",  7, AC_AttitudeControl, _yaw_lagtime, .14),
     AP_GROUPEND
 };
 
@@ -614,6 +627,9 @@ float AC_AttitudeControl::rate_bf_to_motor_yaw(float rate_target_cds)
     float current_rate;     // this iteration's rate
     float rate_error;       // simply target_rate - current_rate
 
+    static float last_output = 0.0f;
+    static float last_input = 0.0f;
+
     // get current rate
     // To-Do: make getting gyro rates more efficient?
     current_rate = (_ahrs.get_gyro().z * AC_ATTITUDE_CONTROL_DEGX100);
@@ -635,9 +651,13 @@ float AC_AttitudeControl::rate_bf_to_motor_yaw(float rate_target_cds)
 
     // get d value
     d = _pid_rate_yaw.get_d(rate_error, _dt);
-
+    
+    float input = p+i+d;
+    
+    last_output += (_dt / (_yaw_lagtime+_dt)) * ((input-last_output) + _yaw_leadtime*(input-last_input)/_dt);
+    last_input = input;
     // constrain output and return
-    return constrain_float((p+i+d), -AC_ATTITUDE_RATE_YAW_CONTROLLER_OUT_MAX, AC_ATTITUDE_RATE_YAW_CONTROLLER_OUT_MAX);
+    return constrain_float(last_output, -AC_ATTITUDE_RATE_YAW_CONTROLLER_OUT_MAX, AC_ATTITUDE_RATE_YAW_CONTROLLER_OUT_MAX);
 
     // To-Do: allow logging of PIDs?
 }
