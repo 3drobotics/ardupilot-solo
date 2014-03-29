@@ -228,6 +228,8 @@ protected:
     AP_Float            _accel_y_max;           // maximum rotation acceleration for earth-frame yaw axis
     AP_Int8             _rate_bf_ff_enabled;    // Enable/Disable body frame rate feed forward
 
+    AP_Float            _yaw_lagtime;
+    AP_Float            _yaw_leadtime;
     // internal variables
     // To-Do: make rate targets a typedef instead of Vector3f?
     float               _dt;                    // time delta in seconds
