@@ -7,10 +7,14 @@
 #if HIL_MODE == HIL_MODE_DISABLED
 static int8_t   test_baro(uint8_t argc,                 const Menu::arg *argv);
 #endif
+static int8_t   test_radio_pwm(uint8_t argc,            const Menu::arg *argv);
+static int8_t   test_radio(uint8_t argc,                const Menu::arg *argv);
 static int8_t   test_compass(uint8_t argc,              const Menu::arg *argv);
 static int8_t   test_ins(uint8_t argc,                  const Menu::arg *argv);
 static int8_t   test_optflow(uint8_t argc,              const Menu::arg *argv);
 static int8_t   test_relay(uint8_t argc,                const Menu::arg *argv);
+static int8_t   test_input(uint8_t argc,                const Menu::arg *argv);
+static int8_t   test_motor(uint8_t argc,                const Menu::arg *argv);
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 static int8_t   test_shell(uint8_t argc,                const Menu::arg *argv);
 #endif
@@ -26,10 +30,14 @@ const struct Menu::command test_menu_commands[] PROGMEM = {
 #if HIL_MODE == HIL_MODE_DISABLED
     {"baro",                test_baro},
 #endif
+    {"pwm",                 test_radio_pwm},
+    {"radio",               test_radio},
     {"compass",             test_compass},
     {"ins",                 test_ins},
     {"optflow",             test_optflow},
     {"relay",               test_relay},
+    {"input",               test_input},
+    {"motor",               test_motor},
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     {"shell", 				test_shell},
 #endif
@@ -75,6 +83,79 @@ test_baro(uint8_t argc, const Menu::arg *argv)
     return 0;
 }
 #endif
+
+static int8_t
+test_radio_pwm(uint8_t argc, const Menu::arg *argv)
+{
+    print_hit_enter();
+    delay(1000);
+
+    while(1) {
+        delay(20);
+
+        // Filters radio input - adjust filters in the radio.pde file
+        // ----------------------------------------------------------
+        read_radio();
+
+        // servo Yaw
+        //APM_RC.OutputCh(CH_7, g.rc_4.radio_out);
+
+        cliSerial->printf_P(PSTR("IN: 1: %d\t2: %d\t3: %d\t4: %d\t5: %d\t6: %d\t7: %d\t8: %d\n"),
+                        g.rc_1.radio_in,
+                        g.rc_2.radio_in,
+                        g.rc_3.radio_in,
+                        g.rc_4.radio_in,
+                        g.rc_5.radio_in,
+                        g.rc_6.radio_in,
+                        g.rc_7.radio_in,
+                        g.rc_8.radio_in);
+
+        if(cliSerial->available() > 0) {
+            return (0);
+        }
+    }
+}
+
+static int8_t
+test_radio(uint8_t argc, const Menu::arg *argv)
+{
+    print_hit_enter();
+    delay(1000);
+
+    while(1) {
+        delay(20);
+        read_radio();
+
+
+        cliSerial->printf_P(PSTR("IN  1: %d\t2: %d\t3: %d\t4: %d\t5: %d\t6: %d\t7: %d\n"),
+                        g.rc_1.control_in,
+                        g.rc_2.control_in,
+                        g.rc_3.control_in,
+                        g.rc_4.control_in,
+                        g.rc_5.control_in,
+                        g.rc_6.control_in,
+                        g.rc_7.control_in);
+
+        //cliSerial->printf_P(PSTR("OUT 1: %d\t2: %d\t3: %d\t4: %d\n"), (g.rc_1.servo_out / 100), (g.rc_2.servo_out / 100), g.rc_3.servo_out, (g.rc_4.servo_out / 100));
+
+        /*cliSerial->printf_P(PSTR(	"min: %d"
+         *                                               "\t in: %d"
+         *                                               "\t pwm_in: %d"
+         *                                               "\t sout: %d"
+         *                                               "\t pwm_out %d\n"),
+         *                                               g.rc_3.radio_min,
+         *                                               g.rc_3.control_in,
+         *                                               g.rc_3.radio_in,
+         *                                               g.rc_3.servo_out,
+         *                                               g.rc_3.pwm_out
+         *                                               );
+         */
+        if(cliSerial->available() > 0) {
+            return (0);
+        }
+    }
+}
+
 
 static int8_t
 test_compass(uint8_t argc, const Menu::arg *argv)
@@ -228,6 +309,73 @@ test_optflow(uint8_t argc, const Menu::arg *argv)
 #endif      // OPTFLOW == ENABLED
 }
 
+
+static int8_t test_input(uint8_t argc, const Menu::arg *argv)
+{
+    print_hit_enter();
+    delay(1000);
+
+    cliSerial->printf_P(PSTR("Input\n"));
+
+    int16_t i;
+    int16_t scaled;
+    
+    // make sure throttle is 1000-2000
+    for (i = 1000; i <= 2000; i++){
+        g.rc_3.set_pwm(i);
+        scaled = get_pilot_desired_throttle(g.rc_3.control_in);
+        cliSerial->printf_P(PSTR("pwm in:%d, control_in %d, scaled: %d\n"), i, g.rc_3.control_in, scaled);
+    }    
+    cliSerial->printf_P(PSTR("\n\nComplete\n"));
+    return (0);
+}
+
+
+static int8_t test_motor(uint8_t argc, const Menu::arg *argv)
+{
+	if (argc < 2) {
+		cliSerial->printf_P(PSTR("Usage: throttle 0-1000, time in milliseconds, repeat\n"));
+        return(0);
+	}
+	
+    int16_t motor_output = argv[1].i;
+    int16_t duration    = argv[2].i;
+    
+    g.rc_3.servo_out = constrain_int16(motor_output, 0, 1000);
+    duration        = constrain_int16(duration, 100, 5000);
+    g.rc_3.calc_pwm();
+
+    // arm and enable motors
+    motors.armed(true);
+    motors.enable();
+    // reduce throttle to minimum
+    motors.throttle_pass_through(g.rc_3.radio_min);
+
+	cliSerial->printf_P(PSTR("\n\nHold on to your F'in hats... in 5 .. "));
+	delay(1000);
+	cliSerial->printf_P(PSTR("4 .. "));
+	delay(1000);
+	cliSerial->printf_P(PSTR("3 .. "));
+	delay(1000);
+	cliSerial->printf_P(PSTR("2 .. "));
+	delay(1000);
+	cliSerial->printf_P(PSTR("1\n"));
+    motors.throttle_pass_through(g.rc_3.radio_min+100);
+	delay(2000);
+	
+
+    // raise throttle
+	cliSerial->printf_P(PSTR("\n%d\n"), g.rc_3.radio_out);
+    motors.throttle_pass_through(g.rc_3.radio_out);
+    delay(duration);
+
+    motors.throttle_pass_through(g.rc_3.radio_min);
+
+    cliSerial->printf_P(PSTR("\n\nComplete\n"));
+    return (0);
+}
+
+
 static int8_t test_relay(uint8_t argc, const Menu::arg *argv)
 {
     print_hit_enter();
@@ -249,6 +397,7 @@ static int8_t test_relay(uint8_t argc, const Menu::arg *argv)
         }
     }
 }
+
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 /*
