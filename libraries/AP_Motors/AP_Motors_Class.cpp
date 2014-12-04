@@ -69,6 +69,13 @@ const AP_Param::GroupInfo AP_Motors::var_info[] PROGMEM = {
     // @User: Standard
     AP_GROUPINFO("SPIN_ARMED", 5, AP_Motors, _spin_when_armed, AP_MOTORS_SPIN_WHEN_ARMED),
 
+    // @Param: OT_PROTECT
+    // @DisplayName: Overtune protection
+    // @Description: Controls whether the copter is protected from runaway climb conditions when the attitude gains are too high.
+    // @Values: 0:Enabled,1:Disabled
+    // @User: Standard
+    AP_GROUPINFO("OT_PROTECT", 6, AP_Motors, _ot_protect, 1),
+
     AP_GROUPEND
 };
 
