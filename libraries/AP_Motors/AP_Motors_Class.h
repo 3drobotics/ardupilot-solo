@@ -179,6 +179,7 @@ protected:
     AP_Int8             _throttle_curve_mid;    // throttle which produces 1/2 the maximum thrust.  expressed as a percentage (i.e. 0 ~ 100 ) of the full throttle range
     AP_Int8             _throttle_curve_max;    // throttle which produces the maximum thrust.  expressed as a percentage (i.e. 0 ~ 100 ) of the full throttle range
     AP_Int16            _spin_when_armed;       // used to control whether the motors always spin when armed.  pwm value above radio_min
+    AP_Int8             _ot_protect;            // specifies whether the copter is protected from runaway climb conditions when the attitude gains are too high
 
     // internal variables
     RC_Channel&         _rc_roll;               // roll input in from users is held in servo_out
