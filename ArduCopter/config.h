@@ -383,13 +383,14 @@
 
 //////////////////////////////////////////////////////////////////////////////
 //  OPTICAL_FLOW
-#ifndef OPTFLOW
+# define OPTFLOW       DISABLED
+/*#ifndef OPTFLOW
  #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
   # define OPTFLOW       ENABLED
  #else
-  # define OPTFLOW       DISABLED
+
  #endif
-#endif
+#endif*/
 // optical flow based loiter PI values
 #ifndef OPTFLOW_ROLL_P
  #define OPTFLOW_ROLL_P 2.5f
