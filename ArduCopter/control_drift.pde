@@ -26,7 +26,7 @@
 // drift_init - initialise drift controller
 static bool drift_init(bool ignore_checks)
 {
-    if (GPS_ok() || ignore_checks) {
+    if (position_ok() || ignore_checks) {
         return true;
     }else{
         return false;
