@@ -128,7 +128,7 @@ nav_filter_status AP_InertialNav::get_filter_status() const
     nav_filter_status ret;
     ret.flags.attitude = true;
     ret.flags.horiz_pos_abs = _xy_enabled;
-    ret.flags.horiz_pos_rel = false;
+    ret.flags.horiz_pos_rel = _xy_enabled;
     ret.flags.horiz_vel = _xy_enabled;
     ret.flags.terrain_alt = false;
     ret.flags.vert_pos = true;
