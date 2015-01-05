@@ -134,6 +134,8 @@ nav_filter_status AP_InertialNav::get_filter_status() const
     ret.flags.vert_pos = true;
     ret.flags.vert_vel = true;
     ret.flags.const_pos_mode = false;
+    ret.flags.pred_horiz_pos_rel = _xy_enabled;
+    ret.flags.pred_horiz_pos_abs = _xy_enabled;
 }
 
 //
