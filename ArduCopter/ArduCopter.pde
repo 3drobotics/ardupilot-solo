@@ -1230,6 +1230,11 @@ static void update_GPS(void)
                 }
             }
 
+            // update home position when not armed
+            if (!motors.armed()) {
+                update_home();
+            }
+
             //If we are not currently armed, and we're ready to 
             //enter RTK mode, then capture current state as home,
             //and enter RTK fixes!
