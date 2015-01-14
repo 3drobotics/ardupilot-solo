@@ -1033,6 +1033,11 @@ static void update_mount()
 #if MOUNT == ENABLED
     // update camera mount's position
     camera_mount.update_mount_position();
+    
+    // gcs_send_message(MSG_MOUNT_CONTROL);
+    //camera_mount.send_mount_control(MAVLINK_COMM_0);
+    camera_mount.send_mount_control(MAVLINK_COMM_1);
+    //camera_mount.send_mount_control(MAVLINK_COMM_2);
 #endif
 
 #if CAMERA == ENABLED
