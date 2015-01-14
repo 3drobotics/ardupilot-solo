@@ -537,6 +537,12 @@ void AP_Mount::status_msg(mavlink_channel_t chan)
     mavlink_msg_mount_status_send(chan,0,0, _tilt_angle*100, _roll_angle*100, _pan_angle*100);
 }
 
+void AP_Mount::send_mount_control(mavlink_channel_t chan)
+{
+    mavlink_msg_mount_control_send(chan,0, 0, _tilt_angle*100, _roll_angle*100, _pan_angle*100, 0);
+}
+
+
 /// Set mount point/region of interest, triggered by mission script commands
 void AP_Mount::set_roi_cmd(const struct Location *target_loc)
 {
