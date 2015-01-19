@@ -96,6 +96,13 @@ const AP_Param::GroupInfo AC_WPNav::var_info[] PROGMEM = {
     // @Increment: 1
     // @User: Advanced
     AP_GROUPINFO("LOIT_MINA",   9, AC_WPNav, _loiter_accel_min_cmss, WPNAV_LOITER_ACCEL_MIN),
+    
+    // @Param: LOIT_SQ
+    // @DisplayName: Loiter quadratic drag
+    // @Description: Enables quadratic drag for loiter
+    // @Values: 0:Disabled,1:Enabled
+    // @User: Advanced
+    AP_GROUPINFO("LOIT_SQ",   10, AC_WPNav, _loiter_quadratic_drag, 0),
 
     AP_GROUPEND
 };
@@ -271,22 +278,36 @@ void AC_WPNav::calc_loiter_desired_velocity(float nav_dt, float ekfGndSpdLimit)
     desired_vel.y += _loiter_desired_accel.y * nav_dt;
 
     // reduce velocity with fake wind resistance
-    if (_pilot_accel_fwd_cms != 0.0f || _pilot_accel_rgt_cms != 0.0f) {
-        desired_vel.x -= (_loiter_accel_cmss)*nav_dt*desired_vel.x/_loiter_speed_cms;
-        desired_vel.y -= (_loiter_accel_cmss)*nav_dt*desired_vel.y/_loiter_speed_cms;
+    if (_loiter_quadratic_drag) {
+        if (desired_vel.x > 0) {
+            desired_vel.x -= (_loiter_accel_cmss-_loiter_accel_min_cmss)*nav_dt*sq(desired_vel.x)/sq(_loiter_speed_cms);
+        } else {
+            desired_vel.x -= (_loiter_accel_cmss-_loiter_accel_min_cmss)*nav_dt*-sq(desired_vel.x)/sq(_loiter_speed_cms);
+        }
     } else {
         desired_vel.x -= (_loiter_accel_cmss-_loiter_accel_min_cmss)*nav_dt*desired_vel.x/_loiter_speed_cms;
-        if(desired_vel.x > 0 ) {
-            desired_vel.x = max(desired_vel.x - _loiter_accel_min_cmss*nav_dt, 0);
-        }else if(desired_vel.x < 0) {
-            desired_vel.x = min(desired_vel.x + _loiter_accel_min_cmss*nav_dt, 0);
+    }
+    
+    if(desired_vel.x > 0 ) {
+        desired_vel.x = max(desired_vel.x - _loiter_accel_min_cmss*nav_dt, 0);
+    }else if(desired_vel.x < 0) {
+        desired_vel.x = min(desired_vel.x + _loiter_accel_min_cmss*nav_dt, 0);
+    }
+    
+    if (_loiter_quadratic_drag) {
+        if (desired_vel.y > 0) {
+            desired_vel.y -= (_loiter_accel_cmss-_loiter_accel_min_cmss)*nav_dt*sq(desired_vel.y)/sq(_loiter_speed_cms);
+        } else {
+            desired_vel.y -= (_loiter_accel_cmss-_loiter_accel_min_cmss)*nav_dt*-sq(desired_vel.y)/sq(_loiter_speed_cms);
         }
+    } else {
         desired_vel.y -= (_loiter_accel_cmss-_loiter_accel_min_cmss)*nav_dt*desired_vel.y/_loiter_speed_cms;
-        if(desired_vel.y > 0 ) {
-            desired_vel.y = max(desired_vel.y - _loiter_accel_min_cmss*nav_dt, 0);
-        }else if(desired_vel.y < 0) {
-            desired_vel.y = min(desired_vel.y + _loiter_accel_min_cmss*nav_dt, 0);
-        }
+    }
+    
+    if(desired_vel.y > 0 ) {
+        desired_vel.y = max(desired_vel.y - _loiter_accel_min_cmss*nav_dt, 0);
+    }else if(desired_vel.y < 0) {
+        desired_vel.y = min(desired_vel.y + _loiter_accel_min_cmss*nav_dt, 0);
     }
 
     // limit EKF speed limit and convert to cm/s
