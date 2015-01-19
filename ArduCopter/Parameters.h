@@ -127,6 +127,7 @@ public:
         k_param_optflow,
         k_param_dcmcheck_thresh,        // 59
         k_param_log_bitmask,
+        k_param_smooth_loiter,
 
         // 65: AP_Limits Library
         k_param_limits = 65,            // deprecated - remove
@@ -398,6 +399,8 @@ public:
     AP_Int8         land_repositioning;
     AP_Float        ekfcheck_thresh;
     AP_Float        dcmcheck_thresh;
+    
+    AP_Int8         smooth_loiter;
 
 #if FRAME_CONFIG ==     HELI_FRAME
     // Heli
