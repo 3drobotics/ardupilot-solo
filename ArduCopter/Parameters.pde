@@ -464,6 +464,13 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Values: 0:Disabled, 0.8:Default, 0.98:Relaxed
     // @User: Advanced
     GSCALAR(dcmcheck_thresh, "DCM_CHECK_THRESH",    DCMCHECK_THRESHOLD_DEFAULT),
+    
+    // @Param: LOITER_SMOOTH
+    // @DisplayName: smooth loiter
+    // @Description: Specifies whether loiter respects angular acceleration limits
+    // @Values: 0:Disabled, 1:Enabled
+    // @User: Advanced
+    GSCALAR(smooth_loiter, "LOITER_SMOOTH",    0),
 
 #if FRAME_CONFIG ==     HELI_FRAME
     // @Group: HS1_
