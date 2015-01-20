@@ -18,7 +18,7 @@ public:
         AP_HAL::UARTDriver* _uartB, // 1st GPS
         AP_HAL::UARTDriver* _uartC, // telem1
         AP_HAL::UARTDriver* _uartD, // telem2
-        AP_HAL::UARTDriver* _uartE, // 2nd GPS
+        AP_HAL::UARTDriver* _uartE, // telem4
         AP_HAL::I2CDriver*  _i2c,
         AP_HAL::SPIDeviceManager* _spi,
         AP_HAL::AnalogIn*   _analogin,
