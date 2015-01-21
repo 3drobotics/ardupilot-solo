@@ -464,6 +464,12 @@
       <field type="uint16_t" name="voltage">voltage in millivolts</field>
       <field type="int16_t" name="current_battery">Battery current, in 10*milliamperes (1 = 10 milliampere), -1: autopilot does not measure the current</field>
     </message>
+    
+    <message name="AUTOPILOT_VERSION_REQUEST" id="182">
+        <description>Request the autopilot version from the system/component.</description>
+        <field type="uint8_t" name="target_system">System ID</field>
+        <field type="uint8_t" name="target_component">Component ID</field>
+    </message>
 
      </messages>
 </mavlink>
