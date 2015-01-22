@@ -8,6 +8,14 @@
 set -e
 set -x
 
+pushd ../PX4Firmware
+git checkout ce602658
+popd
+
+pushd ../PX4NuttX
+git checkout f6e0eff9
+popd
+
 pushd ArduCopter
 make configure
 make clean
