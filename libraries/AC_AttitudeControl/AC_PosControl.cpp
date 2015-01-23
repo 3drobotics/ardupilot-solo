@@ -816,12 +816,12 @@ void AC_PosControl::accel_to_lean_angles(float dt, float ekfNavVelGainScaler)
     float alpha = constrain_float(dt/(dt + 1.0f/(2.0f*(float)M_PI*freq_cut)),0.0f,1.0f);
     static float accel_north_filtered = 0.0f;
     static float accel_east_filtered = 0.0f;
-    accel_north += accel_north_filtered = alpha * (accel_north - accel_north_filtered);
-    accel_east += accel_east_filtered = alpha * (accel_east - accel_east_filtered);
+    accel_north_filtered += alpha * (accel_north - accel_north_filtered);
+    accel_east_filtered += alpha * (accel_east - accel_east_filtered);
 
     // rotate accelerations into body forward-right frame
-    accel_forward = accel_north*_ahrs.cos_yaw() + accel_east*_ahrs.sin_yaw();
-    accel_right = -accel_north*_ahrs.sin_yaw() + accel_east*_ahrs.cos_yaw();
+    accel_forward = accel_north_filtered*_ahrs.cos_yaw() + accel_east_filtered*_ahrs.sin_yaw();
+    accel_right = -accel_north_filtered*_ahrs.sin_yaw() + accel_east_filtered*_ahrs.cos_yaw();
 
     // update angle targets that will be passed to stabilize controller
     _pitch_target = constrain_float(fast_atan(-accel_forward/(GRAVITY_MSS * 100))*(18000/M_PI),-lean_angle_max, lean_angle_max);
