@@ -70,6 +70,7 @@ px4-v1: $(BUILDROOT)/make.flags $(PX4_ROOT)/Archives/px4fmu-v1.export $(SKETCHCP
 	$(v) $(PX4_MAKE) px4fmu-v1_APM
 	$(v) /bin/rm -f $(SKETCH)-v1.px4
 	$(v) cp $(PX4_ROOT)/Images/px4fmu-v1_APM.px4 $(SKETCH)-v1.px4
+	$(v) $(SKETCHBOOK)/Tools/scripts/add_git_hashes.py --ardupilot $(SKETCHBOOK) --px4 $(PX4_ROOT) --nuttx $(NUTTX_SRC) --uavcan $(UAVCAN_DIR) $(SKETCH)-v2.px4 $(SKETCH)-v2.px4 
 	$(v) echo "PX4 $(SKETCH) Firmware is in $(SKETCH)-v1.px4"
 
 px4-v2: $(BUILDROOT)/make.flags $(PX4_ROOT)/Archives/px4fmu-v2.export $(SKETCHCPP) module_mk px4-io-v2
@@ -79,6 +80,8 @@ px4-v2: $(BUILDROOT)/make.flags $(PX4_ROOT)/Archives/px4fmu-v2.export $(SKETCHCP
 	$(PX4_MAKE) px4fmu-v2_APM
 	$(v) /bin/rm -f $(SKETCH)-v2.px4
 	$(v) cp $(PX4_ROOT)/Images/px4fmu-v2_APM.px4 $(SKETCH)-v2.px4
+	$(v) echo $(NUTTX_SRC)
+	$(v) $(SKETCHBOOK)/Tools/scripts/add_git_hashes.py --ardupilot $(SKETCHBOOK) --px4 $(PX4_ROOT) --nuttx $(NUTTX_SRC)/.. --uavcan $(UAVCAN_DIR) $(SKETCH)-v2.px4 $(SKETCH)-v2.px4 
 	$(v) echo "PX4 $(SKETCH) Firmware is in $(SKETCH)-v2.px4"
 
 px4: px4-v1 px4-v2
