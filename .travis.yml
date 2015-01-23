@@ -20,3 +20,6 @@ deploy:
   on:
     tags: true
     all_branches: true
+
+notifications:
+  slack: 3dr:DnBFaUDTVtQa5k18ODuAZRKL
