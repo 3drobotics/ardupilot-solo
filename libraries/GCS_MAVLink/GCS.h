@@ -146,6 +146,10 @@ public:
     */
     static void send_statustext_all(const prog_char_t *msg);
 
+
+    // mavlink routing object
+    static MAVLink_routing routing;
+
 private:
     void        handleMessage(mavlink_message_t * msg);
 
@@ -247,9 +251,6 @@ private:
 
     // bitmask of what mavlink channels are active
     static uint8_t mavlink_active;
-
-    // mavlink routing object
-    static MAVLink_routing routing;
 
     // a vehicle can optionally snoop on messages for other systems
     static void (*msg_snoop)(const mavlink_message_t* msg);

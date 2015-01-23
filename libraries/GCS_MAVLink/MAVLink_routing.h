@@ -35,6 +35,8 @@ public:
     */
     bool check_and_forward(mavlink_channel_t in_channel, const mavlink_message_t* msg);
 
+    void forward(const mavlink_message_t* msg);
+
 private:
     // a simple linear routing table. We don't expect to have a lot of
     // routes, so a scalable structure isn't worthwhile yet.

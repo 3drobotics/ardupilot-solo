@@ -180,6 +180,14 @@ void MAVLink_routing::learn_route(mavlink_channel_t in_channel, const mavlink_me
     }
 }
 
+/*
+    forward message to channel with matching sysid
+*/
+void MAVLink_routing::forward(const mavlink_message_t* msg)
+{
+    check_and_forward(MAVLINK_COMM_0,msg);  // TODO: don't hardcode COMM0 when just forwarding a msg
+}
+
 
 /*
   special handling for heartbeat messages. To ensure routing
