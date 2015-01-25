@@ -14,13 +14,19 @@ static int8_t   test_ins(uint8_t argc,                  const Menu::arg *argv);
 static int8_t   test_optflow(uint8_t argc,              const Menu::arg *argv);
 static int8_t   test_relay(uint8_t argc,                const Menu::arg *argv);
 static int8_t   test_input(uint8_t argc,                const Menu::arg *argv);
-static int8_t   test_motor(uint8_t argc,                const Menu::arg *argv);
+static int8_t   test_motor_torture(uint8_t argc,                const Menu::arg *argv);
+static int8_t   test_motor_step(uint8_t argc,                const Menu::arg *argv);
+static int8_t   test_motor_slew(uint8_t argc,                const Menu::arg *argv);
+static int8_t   test_motor_filter(uint8_t argc,                const Menu::arg *argv);
+static int8_t   test_curve(uint8_t argc,                const Menu::arg *argv);
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 static int8_t   test_shell(uint8_t argc,                const Menu::arg *argv);
 #endif
 #if HIL_MODE == HIL_MODE_DISABLED
 static int8_t   test_sonar(uint8_t argc,                const Menu::arg *argv);
 #endif
+
+static bool do_curve = false;
 
 // Creates a constant array of structs representing menu options
 // and stores them in Flash memory, not RAM.
@@ -37,7 +43,11 @@ const struct Menu::command test_menu_commands[] PROGMEM = {
     {"optflow",             test_optflow},
     {"relay",               test_relay},
     {"input",               test_input},
-    {"motor",               test_motor},
+    {"motor-torture",       test_motor_torture},
+    {"motor-filter",        test_motor_filter},
+    {"motor-slew",          test_motor_slew},
+    {"motor-step",          test_motor_step},
+    {"motor-curve",               test_curve},
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     {"shell", 				test_shell},
 #endif
@@ -331,48 +341,232 @@ static int8_t test_input(uint8_t argc, const Menu::arg *argv)
 }
 
 
-static int8_t test_motor(uint8_t argc, const Menu::arg *argv)
-{
-	if (argc < 2) {
-		cliSerial->printf_P(PSTR("Usage: throttle 0-1000, time in milliseconds, repeat\n"));
-        return(0);
-	}
-	
-    int16_t motor_output = argv[1].i;
-    int16_t duration    = argv[2].i;
-    
-    g.rc_3.servo_out = constrain_int16(motor_output, 0, 1000);
-    duration        = constrain_int16(duration, 100, 5000);
-    g.rc_3.calc_pwm();
+static int8_t test_curve(uint8_t argc, const Menu::arg *argv) {
+    if(do_curve) {
+        cliSerial->printf("Disabling throttle curve\n");
+        do_curve = false;
+    } else {
+        cliSerial->printf("Enabling throttle curve\n");
+        do_curve = true;
+    }
+    return 0;
+}
 
-    // arm and enable motors
+static float curve_throttle(float thr)
+{
+    if(!do_curve) {
+        return thr;
+    }
+
+    float out_min_pwm = g.rc_3.radio_min+130.0f;
+    float out_max_pwm = g.rc_3.radio_max;
+
+    float throttle_out = (thr-out_min_pwm)/(out_max_pwm-out_min_pwm);
+
+    throttle_out = constrain_float(-0.269231f+0.769231f*safe_sqrt(0.1225f+2.6f*throttle_out*0.93f),0.0f,1.0f);
+
+    throttle_out = throttle_out * (out_max_pwm-out_min_pwm) + out_min_pwm;
+
+    throttle_out = constrain_float(throttle_out, g.rc_3.radio_min+130.0f, g.rc_3.radio_max);
+
+    return throttle_out;
+}
+
+static void step_throttle_filtered(float from, float to, float freq_cut) {
+    float elapsed = 0.0f;
+    uint32_t tbegin = micros();
+    uint32_t tlast = micros();
+    uint32_t delay_start = micros();
+    float filtered_thr = from;
+
+    while(elapsed < 10.0f) {
+        uint32_t tnow = micros();
+        float dt = (tnow - tlast)*1.0e-6f;
+
+        float alpha = constrain_float(dt/(dt + 1.0f/(2.0f*(float)M_PI*freq_cut)),0.0f,1.0f);
+        filtered_thr += (to - filtered_thr) * alpha;
+
+        motors.set_throttle(filtered_thr);
+        motors.output();
+
+        if((filtered_thr - from) / (to-from) > 0.95f) {
+            if(tnow-delay_start > 0.5e6f) {
+                break;
+            }
+        } else {
+            delay_start = tnow;
+        }
+
+        delay(2);
+        tlast = tnow;
+        elapsed = (tnow-tbegin)*1.0e-6;
+    }
+}
+
+static int8_t test_motor_torture(uint8_t argc, const Menu::arg *argv)
+{
+    if (argc < 4) {
+        cliSerial->printf("%s <iterations> <max throttle> <freq cut>\n", argv[0].str);
+        return 0;
+    }
+
     motors.armed(true);
     motors.enable();
-    // reduce throttle to minimum
+
+    float high_thr = constrain_float(argv[2].f*10.0f,130,1000);
+
+    for(int32_t i=0; i<argv[1].i; i++) {
+        motors.set_roll(0);
+        motors.set_pitch(0);
+        motors.set_yaw(0);
+        motors.set_throttle(130);
+        motors.output();
+        delay(500);
+
+        step_throttle_filtered(130,high_thr,argv[3].f);
+
+        step_throttle_filtered(high_thr,130,argv[3].f);
+
+        motors.set_pitch(-4500);
+        motors.set_throttle(high_thr);
+        motors.output();
+        delay(500);
+
+        motors.set_pitch(4500);
+        motors.output();
+        delay(500);
+
+        motors.set_pitch(-4500);
+        motors.output();
+        delay(500);
+    }
+
     motors.throttle_pass_through(g.rc_3.radio_min);
+    return 0;
+}
 
-	cliSerial->printf_P(PSTR("\n\nHold on to your F'in hats... in 5 .. "));
-	delay(1000);
-	cliSerial->printf_P(PSTR("4 .. "));
-	delay(1000);
-	cliSerial->printf_P(PSTR("3 .. "));
-	delay(1000);
-	cliSerial->printf_P(PSTR("2 .. "));
-	delay(1000);
-	cliSerial->printf_P(PSTR("1\n"));
-    motors.throttle_pass_through(g.rc_3.radio_min+100);
-	delay(2000);
-	
+static int8_t test_motor_step(uint8_t argc, const Menu::arg *argv)
+{
+    if (argc < 3) {
+        cliSerial->printf("%s <from> <to>\n", argv[0].str);
+        return 0;
+    }
 
-    // raise throttle
-	cliSerial->printf_P(PSTR("\n%d\n"), g.rc_3.radio_out);
-    motors.throttle_pass_through(g.rc_3.radio_out);
-    delay(duration);
+    motors.armed(true);
+    motors.enable();
+
+    float throttle_range = g.rc_3.radio_max - g.rc_3.radio_min;
+    float low_thr = constrain_float(g.rc_3.radio_min + throttle_range*argv[1].f*0.01f, g.rc_3.radio_min+130.0f, g.rc_3.radio_max);
+    float high_thr = constrain_float(g.rc_3.radio_min + throttle_range*argv[2].f*0.01f, g.rc_3.radio_min+130.0f, g.rc_3.radio_max);
+
+    cliSerial->printf("stepping from %f to %f\n", low_thr, high_thr);
+
+    motors.throttle_pass_through(curve_throttle(low_thr));
+
+    delay(1000);
+
+    motors.throttle_pass_through(curve_throttle(high_thr));
+
+    delay(1000);
 
     motors.throttle_pass_through(g.rc_3.radio_min);
+    return 0;
+}
 
-    cliSerial->printf_P(PSTR("\n\nComplete\n"));
-    return (0);
+static int8_t test_motor_slew(uint8_t argc, const Menu::arg *argv)
+{
+    if (argc < 4) {
+        cliSerial->printf("%s <from> <to> <percent/sec>\n", argv[0].str);
+        return 0;
+    }
+
+    motors.armed(true);
+    motors.enable();
+
+    float throttle_range = g.rc_3.radio_max - g.rc_3.radio_min;
+    float low_thr = constrain_float(g.rc_3.radio_min + throttle_range*argv[1].f*0.01f, g.rc_3.radio_min+130.0f, g.rc_3.radio_max);
+    float high_thr = constrain_float(g.rc_3.radio_min + throttle_range*argv[2].f*0.01f, g.rc_3.radio_min+130.0f, g.rc_3.radio_max);
+
+    motors.throttle_pass_through(curve_throttle(low_thr));
+
+    float filtered_thr = low_thr;
+    float slew_rate = throttle_range * argv[3].f * 0.01f; // pwm * 100/s & 1/100 = pwm/s
+
+    cliSerial->printf("slewing from %f to %f over %f sec\n", low_thr, high_thr, (high_thr - low_thr)/slew_rate);
+
+    delay(1000);
+
+    uint32_t tbegin = micros();
+    uint32_t tlast = micros();
+    float elapsed = 0.0f;
+
+    while(elapsed < 10.0f && elapsed < (high_thr - low_thr)/slew_rate + 0.5f) {
+        uint32_t tnow = micros();
+        float dt = (tnow - tlast)*1.0e-6f;
+
+        filtered_thr = constrain_float(filtered_thr + dt * slew_rate,low_thr,high_thr);
+
+        motors.throttle_pass_through(curve_throttle(filtered_thr));
+
+        delay(2);
+        tlast = tnow;
+        elapsed = (tnow-tbegin)*1.0e-6;
+    }
+    motors.throttle_pass_through(g.rc_3.radio_min);
+    return 0;
+}
+
+static int8_t test_motor_filter(uint8_t argc, const Menu::arg *argv)
+{
+    if (argc < 4) {
+        cliSerial->printf("%s <from> <to> <freq>\n", argv[0].str);
+        return 0;
+    }
+
+    motors.armed(true);
+    motors.enable();
+
+    float throttle_range = g.rc_3.radio_max - g.rc_3.radio_min;
+    float low_thr = constrain_float(g.rc_3.radio_min + throttle_range*argv[1].f*0.01f, g.rc_3.radio_min+130.0f, g.rc_3.radio_max);
+    float high_thr = constrain_float(g.rc_3.radio_min + throttle_range*argv[2].f*0.01f, g.rc_3.radio_min+130.0f, g.rc_3.radio_max);
+
+    motors.throttle_pass_through(curve_throttle(low_thr));
+
+    float filtered_thr = low_thr;
+    float freq_cut = argv[3].f;
+
+    cliSerial->printf("stepping from %f to %f with %fhz LPF\n", low_thr, high_thr, freq_cut);
+
+    delay(1000);
+
+    float elapsed = 0.0f;
+    uint32_t tbegin = micros();
+    uint32_t tlast = micros();
+    uint32_t delay_start = micros();
+
+    while(elapsed < 10.0f) {
+        uint32_t tnow = micros();
+        float dt = (tnow - tlast)*1.0e-6f;
+
+        float alpha = constrain_float(dt/(dt + 1.0f/(2.0f*(float)M_PI*freq_cut)),0.0f,1.0f);
+        filtered_thr += (high_thr - filtered_thr) * alpha;
+
+        motors.throttle_pass_through(curve_throttle(filtered_thr));
+
+        if((filtered_thr - low_thr) / (high_thr-low_thr) > 0.95f) {
+            if(tnow-delay_start > 0.5e6f) {
+                break;
+            }
+        } else {
+            delay_start = tnow;
+        }
+
+        delay(2);
+        tlast = tnow;
+        elapsed = (tnow-tbegin)*1.0e-6;
+    }
+    motors.throttle_pass_through(g.rc_3.radio_min);
+    return 0;
 }
 
 
