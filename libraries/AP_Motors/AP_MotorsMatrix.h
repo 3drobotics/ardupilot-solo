@@ -9,6 +9,7 @@
 #include <AP_Common.h>
 #include <AP_Math.h>        // ArduPilot Mega Vector/Matrix math Library
 #include <RC_Channel.h>     // RC Channel Library
+#include <Filter.h>
 #include "AP_Motors_Class.h"
 
 #define AP_MOTORS_MATRIX_YAW_FACTOR_CW   -1
@@ -77,6 +78,8 @@ protected:
     float               _pitch_factor[AP_MOTORS_MAX_NUM_MOTORS]; // each motors contribution to pitch
     float               _yaw_factor[AP_MOTORS_MAX_NUM_MOTORS];  // each motors contribution to yaw (normally 1 or -1)
     uint8_t             _test_order[AP_MOTORS_MAX_NUM_MOTORS];  // order of the motors in the test sequence
+
+    LowPassFilterFloat _throttle_input_filter;
 };
 
 #endif  // AP_MOTORSMATRIX
