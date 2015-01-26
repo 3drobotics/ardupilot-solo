@@ -35,6 +35,8 @@ void AP_MotorsMatrix::Init()
 
     // enable fast channels or instant pwm
     set_update_rate(_speed_hz);
+
+    _throttle_input_filter.set_cutoff_frequency(0.0025f,2.0f);
 }
 
 // set update rate to motors - a value in hertz
@@ -176,12 +178,14 @@ void AP_MotorsMatrix::output_armed()
             }
         }
 
+        _throttle_input_filter.reset(_rc_throttle.radio_min + _spin_when_armed_ramped);
+
         // Every thing is limited
         limit.roll_pitch = true;
         limit.yaw = true;
 
     } else {
-
+        float filtered_thr_out = _throttle_input_filter.apply(_rc_throttle.radio_out);
         // check if throttle is below limit
         if (_rc_throttle.servo_out <= _min_throttle) {  // perhaps being at min throttle itself is not a problem, only being under is
             limit.throttle_lower = true;
@@ -217,7 +221,7 @@ void AP_MotorsMatrix::output_armed()
         int16_t motor_mid = (rpy_low+rpy_high)/2;
         
         if (_ot_protect) {
-            out_best_thr_pwm = min(out_mid_pwm - motor_mid, max(_rc_throttle.radio_out, (_rc_throttle.radio_out+_hover_out)/2));
+            out_best_thr_pwm = min(out_mid_pwm - motor_mid, max(filtered_thr_out, (filtered_thr_out+_hover_out)/2));
         } else {
             out_best_thr_pwm = out_mid_pwm - motor_mid;
         }
@@ -264,7 +268,7 @@ void AP_MotorsMatrix::output_armed()
         }
 
         // check everything fits
-        thr_adj = _rc_throttle.radio_out - out_best_thr_pwm;
+        thr_adj = filtered_thr_out - out_best_thr_pwm;
 
         // calc upper and lower limits of thr_adj
         int16_t thr_adj_max = max(out_max_pwm-(out_best_thr_pwm+rpy_high),0);
@@ -342,6 +346,7 @@ void AP_MotorsMatrix::output_armed()
 // output_disarmed - sends commands to the motors
 void AP_MotorsMatrix::output_disarmed()
 {
+    _throttle_input_filter.reset(_rc_throttle.radio_min);
     // Send minimum values to all motors
     output_min();
 }
