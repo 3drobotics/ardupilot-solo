@@ -40,7 +40,7 @@
 #define POSCONTROL_ACCEL_Z_DTERM_FILTER         20      // Z axis accel controller's D term filter (in hz)
 
 #define POSCONTROL_VEL_ERROR_CUTOFF_FREQ        4.0     // 4hz low-pass filter on velocity error
-#define POSCONTROL_ACCEL_ERROR_CUTOFF_FREQ      2.0     // 2hz low-pass filter on accel error
+#define POSCONTROL_ACCEL_ERROR_CUTOFF_FREQ      20.0     // 2hz low-pass filter on accel error
 
 class AC_PosControl
 {
