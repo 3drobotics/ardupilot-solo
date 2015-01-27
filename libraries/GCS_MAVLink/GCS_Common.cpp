@@ -1095,7 +1095,7 @@ void GCS_MAVLINK::send_scaled_pressure(AP_Baro &barometer)
         pressure*0.01f, // hectopascal
         (pressure - barometer.get_ground_pressure(0))*0.01f, // hectopascal
         barometer.get_temperature(0)*100); // 0.01 degrees C
-#if BARO_MAX_INSTANCES > 1
+/*#if BARO_MAX_INSTANCES > 1
     if (barometer.num_instances() > 1) {
         pressure = barometer.get_pressure(1);
         mavlink_msg_scaled_pressure2_send(
@@ -1105,7 +1105,7 @@ void GCS_MAVLINK::send_scaled_pressure(AP_Baro &barometer)
             (pressure - barometer.get_ground_pressure(1))*0.01f, // hectopascal
             barometer.get_temperature(1)*100); // 0.01 degrees C        
     }
-#endif
+#endif*/
 }
 
 void GCS_MAVLINK::send_sensor_offsets(const AP_InertialSensor &ins, const Compass &compass, AP_Baro &barometer)
