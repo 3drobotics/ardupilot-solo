@@ -166,7 +166,7 @@ static bool init_arm_motors()
 
     // enable gps velocity based centrefugal force compensation
     ahrs.set_correct_centrifugal(true);
-    ahrs.set_armed(true);
+    hal.util->set_soft_armed(true);
 
     // set hover throttle
     motors.set_mid_throttle(g.throttle_mid);
@@ -681,7 +681,7 @@ static void init_disarm_motors()
 
     // disable gps velocity based centrefugal force compensation
     ahrs.set_correct_centrifugal(false);
-    ahrs.set_armed(false);
+    hal.util->set_soft_armed(false);
 }
 
 /*****************************************
