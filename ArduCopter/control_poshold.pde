@@ -36,7 +36,7 @@
 #define POSHOLD_WIND_COMP_ESTIMATE_SPEED_MAX     10      // wind compensation estimates will only run when velocity is at or below this speed in cm/s
 
 // declare some function to keep compiler happy
-static void poshold_update_pilot_lean_angle(int16_t &lean_angle_filtered, int16_t &lean_angle_raw);
+static void poshold_update_pilot_lean_angle(float &lean_angle_filtered, float &lean_angle_raw);
 static int16_t poshold_mix_controls(float mix_ratio, int16_t first_control, int16_t second_control);
 static void poshold_update_brake_angle_from_velocity(int16_t &brake_angle, float velocity);
 static void poshold_update_wind_comp_estimate();
