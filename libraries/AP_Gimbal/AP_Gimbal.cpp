@@ -16,7 +16,15 @@ uint16_t feedback_error_count;
 
 void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
 {
+    uint8_t expected_id = _state.measuraments.id +1;
     mavlink_msg_gimbal_feedback_decode(msg, &_state.measuraments);
+    if(expected_id !=_state.measuraments.id){
+        feedback_error_count++;
+
+        ::printf("error count: %d\t %d\t %d\n", feedback_error_count,expected_id,_state.measuraments.id);
+    }
+
+
     update_state();
     send_control();
 }
