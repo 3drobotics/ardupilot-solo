@@ -113,6 +113,9 @@ public:
 
     void set_ekf_use(bool setting) { _ekf_use.set(setting); }
 
+    // Tell the EKF to de-weight the baro sensor to take account of ground effect on baro during takeoff of landing when set to true
+    void setGndEffectMode(bool setMode);
+
     // is the AHRS subsystem healthy?
     bool healthy(void) const;
 
