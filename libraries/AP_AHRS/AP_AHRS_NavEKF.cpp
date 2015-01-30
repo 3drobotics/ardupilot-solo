@@ -337,5 +337,11 @@ void AP_AHRS_NavEKF::getEkfControlLimits(float &ekfGndSpdLimit, float &ekfNavVel
     EKF.getEkfControlLimits(ekfGndSpdLimit,ekfNavVelGainScaler);
 }
 
+// Tell the EKF to de-weight the baro sensor to take account of ground effect on baro during takeoff of landing when set to true
+void AP_AHRS_NavEKF::setGndEffectMode(bool setMode)
+{
+    EKF.setGndEffectMode(setMode);
+}
+
 #endif // AP_AHRS_NAVEKF_AVAILABLE
 
