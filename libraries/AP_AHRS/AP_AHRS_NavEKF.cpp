@@ -384,5 +384,11 @@ bool AP_AHRS_NavEKF::getMagOffsets(Vector3f &magOffsets)
     return status;
 }
 
+// Tell the EKF to de-weight the baro sensor to take account of ground effect on baro during takeoff of landing when set to true
+void AP_AHRS_NavEKF::setGndEffectMode(bool setMode)
+{
+    EKF.setGndEffectMode(setMode);
+}
+
 #endif // AP_AHRS_NAVEKF_AVAILABLE
 
