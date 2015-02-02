@@ -270,22 +270,34 @@ void AC_WPNav::calc_loiter_desired_velocity(float nav_dt, float ekfGndSpdLimit)
     desired_vel.x += _loiter_desired_accel.x * nav_dt;
     desired_vel.y += _loiter_desired_accel.y * nav_dt;
 
-    if (_pilot_accel_fwd_cms != 0.0f || _pilot_accel_rgt_cms != 0.0f) {
-        desired_vel.x -= (_loiter_accel_cmss)*nav_dt*desired_vel.x/_loiter_speed_cms;
-        desired_vel.y -= (_loiter_accel_cmss)*nav_dt*desired_vel.y/_loiter_speed_cms;
+    static float min_drag;
+    float min_drag_target;
+
+    if (_pilot_accel_fwd_cms == 0.0f && _pilot_accel_rgt_cms == 0.0f) {
+        min_drag_target = _loiter_accel_min_cmss;
     } else {
-        desired_vel.x -= (_loiter_accel_cmss-_loiter_accel_min_cmss)*nav_dt*desired_vel.x/_loiter_speed_cms;
-        if(desired_vel.x > 0 ) {
-            desired_vel.x = max(desired_vel.x - _loiter_accel_min_cmss*nav_dt, 0);
-        }else if(desired_vel.x < 0) {
-            desired_vel.x = min(desired_vel.x + _loiter_accel_min_cmss*nav_dt, 0);
-        }
-        desired_vel.y -= (_loiter_accel_cmss-_loiter_accel_min_cmss)*nav_dt*desired_vel.y/_loiter_speed_cms;
-        if(desired_vel.y > 0 ) {
-            desired_vel.y = max(desired_vel.y - _loiter_accel_min_cmss*nav_dt, 0);
-        }else if(desired_vel.y < 0) {
-            desired_vel.y = min(desired_vel.y + _loiter_accel_min_cmss*nav_dt, 0);
-        }
+        min_drag_target = 0.0f;
+    }
+
+    if(_loiter_jerk_max_cmsss > 0.0f) {
+        float min_drag_change_max = _loiter_jerk_max_cmsss*nav_dt;
+        min_drag = constrain_float(min_drag_target, min_drag-min_drag_change_max, min_drag+min_drag_change_max);
+    } else {
+        min_drag = min_drag_target;
+    }
+
+
+    desired_vel.x -= (_loiter_accel_cmss-min_drag)*nav_dt*desired_vel.x/_loiter_speed_cms;
+    if(desired_vel.x > 0 ) {
+        desired_vel.x = max(desired_vel.x - min_drag*nav_dt, 0);
+    }else if(desired_vel.x < 0) {
+        desired_vel.x = min(desired_vel.x + min_drag*nav_dt, 0);
+    }
+    desired_vel.y -= (_loiter_accel_cmss-min_drag)*nav_dt*desired_vel.y/_loiter_speed_cms;
+    if(desired_vel.y > 0 ) {
+        desired_vel.y = max(desired_vel.y - min_drag*nav_dt, 0);
+    }else if(desired_vel.y < 0) {
+        desired_vel.y = min(desired_vel.y + min_drag*nav_dt, 0);
     }
 
     // limit EKF speed limit and convert to cm/s
