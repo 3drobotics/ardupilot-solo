@@ -15,7 +15,6 @@ deploy:
   file:
   - "ArduCopter/ArduCopter-v2.px4"
   - "Tools/Frame_params/Solo.param"
-  - "Tools/Frame_params/Solo-DVU.param"
   - "Tools/Frame_params/Solo-minus.param"
   skip_cleanup: true
   on:
