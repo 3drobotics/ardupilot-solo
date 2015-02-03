@@ -57,7 +57,7 @@ void SmallEKF::RunEKF(float delta_time, const Vector3f &delta_angles, const Vect
         for (uint8_t i=3; i <= 5; i++) Cov[i][i] = sq(Sigma_velNED);
         for (uint8_t i=6; i <= 8; i++) Cov[i][i] = sq(Sigma_dAngBias);
         FiltInit = true;
-        hal.console->printf("SmallEKF Alignment Started\n");
+        hal.console->printf("\nSmallEKF Alignment Started\n");
     }
 
     // We are using the IMU data from the flight vehicle and setting joint angles to zero for the time being
@@ -87,7 +87,7 @@ void SmallEKF::RunEKF(float delta_time, const Vector3f &delta_angles, const Vect
         //calculate the initial heading using magnetometer, estimated tilt and declination
         alignHeading();
         YawAligned = true;
-        hal.console->printf("SmallEKF Alignment Completed\n");
+        hal.console->printf("\nSmallEKF Alignment Completed\n");
     }
 
     // Fuse magnetometer data if  we have new measurements and an aligned heading
@@ -914,6 +914,12 @@ void SmallEKF::getGyroBias(Vector3f &gyroBias) const
 void SmallEKF::getQuat(Quaternion &quat) const
 {
     quat = state.quat;
+}
+
+// get filter status - true is aligned
+bool SmallEKF::getStatus() const
+{
+    return YawAligned;
 }
 
 #endif // HAL_CPU_CLASS
