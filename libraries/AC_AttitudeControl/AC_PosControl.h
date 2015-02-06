@@ -42,6 +42,8 @@
 #define POSCONTROL_VEL_ERROR_CUTOFF_FREQ        4.0     // 4hz low-pass filter on velocity error
 #define POSCONTROL_ACCEL_ERROR_CUTOFF_FREQ      20.0     // 2hz low-pass filter on accel error
 
+#define POSCONTROL_GNDEFFECT_GAIN               0.2f
+
 class AC_PosControl
 {
 public:
@@ -199,6 +201,10 @@ public:
     ///     when update_vel_controller_xyz is next called the position target is moved based on the desired velocity
     void set_desired_velocity(const Vector3f &des_vel) { _vel_desired = des_vel; freeze_ff_xy(); }
 
+    /// set the height controller to use method that relies more on forward path velocity and less on height error
+    /// this reduces the sensitivity to baro noise and transient errors in ground effect
+    void setGndEffectMode(bool gndEffectMode);
+
     /// freeze_ff_z - used to stop the feed forward being calculated during a known discontinuity
     void freeze_ff_z() { _flags.freeze_ff_z = true; }
 
@@ -295,6 +301,7 @@ private:
     //          set_target_to_stopping_point_z
     //          init_takeoff
     void pos_to_rate_z();
+    void gnd_effect_pos_to_rate_z();
 
     // rate_to_accel_z - calculates desired accel required to achieve the velocity target
     void rate_to_accel_z();
@@ -326,6 +333,8 @@ private:
 
     /// calc_leash_length - calculates the horizontal leash length given a maximum speed, acceleration and position kP gain
     float calc_leash_length(float speed_cms, float accel_cms, float kP) const;
+
+    void update_gnd_effect_targets(float dt);
 
     // references to inertial nav and ahrs libraries
     const AP_AHRS&              _ahrs;
@@ -376,5 +385,9 @@ private:
     float       _distance_to_target;    // distance to position target - for reporting only
     LowPassFilterFloat _vel_error_filter;   // low-pass-filter on z-axis velocity error
     LowPassFilterFloat _accel_error_filter; // low-pass-filter on z-axis accelerometer error
+    bool        _gnd_effect_mode;         // true when a height control relying more on forward path velocity is being used to reduce ground effect coupling
+    float       _gnd_effect_pos_target_z;
+    float       _gnd_effect_pos_error_z;
+    float       _gnd_effect_vel_desired_z;
 };
 #endif	// AC_POSCONTROL_H
