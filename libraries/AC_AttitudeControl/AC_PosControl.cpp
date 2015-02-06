@@ -231,7 +231,11 @@ void AC_PosControl::update_z_controller()
     calc_leash_length_z();
 
     // call position controller
-    pos_to_rate_z();
+    if(_gnd_effect_mode) {
+        gnd_effect_pos_to_rate_z();
+    } else {
+        pos_to_rate_z();
+    }
 }
 
 /// calc_leash_length - calculates the vertical leash lengths from maximum speed, acceleration
@@ -243,6 +247,43 @@ void AC_PosControl::calc_leash_length_z()
         _leash_down_z = calc_leash_length(-_speed_down_cms, _accel_z_cms, _p_pos_z.kP());
         _flags.recalc_leash_z = false;
     }
+}
+
+void AC_PosControl::update_gnd_effect_targets(float dt) {
+    _pos_error.z = _pos_target.z - _gnd_effect_pos_target_z;
+
+    // clear position limit flags
+    _limit.pos_up = false;
+    _limit.pos_down = false;
+
+    // do not let target altitude get too far from current altitude
+    if (_pos_error.z > _leash_up_z) {
+        _pos_target.z = _gnd_effect_pos_target_z + _leash_up_z;
+        _pos_error.z = _leash_up_z;
+        _limit.pos_up = true;
+    }
+    if (_pos_error.z < -_leash_down_z) {
+        _pos_target.z = _gnd_effect_pos_target_z - _leash_down_z;
+        _pos_error.z = -_leash_down_z;
+        _limit.pos_down = true;
+    }
+
+    _gnd_effect_vel_desired_z = AC_AttitudeControl::sqrt_controller(_pos_error.z, _p_pos_z.kP(), _accel_z_cms);
+    _gnd_effect_pos_error_z = _gnd_effect_pos_target_z - _inav.get_altitude();
+
+    _gnd_effect_pos_target_z += _gnd_effect_vel_desired_z * dt;
+}
+
+void AC_PosControl::gnd_effect_pos_to_rate_z() {
+    // update gnd effect pos target
+    update_gnd_effect_targets(_dt);
+
+    // calculate _vel_target.z using from _pos_error.z using sqrt controller
+    _vel_target.z = AC_AttitudeControl::sqrt_controller(_gnd_effect_pos_error_z, _p_pos_z.kP()*POSCONTROL_GNDEFFECT_GAIN, _accel_z_cms);
+    _vel_target.z += _gnd_effect_vel_desired_z;
+
+    // call rate based throttle controller which will update accel based throttle controller targets
+    rate_to_accel_z();
 }
 
 // pos_to_rate_z - position to rate controller for Z axis
@@ -879,4 +920,28 @@ float AC_PosControl::calc_leash_length(float speed_cms, float accel_cms, float k
     }
 
     return leash_length;
+}
+
+// set the height controller to use method that relies more on forward path velocity and less on height error
+// this reduces the sensitivity to baro noise and transient errors in ground effect
+void AC_PosControl::setGndEffectMode(bool gndEffectMode)
+{
+    if(_gnd_effect_mode != gndEffectMode) {
+        if(gndEffectMode) {
+            // turning feedforward on, initialize
+            float curr_alt = _inav.get_altitude();
+            _gnd_effect_pos_target_z = curr_alt;
+            update_gnd_effect_targets(0.0f);
+        } else {
+            // turning feedforward off - adjust position target such that velocity demand stays constant:
+            // sqrt_controller_gnd(err_gnd)+vel_desired = sqrt_controller_air(err_air)
+            // find err_gnd such that this equality is met:
+            // err_air = sqrt_controller_air_inv(sqrt_controller_gnd(err_gnd)+vel_desired)
+            float curr_alt = _inav.get_altitude();
+            float prev_fb_vel_target = AC_AttitudeControl::sqrt_controller(_gnd_effect_pos_error_z, _p_pos_z.kP()*POSCONTROL_GNDEFFECT_GAIN, _accel_z_cms);
+            float new_pos_error = AC_AttitudeControl::inverse_sqrt_controller(prev_fb_vel_target+_gnd_effect_vel_desired_z, _p_pos_z.kP(), _accel_z_cms);
+            _pos_target.z = new_pos_error + curr_alt;
+        }
+    }
+    _gnd_effect_mode = gndEffectMode;
 }
