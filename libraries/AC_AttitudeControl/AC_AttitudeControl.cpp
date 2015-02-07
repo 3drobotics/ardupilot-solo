@@ -738,3 +738,20 @@ float AC_AttitudeControl::sqrt_controller(float error, float p, float second_ord
         return error*p;
     }
 }
+
+float AC_AttitudeControl::inverse_sqrt_controller(float output, float p, float second_ord_lim)
+{
+    if (second_ord_lim == 0.0f || p == 0.0f) {
+        return output/p;
+    }
+
+    float linear_dist = second_ord_lim/(p);
+
+    if (output > linear_dist) {
+        return (sq(second_ord_lim) + sq(output) * sq(p)) / (2*second_ord_lim*sq(p));
+    } else if (output < -linear_dist) {
+        return -(sq(second_ord_lim) + sq(output) * sq(p)) / (2*second_ord_lim*sq(p));
+    } else {
+        return output/p;
+    }
+}
