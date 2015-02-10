@@ -3,7 +3,7 @@
 /************************************************************
 * AP_Gimbal -- library to control a 3 axis rate gimbal.		*
 *															*
-* Author:  Arthur Benemann;									*
+* Author:  Arthur Benemann, Paul Riseborough;									*
 *															*
 * Purpose:                          						*
 *															*
@@ -25,28 +25,23 @@ class AP_Gimbal
 {
 public:
     //Constructor
-    AP_Gimbal(const struct Location *current_loc, const AP_AHRS &ahrs, uint8_t sysid, uint8_t compid) :
+    AP_Gimbal(const AP_AHRS &ahrs, uint8_t sysid, uint8_t compid) :
         _ahrs(ahrs)
     {
         AP_Param::setup_object_defaults(this, var_info);
-        _current_loc = current_loc;
-        _state.sysid = sysid;
-        _state.compid = compid;
+        _sysid = sysid;
+        _compid = compid;
     }
-    
-   
         
     // MAVLink methods
-    void                    status_msg(mavlink_channel_t chan);
     void                    receive_feedback(mavlink_message_t *msg);
-
-    // should be called periodically
-    void                    update_position();
 
     // hook for eeprom variables
     static const struct AP_Param::GroupInfo        var_info[];
 
 private:
+    uint8_t _sysid;
+    uint8_t _compid;
 
     enum GIMBAL_JOINTS{
         AZ,ROLL,EL
@@ -56,20 +51,21 @@ private:
         X,Y,Z
     };
 
-    struct Gimbal_State {
-        uint8_t sysid;
-        uint8_t compid;
-        mavlink_gimbal_feedback_t measuraments;
-        float target_angles[3];     // degrees
-        float target_rate[3];       // degrees/s
-    };
+    struct Measurament {
+        uint8_t id;
+        Vector3f delta_angles;
+        Vector3f delta_velocity;
+        Vector3f joint_angles;
+    } _measurament;
 
-    struct Gimbal_State             _state;
+
+    Vector3f gimbalRateDemVec;       // degrees/s
+
     const AP_AHRS                   &_ahrs;             //  Rotation matrix from earth to plane.
-    const struct Location           *_current_loc;
 
     void                    send_control();
     void                    update_state();
+    void                    decode_feedback(mavlink_message_t *msg);
 };
 
 #endif // __AP_MOUNT_H__
