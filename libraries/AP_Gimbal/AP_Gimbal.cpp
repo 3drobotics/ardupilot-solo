@@ -47,9 +47,11 @@ void AP_Gimbal::decode_feedback(mavlink_message_t *msg)
     _measurament.joint_angles.z = feedback_msg.joint_az;
 }
 
+#define USE_JOINT_ONLY
 
 void AP_Gimbal::update_state()
 {
+    #ifdef USE_JOINT_ONLY
     // Define rotation from vehicle to gimbal using a 312 rotation sequence
     Matrix3f Tvg;
     float cosPhi = cosf(_measurament.joint_angles.x);
@@ -104,6 +106,10 @@ void AP_Gimbal::update_state()
     */
 
     //::printf("joint \t%1.2f\t%1.2f\t%1.2f\t gyro \t%1.4f\t%1.4f\t%1.4f\t rate \t%1.2f\t%1.2f\t%1.2f\t\n",_state.feedback_msg.joint_roll,_state.feedback_msg.joint_el,_state.feedback_msg.joint_az,_state.feedback_msg.gyrox,_state.feedback_msg.gyroy,_state.feedback_msg.gyroz, _state.target_rate[X], _state.target_rate[Y], _state.target_rate[Z]);
+
+    #else
+
+    #endif
 }
 
 void AP_Gimbal::send_control()
