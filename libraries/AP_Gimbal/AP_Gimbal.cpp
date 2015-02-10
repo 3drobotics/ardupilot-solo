@@ -76,13 +76,27 @@ void AP_Gimbal::update_state()
     Tvg[1][2] = sinPhi;
     Tvg[2][2] = cosTheta*cosPhi;
 
+    //Get rotation from earth to vehicle
+    Matrix3f Tev; 
+    Tev = _ahrs.get_dcm_matrix().transposed();
+
+    //Get rotation from earth to gimbal 
+    Matrix3f Teg; 
+    Teg = Tvg*Tev;
+
     // convert vehicle to gimbal rotation matrix to a rotation vector using small angle approximation
     Vector3f deltaAngErr;
-    deltaAngErr.x = (Tvg[2][1] - Tvg[1][2]) * 0.5f;
-    deltaAngErr.y = (Tvg[0][2] - Tvg[2][0]) * 0.5f;
-    deltaAngErr.z = (Tvg[1][0] - Tvg[0][1]) * 0.5f;
+    deltaAngErr.x = (Teg[2][1] - Teg[1][2]) * 0.5f;
+    deltaAngErr.y = (Teg[0][2] - Teg[2][0]) * 0.5f;
+    deltaAngErr.z = (Teg[1][0] - Teg[0][1]) * 0.5f;
 
-    // multiply the rotation vector by an error gain to calculate a demanded vehicle frame relative rate vector
+    // Zeroing the yaw demand in earth frame
+    Vector3f deltaAngErrNED;
+    deltaAngErrNED = Teg.transposed() * deltaAngErr;
+    deltaAngErrNED.z = -joint_angles.z * K_gimbalRate;
+    deltaAngErr = Teg * deltaAngErrNED;
+
+    // multiply the rotation vector by an error gain to calculate a demanded   vehicle frame relative rate vector
     gimbalRateDemVec = deltaAngErr * K_gimbalRate;
 
     // constrain the vehicle relative rate vector length
@@ -91,9 +105,11 @@ void AP_Gimbal::update_state()
         gimbalRateDemVec = gimbalRateDemVec * (angRateLimit / length);
     }
     
+    /*
     // rotate the earth relative vehicle angular rate vector into gimbal axes and add to obtain the demanded gimbal angular rate
     Vector3f forwardPathRateDem = Tvg * _ahrs.get_gyro();
     gimbalRateDemVec += forwardPathRateDem;
+    */
 
     _state.target_rate[X] = gimbalRateDemVec.x;
     _state.target_rate[Y] = gimbalRateDemVec.y;
@@ -107,8 +123,8 @@ void AP_Gimbal::send_control()
     mavlink_message_t msg;
     mavlink_gimbal_control_t control;
     control.ratex = _state.target_rate[X];
-    control.ratey = _state.target_rate[Z];
-    control.ratez = _state.target_rate[Y];
+    control.ratey = _state.target_rate[Y];
+    control.ratez = _state.target_rate[Z];
     /*
     control.ratex = 0;
     control.ratey = 0;
