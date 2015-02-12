@@ -14,7 +14,7 @@ const AP_Param::GroupInfo AP_Gimbal::var_info[] PROGMEM = {
 };
 
 uint16_t feedback_error_count;
-static float K_gimbalRate = 0.5f;
+static float K_gimbalRate = 1.0f;
 static float angRateLimit = 0.5f;
 
 void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
@@ -23,16 +23,21 @@ void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
     update_state();
     if (_ekf.getStatus()){
         send_control();        
-    }
  
-    float tilt;
-    Vector3f velocity, euler, gyroBias;
-    _ekf.getDebug(tilt, velocity, euler, gyroBias);
-    /*
-    ::printf("euler=(%.2f, %.2f, %.2f) \t rates=(%.2f, %.2f, %.2f)\n", 
-    degrees(euler.x), degrees(euler.y), degrees(euler.z),
-    degrees(gimbalRateDemVec.x), degrees(gimbalRateDemVec.y), degrees(gimbalRateDemVec.z));
-    */
+        float tilt;
+        Vector3f velocity, euler, gyroBias;
+        _ekf.getDebug(tilt, velocity, euler, gyroBias);
+        
+        /*
+        ::printf("euler=(%.2f, %.2f, %.2f) \t rates=(%.2f, %.2f, %.2f)\n", 
+        degrees(euler.x), degrees(euler.y), degrees(euler.z),
+        degrees(gimbalRateDemVec.x), degrees(gimbalRateDemVec.y), degrees(gimbalRateDemVec.z));
+        */
+        
+
+        ::printf("euler=(%.2f, %.2f, %.2f)\n", 
+        degrees(euler.x), degrees(euler.y), degrees(euler.z));
+    }
 }
     
 
@@ -128,8 +133,6 @@ void AP_Gimbal::send_control()
     control.ratex = gimbalRateDemVec.x;
     control.ratey = gimbalRateDemVec.y;
     control.ratez = gimbalRateDemVec.z;
-
-    control.ratez = 0;
 
     mavlink_msg_gimbal_control_encode(1, 1, &msg, &control);
     GCS_MAVLINK::routing.forward(&msg);
