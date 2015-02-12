@@ -19,18 +19,22 @@
 #include <AP_GPS.h>
 #include <AP_AHRS.h>
 #include <GCS_MAVLink.h>
+#include <AP_SmallEKF.h>
+#include <AP_NavEKF.h>
 
 
 class AP_Gimbal
 {
 public:
     //Constructor
-    AP_Gimbal(const AP_AHRS &ahrs, uint8_t sysid, uint8_t compid) :
-        _ahrs(ahrs)
+    AP_Gimbal(const AP_AHRS_NavEKF &ahrs, uint8_t sysid, uint8_t compid) :
+        _ahrs(ahrs),
+        _ekf(ahrs)
     {
         AP_Param::setup_object_defaults(this, var_info);
         _sysid = sysid;
         _compid = compid;
+        _initialised = false;        
     }
         
     // MAVLink methods
@@ -59,9 +63,18 @@ private:
     } _measurament;
 
 
-    Vector3f gimbalRateDemVec;       // degrees/s
+    Vector3f gimbalRateDemVec;       // degrees/s    
+    float vehicleYawRateDem;        // vehicle yaw rate demand
 
-    const AP_AHRS                   &_ahrs;             //  Rotation matrix from earth to plane.
+
+    const AP_AHRS_NavEKF             &_ahrs;             //  Rotation matrix from earth to plane.
+
+    // internal variables
+    bool _initialised;              // true once the driver has been initialised
+
+    // state of small EKF for gimbal
+    SmallEKF _ekf;
+
 
     void                    send_control();
     void                    update_state();

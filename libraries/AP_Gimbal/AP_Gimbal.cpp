@@ -7,20 +7,32 @@
 #include <AP_Gimbal.h>
 #include <GCS.h>
 #include <GCS_MAVLink.h>
+#include <AP_SmallEKF.h>
 
 const AP_Param::GroupInfo AP_Gimbal::var_info[] PROGMEM = {
     AP_GROUPEND
 };
 
 uint16_t feedback_error_count;
-static float K_gimbalRate = 2.0f;
+static float K_gimbalRate = 0.5f;
 static float angRateLimit = 0.5f;
 
 void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
 {
     decode_feedback(msg);
     update_state();
-    send_control();
+    if (_ekf.getStatus()){
+        send_control();        
+    }
+ 
+    float tilt;
+    Vector3f velocity, euler, gyroBias;
+    _ekf.getDebug(tilt, velocity, euler, gyroBias);
+    /*
+    ::printf("euler=(%.2f, %.2f, %.2f) \t rates=(%.2f, %.2f, %.2f)\n", 
+    degrees(euler.x), degrees(euler.y), degrees(euler.z),
+    degrees(gimbalRateDemVec.x), degrees(gimbalRateDemVec.y), degrees(gimbalRateDemVec.z));
+    */
 }
     
 
@@ -47,69 +59,62 @@ void AP_Gimbal::decode_feedback(mavlink_message_t *msg)
     _measurament.joint_angles.z = feedback_msg.joint_az;
 }
 
-#define USE_JOINT_ONLY
 
 void AP_Gimbal::update_state()
 {
-    #ifdef USE_JOINT_ONLY
-    // Define rotation from vehicle to gimbal using a 312 rotation sequence
-    Matrix3f Tvg;
-    float cosPhi = cosf(_measurament.joint_angles.x);
-    float cosTheta = cosf(_measurament.joint_angles.y);
-    float sinPhi = sinf(_measurament.joint_angles.x);
-    float sinTheta = sinf(_measurament.joint_angles.y);
-    float sinPsi = sinf(_measurament.joint_angles.z);
-    float cosPsi = cosf(_measurament.joint_angles.z);
-    Tvg[0][0] = cosTheta*cosPsi-sinPsi*sinPhi*sinTheta;
-    Tvg[1][0] = -sinPsi*cosPhi;
-    Tvg[2][0] = cosPsi*sinTheta+cosTheta*sinPsi*sinPhi;
-    Tvg[0][1] = cosTheta*sinPsi+cosPsi*sinPhi*sinTheta;
-    Tvg[1][1] = cosPsi*cosPhi;
-    Tvg[2][1] = sinPsi*sinTheta-cosTheta*cosPsi*sinPhi;
-    Tvg[0][2] = -sinTheta*cosPhi;
-    Tvg[1][2] = sinPhi;
-    Tvg[2][2] = cosTheta*cosPhi;
 
-    //Get rotation from earth to vehicle
-    Matrix3f Tev; 
-    Tev = _ahrs.get_dcm_matrix().transposed();
 
-    //Get rotation from earth to gimbal 
-    Matrix3f Teg; 
-    Teg = Tvg*Tev;
+    // Run the gimbal attitude and gyro bias estimator
+    _ekf.RunEKF(1.0/100.0, _measurament.delta_angles, _measurament.delta_velocity, _measurament.joint_angles);
 
-    // convert vehicle to gimbal rotation matrix to a rotation vector using small angle approximation
-    Vector3f deltaAngErr;
-    deltaAngErr.x = (Teg[2][1] - Teg[1][2]) * 0.5f;
-    deltaAngErr.y = (Teg[0][2] - Teg[2][0]) * 0.5f;
-    deltaAngErr.z = (Teg[1][0] - Teg[0][1]) * 0.5f;
 
-    // Zeroing the yaw demand in earth frame
-    Vector3f deltaAngErrNED;
-    deltaAngErrNED = Teg.transposed() * deltaAngErr;
-    deltaAngErrNED.z = -_measurament.joint_angles.z * K_gimbalRate;
-    deltaAngErr = Teg * deltaAngErrNED;
+    // get the gimbal quaternion estimate
+    Quaternion quatEst;
+    _ekf.getQuat(quatEst);
 
-    // multiply the rotation vector by an error gain to calculate a demanded   vehicle frame relative rate vector
-    gimbalRateDemVec = deltaAngErr * K_gimbalRate;
+/*
+    float tilt;
+    Vector3f velocity, euler, gyroBias;
+    _ekf.getDebug(tilt, velocity, euler, gyroBias);
+    ::printf("tilt=%.2f euler=(%.2f, %.2f, %.2f) bias=(%.1f, %.1f, %.1f) status = %d\n",
+             tilt,
+             degrees(euler.x), degrees(euler.y), degrees(euler.z),
+             degrees(gyroBias.x), degrees(gyroBias.y), degrees(gyroBias.z),
+             (int) _ekf.getStatus());
+*/
 
-    // constrain the vehicle relative rate vector length
-    float length = gimbalRateDemVec.length();
-    if (length > angRateLimit) {
-        gimbalRateDemVec = gimbalRateDemVec * (angRateLimit / length);
-    }
-    
-    /*
-    // rotate the earth relative vehicle angular rate vector into gimbal axes and add to obtain the demanded gimbal angular rate
-    Vector3f forwardPathRateDem = Tvg * _ahrs.get_gyro();
-    gimbalRateDemVec += forwardPathRateDem;
-    */
+        // Calculate the demanded quaternion orientation for the gimbal
+        // set the demanded quaternion using demanded 321 Euler angles wrt earth frame
+        Quaternion quatDem;
+        quatDem.from_euler(0,0,0);
 
-    //::printf("joint \t%1.2f\t%1.2f\t%1.2f\t gyro \t%1.4f\t%1.4f\t%1.4f\t rate \t%1.2f\t%1.2f\t%1.2f\t\n",_state.feedback_msg.joint_roll,_state.feedback_msg.joint_el,_state.feedback_msg.joint_az,_state.feedback_msg.gyrox,_state.feedback_msg.gyroy,_state.feedback_msg.gyroz, _state.target_rate[X], _state.target_rate[Y], _state.target_rate[Z]);
+        //divide the demanded quaternion by the estimated to get the error
+        Quaternion quatErr = quatDem / quatEst;
 
-    #else
+        // convert the quaternion to an angle error vector
+        Vector3f deltaAngErr;
+        float scaler = 1.0f-quatErr[0]*quatErr[0];
+        if (scaler > 1e-12) {
+            scaler = 1.0f/sqrtf(scaler);
+            if (quatErr[0] < 0.0f) {
+                scaler *= -1.0f;
+            }
+            deltaAngErr.x = quatErr[1] * scaler;
+            deltaAngErr.y = quatErr[2] * scaler;
+            deltaAngErr.z = quatErr[3] * scaler;
+        } else {
+            deltaAngErr.zero();
+        }
 
-    #endif
+        // multiply the angle error vector by a gain to calculate a demanded gimbal rate
+        gimbalRateDemVec = deltaAngErr * K_gimbalRate;
+
+        // Constrain the demanded rate
+        float length = gimbalRateDemVec.length();
+        if (length > angRateLimit) {
+            gimbalRateDemVec = gimbalRateDemVec * (angRateLimit / length);
+        }
+
 }
 
 void AP_Gimbal::send_control()
@@ -122,8 +127,12 @@ void AP_Gimbal::send_control()
 
     control.ratex = gimbalRateDemVec.x;
     control.ratey = gimbalRateDemVec.y;
-    control.ratez = gimbalRateDemVec.z;    
+    control.ratez = gimbalRateDemVec.z;
+
+    control.ratez = 0;
 
     mavlink_msg_gimbal_control_encode(1, 1, &msg, &control);
     GCS_MAVLINK::routing.forward(&msg);
+
+
 }
