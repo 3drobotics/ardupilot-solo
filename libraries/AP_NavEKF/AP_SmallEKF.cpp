@@ -83,7 +83,7 @@ void SmallEKF::RunEKF(float delta_time, const Vector3f &delta_angles, const Vect
     fuseVelocity(YawAligned);
 
     // Align the heading once there has been enough time for the filter to settle and the tilt corrections have dropped below a threshold
-    if ((((imuSampleTime_ms - StartTime_ms) > 5000 && TiltCorrection < 1e-4f) || ((imuSampleTime_ms - StartTime_ms) > 30000)) && !YawAligned) {
+    if ((((imuSampleTime_ms - StartTime_ms) > 5000 && TiltCorrection < 1e-4f) || ((imuSampleTime_ms - StartTime_ms) > 30000)) && !YawAligned && _main_ekf.healthy()) {
         //calculate the initial heading using magnetometer, estimated tilt and declination
         alignHeading();
         YawAligned = true;
