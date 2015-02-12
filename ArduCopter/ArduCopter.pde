@@ -377,6 +377,7 @@ static union {
         uint8_t initialised         : 1; // 17  // true once the init_ardupilot function has completed.  Extended status to GCS is not sent until this completes
         uint8_t land_complete_maybe : 1; // 18  // true if we may have landed (less strict version of land_complete)
         uint8_t throttle_zero       : 1; // 19  // true if the throttle stick is at zero, debounced
+        uint8_t in_ground_effect    : 1; // 20
     };
     uint32_t value;
 } ap;
@@ -1004,6 +1005,8 @@ static void throttle_loop()
 
     // check if we've landed
     update_land_detector();
+
+    update_ground_effect_detector();
 
     // check auto_armed status
     update_auto_armed();
