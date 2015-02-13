@@ -132,6 +132,8 @@ void AP_Gimbal::update_state()
 
         // rotate into gimbal frame to calculate the gimbal rate vector required to keep the yaw gimbal centred
         gimbalRateDemVecYaw = Tvg * gimbalRateDemVecYaw;
+        gimbalRateDemVecYaw.x = 0;
+        gimbalRateDemVecYaw.y = 0;
 
         // Calculate the gimbal 321 Euler angle estimates relative to earth frame
         Vector3f eulerEst;
