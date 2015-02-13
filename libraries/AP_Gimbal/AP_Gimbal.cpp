@@ -114,9 +114,6 @@ void AP_Gimbal::update_state()
         Vector3f gimbalRateDemVecYaw;
         gimbalRateDemVecYaw.z = - K_gimbalRate * _measurament.joint_angles.z;
 
-        // constrain the vehicle relative yaw rate demand
-        gimbalRateDemVecYaw.z = constrain_float(gimbalRateDemVecYaw.z, -angRateLimit, angRateLimit);
-
         // Add the vehicle yaw rate after filtering and scaling
         // scaling is applied as a function of yaw rate such that the steady state error does not exceed the limit set
         vehicleYawRateFilt = (1.0f - yawRateFiltPole * delta_time) * vehicleYawRateFilt + yawRateFiltPole * delta_time * _ahrs.get_gyro().z;
@@ -164,12 +161,6 @@ void AP_Gimbal::update_state()
 
         // multiply the angle error vector by a gain to calculate a demanded gimbal rate required to control tilt
         Vector3f gimbalRateDemVecTilt = deltaAngErr * K_gimbalRate;
-
-        // Constrain the tilt correction rate vector
-        float length = gimbalRateDemVecTilt.length();
-        if (length > angRateLimit) {
-            gimbalRateDemVecTilt = gimbalRateDemVecTilt * (angRateLimit / length);
-        }
 
         // Add the yaw and tilt control rate vectors
         gimbalRateDemVec = gimbalRateDemVecTilt + gimbalRateDemVecYaw;
