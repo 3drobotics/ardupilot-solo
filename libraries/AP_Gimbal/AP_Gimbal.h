@@ -79,6 +79,28 @@ private:
     void                    send_control();
     void                    update_state();
     void                    decode_feedback(mavlink_message_t *msg);
+
+    
+    float const delta_time = 1.0/100.0;
+
+        // maximum vehicle yaw rate in rad/sec
+    float const vehYawRateLim = 1.0f;
+
+    // gimbal yaw offset relative to vehicle reference frame in radians, used to centre relative to visual or mechanical limits
+    float const gimbalYawOffset = 0.03f;
+
+    // filtered yaw rate from the vehicle
+    float vehicleYawRateFilt = 0.0f;
+
+    // circular frequency (rad/sec) constant of filter applied to forward path vehicle yaw rate
+    // this frequency must not be larger than the update rate (Hz).
+    // reducing it makes the gimbal yaw less responsive to vehicle yaw
+    // increasing it makes the gimbal yawe more responsive to vehicle yaw
+    float const yawRateFiltPole = 10.0f;
+
+    // amount of yaw angle that we permit the gimbal to lag the vehicle when operating in slave mode
+    // reducing this makes the gimbal respond more to vehicle yaw disturbances
+    float const yawErrorLimit = 0.1f;
 };
 
 #endif // __AP_MOUNT_H__
