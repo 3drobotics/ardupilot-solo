@@ -995,6 +995,10 @@ static void fast_loop()
 
     // run the attitude controllers
     update_flight_mode();
+
+//     if (should_log(MASK_LOG_IMU)) {
+//         DataFlash.Log_Write_IMU(ins);
+//     }
 }
 
 // rc_loops - reads user input from transmitter/receiver
@@ -1093,10 +1097,6 @@ static void fifty_hz_logging_loop()
 #if HIL_MODE == HIL_MODE_DISABLED
     if (should_log(MASK_LOG_ATTITUDE_FAST)) {
         Log_Write_Attitude();
-    }
-
-    if (should_log(MASK_LOG_IMU)) {
-        DataFlash.Log_Write_IMU(ins);
     }
 #endif
     if (should_log(MASK_LOG_ANY)) {
