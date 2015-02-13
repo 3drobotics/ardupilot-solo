@@ -177,7 +177,8 @@ void AP_Gimbal::update_state()
 
 
         //Compensate for gyro bias
-        //gimbalRateDemVec+= gyroBias;
+        //TODO send the gyro bias to the gimbal
+        gimbalRateDemVec+= gyroBias;
 
 }
 
