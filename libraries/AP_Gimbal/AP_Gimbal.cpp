@@ -114,26 +114,24 @@ void AP_Gimbal::update_state()
         Vector3f gimbalRateDemVecYaw;
         gimbalRateDemVecYaw.z = - K_gimbalRate * _measurament.joint_angles.z;
 
-        // Add the vehicle yaw rate after filtering and scaling
-        // scaling is applied as a function of yaw rate such that the steady state error does not exceed the limit set
-        vehicleYawRateFilt = (1.0f - yawRateFiltPole * delta_time) * vehicleYawRateFilt + yawRateFiltPole * delta_time * _ahrs.get_gyro().z;
-        // calculate the maximum steady state rate error corresponding to the maximum permitted yaw angle error
+        // Get filtered vehicle turn rate in earth frame
+        vehicleYawRateFilt = (1.0f - yawRateFiltPole * delta_time) * vehicleYawRateFilt + yawRateFiltPole * delta_time * _ahrs.get_yaw_rate_earth();
+        Vector3f vehicle_rate_ef(0,0,vehicleYawRateFilt);
+
+         // calculate the maximum steady state rate error corresponding to the maximum permitted yaw angle error
         float maxRate = K_gimbalRate * yawErrorLimit;
-        // compare max steady state rate error with vehicle yaw rate magnitude
-        float excessRateMag = fabs(vehicleYawRateFilt) - maxRate;
-        // if the difference is positive, then we need to use some forward rate demand to reduce steady state error
-        if (excessRateMag > 0.0f) {
-            if (vehicleYawRateFilt >= 0.0f) {
-                gimbalRateDemVecYaw.z += excessRateMag;
-            } else {
-                gimbalRateDemVecYaw.z -= excessRateMag;
-            }
-        }
+        float vehicle_rate_mag_ef = vehicle_rate_ef.length();
+        float excess_rate_correction = fabs(vehicle_rate_mag_ef) - maxRate; 
+        if (vehicle_rate_mag_ef > maxRate) {
+            if (vehicle_rate_ef.z>0.0f){
+                gimbalRateDemVecYaw += _ahrs.get_dcm_matrix().transposed()*Vector3f(0,0,excess_rate_correction);    
+            }else{
+                gimbalRateDemVecYaw -= _ahrs.get_dcm_matrix().transposed()*Vector3f(0,0,excess_rate_correction);    
+            }            
+        }        
 
         // rotate into gimbal frame to calculate the gimbal rate vector required to keep the yaw gimbal centred
         gimbalRateDemVecYaw = Tvg * gimbalRateDemVecYaw;
-        gimbalRateDemVecYaw.x = 0;
-        gimbalRateDemVecYaw.y = 0;
 
         // Calculate the gimbal 321 Euler angle estimates relative to earth frame
         Vector3f eulerEst;
@@ -141,6 +139,7 @@ void AP_Gimbal::update_state()
 
         // Calculate a demanded quaternion using the demanded roll and pitch and estimated yaw (yaw is slaved to the vehicle)
         Quaternion quatDem;
+        //TODO receive target from AP_Mount
         quatDem.from_euler(0, 0, eulerEst.z);
 
         //divide the demanded quaternion by the estimated to get the error
