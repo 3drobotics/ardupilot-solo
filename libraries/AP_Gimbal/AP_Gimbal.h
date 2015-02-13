@@ -29,7 +29,8 @@ public:
     //Constructor
     AP_Gimbal(const AP_AHRS_NavEKF &ahrs, uint8_t sysid, uint8_t compid) :
         _ahrs(ahrs),
-        _ekf(ahrs)
+        _ekf(ahrs),
+        _joint_offsets(0.05,0.18,-0.02)
     {
         AP_Param::setup_object_defaults(this, var_info);
         _sysid = sysid;
@@ -101,6 +102,8 @@ private:
     // amount of yaw angle that we permit the gimbal to lag the vehicle when operating in slave mode
     // reducing this makes the gimbal respond more to vehicle yaw disturbances
     float const yawErrorLimit = 0.1f;
+
+    Vector3f const _joint_offsets;
 };
 
 #endif // __AP_MOUNT_H__

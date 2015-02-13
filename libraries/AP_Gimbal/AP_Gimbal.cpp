@@ -63,6 +63,9 @@ void AP_Gimbal::decode_feedback(mavlink_message_t *msg)
     _measurament.joint_angles.x = feedback_msg.joint_roll;
     _measurament.joint_angles.y = feedback_msg.joint_el,
     _measurament.joint_angles.z = feedback_msg.joint_az;
+
+    //apply joint angle compensation
+    _measurament.joint_angles -= _joint_offsets;
 }
 
 
