@@ -22,22 +22,7 @@ void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
     decode_feedback(msg);
     update_state();
     if (_ekf.getStatus()){
-        send_control();        
- 
-        float tilt;
-        Vector3f velocity, euler, gyroBias;
-        _ekf.getDebug(tilt, velocity, euler, gyroBias);
-        
-        /*
-        ::printf("euler=(%.2f, %.2f, %.2f) \t rates=(%.2f, %.2f, %.2f)\n", 
-        degrees(euler.x), degrees(euler.y), degrees(euler.z),
-        degrees(gimbalRateDemVec.x), degrees(gimbalRateDemVec.y), degrees(gimbalRateDemVec.z));
-        */
-        
-
-        ::printf("(%+.1f, %+.1f, %+.1f)\t(%+.1f, %+.1f, %+.1f)\n", 
-        degrees(euler.x), degrees(euler.y), degrees(euler.z), 
-        degrees(gimbalRateDemVec.x), degrees(gimbalRateDemVec.y), degrees(gimbalRateDemVec.z));
+        send_control();
     }
 }
     
@@ -74,23 +59,9 @@ void AP_Gimbal::update_state()
     // Run the gimbal attitude and gyro bias estimator
     _ekf.RunEKF(delta_time, _measurament.delta_angles, _measurament.delta_velocity, _measurament.joint_angles);
 
-
     // get the gimbal quaternion estimate
     Quaternion quatEst;
     _ekf.getQuat(quatEst);
-
-
-    float tilt;
-    Vector3f velocity, euler, gyroBias;
-    _ekf.getDebug(tilt, velocity, euler, gyroBias);
-/*
-    ::printf("tilt=%.2f euler=(%.2f, %.2f, %.2f) bias=(%.1f, %.1f, %.1f) status = %d\n",
-             tilt,
-             degrees(euler.x), degrees(euler.y), degrees(euler.z),
-             degrees(gyroBias.x), degrees(gyroBias.y), degrees(gyroBias.z),
-             (int) _ekf.getStatus());
-*/
-
  
         // Define rotation from vehicle to gimbal using a 312 rotation sequence
         Matrix3f Tvg;
@@ -169,10 +140,10 @@ void AP_Gimbal::update_state()
         // the copter should not be using the gimbal yaw rate demand in this mode of operation, so we set it to zero
         vehicleYawRateDem = 0.0f;
 
-
-
         //Compensate for gyro bias
-        //TODO send the gyro bias to the gimbal
+        //TODO send the gyro bias to the gimbal        
+        Vector3f gyroBias;
+        _ekf.getGyroBias(gyroBias);
         gimbalRateDemVec+= gyroBias;
 
 }

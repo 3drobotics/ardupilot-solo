@@ -76,7 +76,6 @@ private:
     // state of small EKF for gimbal
     SmallEKF _ekf;
 
-
     void                    send_control();
     void                    update_state();
     void                    decode_feedback(mavlink_message_t *msg);
@@ -103,6 +102,7 @@ private:
     // reducing this makes the gimbal respond more to vehicle yaw disturbances
     float const yawErrorLimit = 0.1f;
 
+    // These are corrections (in radians) applied to the to the gimbal joint (x,y,z = roll,pitch,yaw) measurements
     Vector3f const _joint_offsets;
 };
 
