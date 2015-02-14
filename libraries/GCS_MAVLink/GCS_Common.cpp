@@ -37,6 +37,12 @@ GCS_MAVLINK::init(AP_HAL::UARTDriver *port, mavlink_channel_t mav_chan)
     _port = port;
     chan = mav_chan;
 
+    if (port == (AP_HAL::BetterStream*)hal.uartE) { 
+        mavlink_comm_3_port = port;
+        chan = MAVLINK_COMM_3;
+        initialised = true;
+    }
+
     switch (chan) {
         case MAVLINK_COMM_0:
             mavlink_comm_0_port = _port;
@@ -440,6 +446,9 @@ bool GCS_MAVLINK::have_flow_control(void)
         }
         break;
 #endif
+
+    case MAVLINK_COMM_3:
+        return hal.uartE != NULL && hal.uartE->get_flow_control() != AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE;
 
     default:
         break;
