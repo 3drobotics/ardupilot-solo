@@ -55,6 +55,25 @@ void AP_Gimbal::decode_feedback(mavlink_message_t *msg)
 }
 
 
+// convert the quaternion to rotation vector
+Vector3f quaternion_to_vector(Quaternion quat)
+{
+        Vector3f vector;
+        float scaler = 1.0f-quat[0]*quat[0];
+        if (scaler > 1e-12) {
+            scaler = 1.0f/sqrtf(scaler);
+            if (quat[0] < 0.0f) {
+                scaler *= -1.0f;
+            }
+            vector.x = quat[1] * scaler;
+            vector.y = quat[2] * scaler;
+            vector.z = quat[3] * scaler;
+        } else {
+            vector.zero();
+        }
+    return vector;
+}
+
 void AP_Gimbal::update_state()
 {
     // Run the gimbal attitude and gyro bias estimator
@@ -114,29 +133,26 @@ void AP_Gimbal::update_state()
         //TODO receive target from AP_Mount
         quatDem.from_euler(0, _angle_ef_target_rad.y, eulerEst.z);
 
-        //divide the demanded quaternion by the estimated to get the error
+       //divide the demanded quaternion by the estimated to get the error
         Quaternion quatErr = quatDem / quatEst;
 
-        // convert the quaternion to an angle error vector
-        Vector3f deltaAngErr;
-        float scaler = 1.0f-quatErr[0]*quatErr[0];
-        if (scaler > 1e-12) {
-            scaler = 1.0f/sqrtf(scaler);
-            if (quatErr[0] < 0.0f) {
-                scaler *= -1.0f;
-            }
-            deltaAngErr.x = quatErr[1] * scaler;
-            deltaAngErr.y = quatErr[2] * scaler;
-            deltaAngErr.z = quatErr[3] * scaler;
-        } else {
-            deltaAngErr.zero();
-        }
-
         // multiply the angle error vector by a gain to calculate a demanded gimbal rate required to control tilt
-        Vector3f gimbalRateDemVecTilt = deltaAngErr * K_gimbalRate;
+        Vector3f gimbalRateDemVecTilt = quaternion_to_vector(quatErr) * K_gimbalRate;
+
+        // quaternion demanded at the previous time step
+        static Quaternion lastQuatDem;
+
+        // calculate the delta rotation from the last to the current demand where the demand does not incorporate the copters yaw rotation
+        Quaternion quatDemForward;
+        quatDemForward.from_euler(0, _angle_ef_target_rad.y, 0);
+        Quaternion deltaQuat = quatDemForward / lastQuatDem;
+        lastQuatDem = quatDemForward;
+
+        // convert to a rotation vector and divide by delta time to obtain a forward path rate demand
+        Vector3f gimbalRateDemVecForward = quaternion_to_vector(deltaQuat) * (1.0f / delta_time);
 
         // Add the yaw and tilt control rate vectors
-        gimbalRateDemVec = gimbalRateDemVecTilt + gimbalRateDemVecYaw;
+        gimbalRateDemVec = gimbalRateDemVecYaw + gimbalRateDemVecTilt + gimbalRateDemVecForward;
 
         // the copter should not be using the gimbal yaw rate demand in this mode of operation, so we set it to zero
         vehicleYawRateDem = 0.0f;
