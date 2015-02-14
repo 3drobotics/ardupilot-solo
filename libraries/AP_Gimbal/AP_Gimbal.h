@@ -81,6 +81,9 @@ private:
     void                    decode_feedback(mavlink_message_t *msg);
     void                    update_targets_from_rc();
 
+    // Auxiliary math functions
+    Vector3f quaternion_to_vector(Quaternion quat);
+    Matrix3f vetor312_to_rotation_matrix(Vector3f vector);
     
     float const delta_time = 1.0/100.0;
 
