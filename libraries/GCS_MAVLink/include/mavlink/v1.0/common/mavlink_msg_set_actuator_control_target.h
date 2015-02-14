@@ -1,5 +1,9 @@
 // MESSAGE SET_ACTUATOR_CONTROL_TARGET PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_SET_ACTUATOR_CONTROL_TARGET 139
 
 typedef struct __mavlink_set_actuator_control_target_t
@@ -55,6 +59,14 @@ static inline uint16_t mavlink_msg_set_actuator_control_target_pack(uint8_t syst
 	_mav_put_uint8_t(buf, 42, target_component);
 	_mav_put_float_array(buf, 8, controls, 8);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SET_ACTUATOR_CONTROL_TARGET_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 40, group_mlx);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 41, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 42, target_component);
+	
+		mav_put_float_array_c2000(&(msg->payload64[0]), controls, 8, 8);
+	
 #else
 	mavlink_set_actuator_control_target_t packet;
 	packet.time_usec = time_usec;
@@ -234,7 +246,11 @@ static inline void mavlink_msg_set_actuator_control_target_send_buf(mavlink_mess
  */
 static inline uint64_t mavlink_msg_set_actuator_control_target_get_time_usec(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -244,7 +260,11 @@ static inline uint64_t mavlink_msg_set_actuator_control_target_get_time_usec(con
  */
 static inline uint8_t mavlink_msg_set_actuator_control_target_get_group_mlx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  40);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  40);
+#endif
 }
 
 /**
@@ -254,7 +274,11 @@ static inline uint8_t mavlink_msg_set_actuator_control_target_get_group_mlx(cons
  */
 static inline uint8_t mavlink_msg_set_actuator_control_target_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  41);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  41);
+#endif
 }
 
 /**
@@ -264,7 +288,11 @@ static inline uint8_t mavlink_msg_set_actuator_control_target_get_target_system(
  */
 static inline uint8_t mavlink_msg_set_actuator_control_target_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  42);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  42);
+#endif
 }
 
 /**
@@ -274,7 +302,11 @@ static inline uint8_t mavlink_msg_set_actuator_control_target_get_target_compone
  */
 static inline uint16_t mavlink_msg_set_actuator_control_target_get_controls(const mavlink_message_t* msg, float *controls)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float_array(msg, controls, 8,  8);
+#else
+	return mav_get_float_array_c2000(&(msg->payload64[0]), controls, 8,  8);
+#endif
 }
 
 /**
@@ -285,7 +317,7 @@ static inline uint16_t mavlink_msg_set_actuator_control_target_get_controls(cons
  */
 static inline void mavlink_msg_set_actuator_control_target_decode(const mavlink_message_t* msg, mavlink_set_actuator_control_target_t* set_actuator_control_target)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	set_actuator_control_target->time_usec = mavlink_msg_set_actuator_control_target_get_time_usec(msg);
 	mavlink_msg_set_actuator_control_target_get_controls(msg, set_actuator_control_target->controls);
 	set_actuator_control_target->group_mlx = mavlink_msg_set_actuator_control_target_get_group_mlx(msg);

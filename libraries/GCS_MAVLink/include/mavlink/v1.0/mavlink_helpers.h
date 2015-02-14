@@ -5,6 +5,7 @@
 #include "checksum.h"
 #include "mavlink_types.h"
 #include "mavlink_conversions.h"
+#include "protocol_c2000.h"
 
 #ifndef MAVLINK_HELPER
 #define MAVLINK_HELPER
