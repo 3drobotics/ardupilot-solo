@@ -479,38 +479,33 @@
       <field type="float" name="v4">test variable4</field>
     </message>
 
-    <message name="AUTOPILOT_VERSION_REQUEST" id="183">
-        <description>Request the autopilot version from the system/component.</description>
-        <field type="uint8_t" name="target_system">System ID</field>
-        <field type="uint8_t" name="target_component">Component ID</field>
+    <message name="GIMBAL_FEEDBACK" id="183">
+      <description>3 axis gimbal mesuraments</description>
+      <field name="target_system" type="uint8_t">System ID</field>
+      <field name="target_component" type="uint8_t">Component ID</field>
+      <field type="uint8_t" name="id">Message identifier</field>
+      <field type="float" name="accx">X acceleration m/s/s</field>
+      <field type="float" name="accy">Y acceleration m/s/s</field>
+      <field type="float" name="accz">Z acceleration m/s/s</field> 
+      <field type="float" name="gyrox">Angular speed around X axis rad/s</field>
+      <field type="float" name="gyroy">Angular speed around Y axis rad/s</field>
+      <field type="float" name="gyroz">Angular speed around Z axis rad/s</field>
+      <field type="int16_t" name="joint_az"> Azimuth joint angle (-10000,10000)</field>
+      <field type="int16_t" name="joint_roll"> Roll joint angle (-10000,10000)</field>
+      <field type="int16_t" name="joint_el"> Elevation joint angle (-10000,10000)</field>
     </message>
 
-    <message name="GIMBAL_REPORT" id="184">
-      <description>Report from MAVLink enabled gimbal to vehicle. The deltas are in gimbal sensor frame. Joint measurements assume a 312 ordering (azimuth, roll, pitch).</description>
-      <field type="uint8_t" name="target_system">System ID</field>
-      <field type="uint8_t" name="target_component">Component ID</field>
-      <field type="float" name="delta_time">Time since last update (seconds)</field>
-      <field type="float" name="delta_angle_x">Delta angle X, radians</field>
-      <field type="float" name="delta_angle_y">Delta angle Y, radians</field>
-      <field type="float" name="delta_angle_z">Delta angle Z, radians</field>
-      <field type="float" name="delta_velocity_x">Delta velocity X, m/s</field>
-      <field type="float" name="delta_velocity_y">Delta velocity Y, m/s</field>
-      <field type="float" name="delta_velocity_z">Delta velocity Z, m/s</field>
-      <field type="float" name="joint_roll">Joint roll, radians</field>
-      <field type="float" name="joint_pitch">Joint pitch, radians</field>
-      <field type="float" name="joint_yaw">Joint yaw, radians</field>
-    </message>
-
-    <message name="GIMBAL_CONTROL" id="185">
-      <description>Control packet from vehicle to MAVLink enabled gimbal. All values in gimbal sensor frame</description>
-      <field type="uint8_t" name="target_system">System ID</field>
-      <field type="uint8_t" name="target_component">Component ID</field>
-      <field type="float" name="demanded_rate_x">Demanded angular rate X, radians/s</field>
-      <field type="float" name="demanded_rate_y">Demanded angular rate Y, radians/s</field>
-      <field type="float" name="demanded_rate_z">Demanded angular rate Z, radians/s</field>
-      <field type="float" name="gyro_bias_x">Gyro bias X, radians/s</field>
-      <field type="float" name="gyro_bias_y">Gyro bias Y, radians/s</field>
-      <field type="float" name="gyro_bias_z">Gyro bias Z, radians/s</field>
+    <message name="GIMBAL_CONTROL" id="184">
+      <description>Control message for rate gimbal</description>
+      <field name="target_system" type="uint8_t">System ID</field>
+      <field name="target_component" type="uint8_t">Component ID</field>
+      <field type="uint8_t" name="id">Message identifier</field>
+      <field type="float" name="ratex">Desired angular speed around X axis rad/s</field>
+      <field type="float" name="ratey">Desired angular speed around Y axis rad/s</field>
+      <field type="float" name="ratez">Desired angular speed around Z axis rad/s</field>
+      <field type="float" name="gyro_cal_x">gyro X calibration</field>
+      <field type="float" name="gyro_cal_y">gyro Y calibration</field>
+      <field type="float" name="gyro_cal_z">gyro Z calibration</field>
     </message>
 
      </messages>
