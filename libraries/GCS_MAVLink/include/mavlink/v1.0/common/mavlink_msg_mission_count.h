@@ -1,5 +1,9 @@
 // MESSAGE MISSION_COUNT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_MISSION_COUNT 44
 
 typedef struct __mavlink_mission_count_t
@@ -48,6 +52,12 @@ static inline uint16_t mavlink_msg_mission_count_pack(uint8_t system_id, uint8_t
 	_mav_put_uint8_t(buf, 3, target_component);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MISSION_COUNT_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, count);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 3, target_component);
+	
+	
 #else
 	mavlink_mission_count_t packet;
 	packet.count = count;
@@ -216,7 +226,11 @@ static inline void mavlink_msg_mission_count_send_buf(mavlink_message_t *msgbuf,
  */
 static inline uint8_t mavlink_msg_mission_count_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -226,7 +240,11 @@ static inline uint8_t mavlink_msg_mission_count_get_target_system(const mavlink_
  */
 static inline uint8_t mavlink_msg_mission_count_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  3);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  3);
+#endif
 }
 
 /**
@@ -236,7 +254,11 @@ static inline uint8_t mavlink_msg_mission_count_get_target_component(const mavli
  */
 static inline uint16_t mavlink_msg_mission_count_get_count(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -247,7 +269,7 @@ static inline uint16_t mavlink_msg_mission_count_get_count(const mavlink_message
  */
 static inline void mavlink_msg_mission_count_decode(const mavlink_message_t* msg, mavlink_mission_count_t* mission_count)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	mission_count->count = mavlink_msg_mission_count_get_count(msg);
 	mission_count->target_system = mavlink_msg_mission_count_get_target_system(msg);
 	mission_count->target_component = mavlink_msg_mission_count_get_target_component(msg);

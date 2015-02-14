@@ -1,5 +1,9 @@
 // MESSAGE ATTITUDE_QUATERNION PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_ATTITUDE_QUATERNION 31
 
 typedef struct __mavlink_attitude_quaternion_t
@@ -68,6 +72,17 @@ static inline uint16_t mavlink_msg_attitude_quaternion_pack(uint8_t system_id, u
 	_mav_put_float(buf, 28, yawspeed);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_ATTITUDE_QUATERNION_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, q1);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, q2);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, q3);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, q4);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, rollspeed);
+		mav_put_float_c2000(&(msg->payload64[0]), 24, pitchspeed);
+		mav_put_float_c2000(&(msg->payload64[0]), 28, yawspeed);
+	
+	
 #else
 	mavlink_attitude_quaternion_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -281,7 +296,11 @@ static inline void mavlink_msg_attitude_quaternion_send_buf(mavlink_message_t *m
  */
 static inline uint32_t mavlink_msg_attitude_quaternion_get_time_boot_ms(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -291,7 +310,11 @@ static inline uint32_t mavlink_msg_attitude_quaternion_get_time_boot_ms(const ma
  */
 static inline float mavlink_msg_attitude_quaternion_get_q1(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -301,7 +324,11 @@ static inline float mavlink_msg_attitude_quaternion_get_q1(const mavlink_message
  */
 static inline float mavlink_msg_attitude_quaternion_get_q2(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -311,7 +338,11 @@ static inline float mavlink_msg_attitude_quaternion_get_q2(const mavlink_message
  */
 static inline float mavlink_msg_attitude_quaternion_get_q3(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -321,7 +352,11 @@ static inline float mavlink_msg_attitude_quaternion_get_q3(const mavlink_message
  */
 static inline float mavlink_msg_attitude_quaternion_get_q4(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -331,7 +366,11 @@ static inline float mavlink_msg_attitude_quaternion_get_q4(const mavlink_message
  */
 static inline float mavlink_msg_attitude_quaternion_get_rollspeed(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -341,7 +380,11 @@ static inline float mavlink_msg_attitude_quaternion_get_rollspeed(const mavlink_
  */
 static inline float mavlink_msg_attitude_quaternion_get_pitchspeed(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -351,7 +394,11 @@ static inline float mavlink_msg_attitude_quaternion_get_pitchspeed(const mavlink
  */
 static inline float mavlink_msg_attitude_quaternion_get_yawspeed(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -362,7 +409,7 @@ static inline float mavlink_msg_attitude_quaternion_get_yawspeed(const mavlink_m
  */
 static inline void mavlink_msg_attitude_quaternion_decode(const mavlink_message_t* msg, mavlink_attitude_quaternion_t* attitude_quaternion)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	attitude_quaternion->time_boot_ms = mavlink_msg_attitude_quaternion_get_time_boot_ms(msg);
 	attitude_quaternion->q1 = mavlink_msg_attitude_quaternion_get_q1(msg);
 	attitude_quaternion->q2 = mavlink_msg_attitude_quaternion_get_q2(msg);

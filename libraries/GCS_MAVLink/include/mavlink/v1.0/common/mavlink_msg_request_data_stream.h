@@ -1,5 +1,9 @@
 // MESSAGE REQUEST_DATA_STREAM PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_REQUEST_DATA_STREAM 66
 
 typedef struct __mavlink_request_data_stream_t
@@ -56,6 +60,14 @@ static inline uint16_t mavlink_msg_request_data_stream_pack(uint8_t system_id, u
 	_mav_put_uint8_t(buf, 5, start_stop);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_REQUEST_DATA_STREAM_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, req_message_rate);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 3, target_component);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 4, req_stream_id);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 5, start_stop);
+	
+	
 #else
 	mavlink_request_data_stream_t packet;
 	packet.req_message_rate = req_message_rate;
@@ -242,7 +254,11 @@ static inline void mavlink_msg_request_data_stream_send_buf(mavlink_message_t *m
  */
 static inline uint8_t mavlink_msg_request_data_stream_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -252,7 +268,11 @@ static inline uint8_t mavlink_msg_request_data_stream_get_target_system(const ma
  */
 static inline uint8_t mavlink_msg_request_data_stream_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  3);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  3);
+#endif
 }
 
 /**
@@ -262,7 +282,11 @@ static inline uint8_t mavlink_msg_request_data_stream_get_target_component(const
  */
 static inline uint8_t mavlink_msg_request_data_stream_get_req_stream_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  4);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -272,7 +296,11 @@ static inline uint8_t mavlink_msg_request_data_stream_get_req_stream_id(const ma
  */
 static inline uint16_t mavlink_msg_request_data_stream_get_req_message_rate(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -282,7 +310,11 @@ static inline uint16_t mavlink_msg_request_data_stream_get_req_message_rate(cons
  */
 static inline uint8_t mavlink_msg_request_data_stream_get_start_stop(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  5);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  5);
+#endif
 }
 
 /**
@@ -293,7 +325,7 @@ static inline uint8_t mavlink_msg_request_data_stream_get_start_stop(const mavli
  */
 static inline void mavlink_msg_request_data_stream_decode(const mavlink_message_t* msg, mavlink_request_data_stream_t* request_data_stream)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	request_data_stream->req_message_rate = mavlink_msg_request_data_stream_get_req_message_rate(msg);
 	request_data_stream->target_system = mavlink_msg_request_data_stream_get_target_system(msg);
 	request_data_stream->target_component = mavlink_msg_request_data_stream_get_target_component(msg);

@@ -1,5 +1,9 @@
 // MESSAGE SENSOR_OFFSETS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_SENSOR_OFFSETS 150
 
 typedef struct __mavlink_sensor_offsets_t
@@ -84,6 +88,21 @@ static inline uint16_t mavlink_msg_sensor_offsets_pack(uint8_t system_id, uint8_
 	_mav_put_int16_t(buf, 40, mag_ofs_z);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SENSOR_OFFSETS_LEN);
+#elif MAVLINK_C2000
+		mav_put_float_c2000(&(msg->payload64[0]), 0, mag_declination);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, raw_press);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 8, raw_temp);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, gyro_cal_x);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, gyro_cal_y);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, gyro_cal_z);
+		mav_put_float_c2000(&(msg->payload64[0]), 24, accel_cal_x);
+		mav_put_float_c2000(&(msg->payload64[0]), 28, accel_cal_y);
+		mav_put_float_c2000(&(msg->payload64[0]), 32, accel_cal_z);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 36, mag_ofs_x);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 38, mag_ofs_y);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 40, mag_ofs_z);
+	
+	
 #else
 	mavlink_sensor_offsets_t packet;
 	packet.mag_declination = mag_declination;
@@ -333,7 +352,11 @@ static inline void mavlink_msg_sensor_offsets_send_buf(mavlink_message_t *msgbuf
  */
 static inline int16_t mavlink_msg_sensor_offsets_get_mag_ofs_x(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  36);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  36);
+#endif
 }
 
 /**
@@ -343,7 +366,11 @@ static inline int16_t mavlink_msg_sensor_offsets_get_mag_ofs_x(const mavlink_mes
  */
 static inline int16_t mavlink_msg_sensor_offsets_get_mag_ofs_y(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  38);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  38);
+#endif
 }
 
 /**
@@ -353,7 +380,11 @@ static inline int16_t mavlink_msg_sensor_offsets_get_mag_ofs_y(const mavlink_mes
  */
 static inline int16_t mavlink_msg_sensor_offsets_get_mag_ofs_z(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  40);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  40);
+#endif
 }
 
 /**
@@ -363,7 +394,11 @@ static inline int16_t mavlink_msg_sensor_offsets_get_mag_ofs_z(const mavlink_mes
  */
 static inline float mavlink_msg_sensor_offsets_get_mag_declination(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -373,7 +408,11 @@ static inline float mavlink_msg_sensor_offsets_get_mag_declination(const mavlink
  */
 static inline int32_t mavlink_msg_sensor_offsets_get_raw_press(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -383,7 +422,11 @@ static inline int32_t mavlink_msg_sensor_offsets_get_raw_press(const mavlink_mes
  */
 static inline int32_t mavlink_msg_sensor_offsets_get_raw_temp(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  8);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -393,7 +436,11 @@ static inline int32_t mavlink_msg_sensor_offsets_get_raw_temp(const mavlink_mess
  */
 static inline float mavlink_msg_sensor_offsets_get_gyro_cal_x(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -403,7 +450,11 @@ static inline float mavlink_msg_sensor_offsets_get_gyro_cal_x(const mavlink_mess
  */
 static inline float mavlink_msg_sensor_offsets_get_gyro_cal_y(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -413,7 +464,11 @@ static inline float mavlink_msg_sensor_offsets_get_gyro_cal_y(const mavlink_mess
  */
 static inline float mavlink_msg_sensor_offsets_get_gyro_cal_z(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -423,7 +478,11 @@ static inline float mavlink_msg_sensor_offsets_get_gyro_cal_z(const mavlink_mess
  */
 static inline float mavlink_msg_sensor_offsets_get_accel_cal_x(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -433,7 +492,11 @@ static inline float mavlink_msg_sensor_offsets_get_accel_cal_x(const mavlink_mes
  */
 static inline float mavlink_msg_sensor_offsets_get_accel_cal_y(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -443,7 +506,11 @@ static inline float mavlink_msg_sensor_offsets_get_accel_cal_y(const mavlink_mes
  */
 static inline float mavlink_msg_sensor_offsets_get_accel_cal_z(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  32);
+#endif
 }
 
 /**
@@ -454,7 +521,7 @@ static inline float mavlink_msg_sensor_offsets_get_accel_cal_z(const mavlink_mes
  */
 static inline void mavlink_msg_sensor_offsets_decode(const mavlink_message_t* msg, mavlink_sensor_offsets_t* sensor_offsets)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	sensor_offsets->mag_declination = mavlink_msg_sensor_offsets_get_mag_declination(msg);
 	sensor_offsets->raw_press = mavlink_msg_sensor_offsets_get_raw_press(msg);
 	sensor_offsets->raw_temp = mavlink_msg_sensor_offsets_get_raw_temp(msg);

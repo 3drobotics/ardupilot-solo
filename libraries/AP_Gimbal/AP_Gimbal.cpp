@@ -13,6 +13,8 @@ const AP_Param::GroupInfo AP_Gimbal::var_info[] PROGMEM = {
 };
 
 uint16_t feedback_error_count;
+static float K_gimbalRate = 2.0f;
+static float angRateLimit = 0.5f;
 
 void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
 {
@@ -28,6 +30,8 @@ void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
     update_state();
     send_control();
 }
+
+
 
 void AP_Gimbal::update_state()
 {
@@ -48,15 +52,69 @@ void AP_Gimbal::update_state()
 
     // TODO add EKF code here
 
+
+    Vector3f gimbalRateDemVec;
+    Vector3f joint_angles(_state.measuraments.joint_roll,
+                          _state.measuraments.joint_el,
+                          _state.measuraments.joint_az);
+
+   // Define rotation from vehicle to gimbal using a 312 rotation sequence
+    Matrix3f Tvg;
+    float cosPhi = cosf(joint_angles.x);
+    float cosTheta = cosf(joint_angles.y);
+    float sinPhi = sinf(joint_angles.x);
+    float sinTheta = sinf(joint_angles.y);
+    float sinPsi = sinf(joint_angles.z);
+    float cosPsi = cosf(joint_angles.z);
+    Tvg[0][0] = cosTheta*cosPsi-sinPsi*sinPhi*sinTheta;
+    Tvg[1][0] = -sinPsi*cosPhi;
+    Tvg[2][0] = cosPsi*sinTheta+cosTheta*sinPsi*sinPhi;
+    Tvg[0][1] = cosTheta*sinPsi+cosPsi*sinPhi*sinTheta;
+    Tvg[1][1] = cosPsi*cosPhi;
+    Tvg[2][1] = sinPsi*sinTheta-cosTheta*cosPsi*sinPhi;
+    Tvg[0][2] = -sinTheta*cosPhi;
+    Tvg[1][2] = sinPhi;
+    Tvg[2][2] = cosTheta*cosPhi;
+
+    // convert vehicle to gimbal rotation matrix to a rotation vector using small angle approximation
+    Vector3f deltaAngErr;
+    deltaAngErr.x = (Tvg[2][1] - Tvg[1][2]) * 0.5f;
+    deltaAngErr.y = (Tvg[0][2] - Tvg[2][0]) * 0.5f;
+    deltaAngErr.z = (Tvg[1][0] - Tvg[0][1]) * 0.5f;
+
+    // multiply the rotation vector by an error gain to calculate a demanded vehicle frame relative rate vector
+    gimbalRateDemVec = deltaAngErr * K_gimbalRate;
+
+    // constrain the vehicle relative rate vector length
+    float length = gimbalRateDemVec.length();
+    if (length > angRateLimit) {
+        gimbalRateDemVec = gimbalRateDemVec * (angRateLimit / length);
+    }
+    
+    // rotate the earth relative vehicle angular rate vector into gimbal axes and add to obtain the demanded gimbal angular rate
+    Vector3f forwardPathRateDem = Tvg * _ahrs.get_gyro();
+    gimbalRateDemVec += forwardPathRateDem;
+
+    _state.target_rate[X] = gimbalRateDemVec.x;
+    _state.target_rate[Y] = gimbalRateDemVec.y;
+    _state.target_rate[Z] = gimbalRateDemVec.z;
+
+    //::printf("joint \t%1.2f\t%1.2f\t%1.2f\t gyro \t%1.4f\t%1.4f\t%1.4f\t rate \t%1.2f\t%1.2f\t%1.2f\t\n",_state.measuraments.joint_roll,_state.measuraments.joint_el,_state.measuraments.joint_az,_state.measuraments.gyrox,_state.measuraments.gyroy,_state.measuraments.gyroz, _state.target_rate[X], _state.target_rate[Y], _state.target_rate[Z]);
 }
 
 void AP_Gimbal::send_control()
 {
     mavlink_message_t msg;
     mavlink_gimbal_control_t control;
-    control.ratex = _state.target_rate[0];
-    control.ratey = _state.target_rate[1];
-    control.ratez = _state.target_rate[2];
+    control.ratex = _state.target_rate[X];
+    control.ratey = _state.target_rate[Z];
+    control.ratez = _state.target_rate[Y];
+    /*
+    control.ratex = 0;
+    control.ratey = 0;
+    control.ratez = 0;
+    */
+
     control.target_system = _state.sysid;
     control.target_component = _state.compid;
     control.id = _state.measuraments.id;

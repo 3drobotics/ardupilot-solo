@@ -1,5 +1,9 @@
 // MESSAGE SET_MAG_OFFSETS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_SET_MAG_OFFSETS 151
 
 typedef struct __mavlink_set_mag_offsets_t
@@ -56,6 +60,14 @@ static inline uint16_t mavlink_msg_set_mag_offsets_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 7, target_component);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SET_MAG_OFFSETS_LEN);
+#elif MAVLINK_C2000
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 0, mag_ofs_x);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 2, mag_ofs_y);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 4, mag_ofs_z);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 6, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 7, target_component);
+	
+	
 #else
 	mavlink_set_mag_offsets_t packet;
 	packet.mag_ofs_x = mag_ofs_x;
@@ -242,7 +254,11 @@ static inline void mavlink_msg_set_mag_offsets_send_buf(mavlink_message_t *msgbu
  */
 static inline uint8_t mavlink_msg_set_mag_offsets_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  6);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  6);
+#endif
 }
 
 /**
@@ -252,7 +268,11 @@ static inline uint8_t mavlink_msg_set_mag_offsets_get_target_system(const mavlin
  */
 static inline uint8_t mavlink_msg_set_mag_offsets_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  7);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  7);
+#endif
 }
 
 /**
@@ -262,7 +282,11 @@ static inline uint8_t mavlink_msg_set_mag_offsets_get_target_component(const mav
  */
 static inline int16_t mavlink_msg_set_mag_offsets_get_mag_ofs_x(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  0);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -272,7 +296,11 @@ static inline int16_t mavlink_msg_set_mag_offsets_get_mag_ofs_x(const mavlink_me
  */
 static inline int16_t mavlink_msg_set_mag_offsets_get_mag_ofs_y(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  2);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -282,7 +310,11 @@ static inline int16_t mavlink_msg_set_mag_offsets_get_mag_ofs_y(const mavlink_me
  */
 static inline int16_t mavlink_msg_set_mag_offsets_get_mag_ofs_z(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  4);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -293,7 +325,7 @@ static inline int16_t mavlink_msg_set_mag_offsets_get_mag_ofs_z(const mavlink_me
  */
 static inline void mavlink_msg_set_mag_offsets_decode(const mavlink_message_t* msg, mavlink_set_mag_offsets_t* set_mag_offsets)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	set_mag_offsets->mag_ofs_x = mavlink_msg_set_mag_offsets_get_mag_ofs_x(msg);
 	set_mag_offsets->mag_ofs_y = mavlink_msg_set_mag_offsets_get_mag_ofs_y(msg);
 	set_mag_offsets->mag_ofs_z = mavlink_msg_set_mag_offsets_get_mag_ofs_z(msg);

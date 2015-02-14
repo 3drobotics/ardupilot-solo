@@ -1,5 +1,9 @@
 // MESSAGE HEARTBEAT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_HEARTBEAT 0
 
 typedef struct __mavlink_heartbeat_t
@@ -59,6 +63,15 @@ static inline uint16_t mavlink_msg_heartbeat_pack(uint8_t system_id, uint8_t com
 	_mav_put_uint8_t(buf, 8, 3);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_HEARTBEAT_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, custom_mode);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 4, type);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 5, autopilot);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 6, base_mode);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 7, system_status);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 8, 3);
+	
+	
 #else
 	mavlink_heartbeat_t packet;
 	packet.custom_mode = custom_mode;
@@ -252,7 +265,11 @@ static inline void mavlink_msg_heartbeat_send_buf(mavlink_message_t *msgbuf, mav
  */
 static inline uint8_t mavlink_msg_heartbeat_get_type(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  4);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -262,7 +279,11 @@ static inline uint8_t mavlink_msg_heartbeat_get_type(const mavlink_message_t* ms
  */
 static inline uint8_t mavlink_msg_heartbeat_get_autopilot(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  5);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  5);
+#endif
 }
 
 /**
@@ -272,7 +293,11 @@ static inline uint8_t mavlink_msg_heartbeat_get_autopilot(const mavlink_message_
  */
 static inline uint8_t mavlink_msg_heartbeat_get_base_mode(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  6);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  6);
+#endif
 }
 
 /**
@@ -282,7 +307,11 @@ static inline uint8_t mavlink_msg_heartbeat_get_base_mode(const mavlink_message_
  */
 static inline uint32_t mavlink_msg_heartbeat_get_custom_mode(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -292,7 +321,11 @@ static inline uint32_t mavlink_msg_heartbeat_get_custom_mode(const mavlink_messa
  */
 static inline uint8_t mavlink_msg_heartbeat_get_system_status(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  7);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  7);
+#endif
 }
 
 /**
@@ -302,7 +335,11 @@ static inline uint8_t mavlink_msg_heartbeat_get_system_status(const mavlink_mess
  */
 static inline uint8_t mavlink_msg_heartbeat_get_mavlink_version(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  8);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -313,7 +350,7 @@ static inline uint8_t mavlink_msg_heartbeat_get_mavlink_version(const mavlink_me
  */
 static inline void mavlink_msg_heartbeat_decode(const mavlink_message_t* msg, mavlink_heartbeat_t* heartbeat)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	heartbeat->custom_mode = mavlink_msg_heartbeat_get_custom_mode(msg);
 	heartbeat->type = mavlink_msg_heartbeat_get_type(msg);
 	heartbeat->autopilot = mavlink_msg_heartbeat_get_autopilot(msg);

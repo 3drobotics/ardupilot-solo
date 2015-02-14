@@ -1,5 +1,9 @@
 // MESSAGE GPS_INJECT_DATA PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_GPS_INJECT_DATA 123
 
 typedef struct __mavlink_gps_inject_data_t
@@ -51,6 +55,13 @@ static inline uint16_t mavlink_msg_gps_inject_data_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 2, len);
 	_mav_put_uint8_t_array(buf, 3, data, 110);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_GPS_INJECT_DATA_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 0, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 1, target_component);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, len);
+	
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), data, 3, 110);
+	
 #else
 	mavlink_gps_inject_data_t packet;
 	packet.target_system = target_system;
@@ -221,7 +232,11 @@ static inline void mavlink_msg_gps_inject_data_send_buf(mavlink_message_t *msgbu
  */
 static inline uint8_t mavlink_msg_gps_inject_data_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  0);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -231,7 +246,11 @@ static inline uint8_t mavlink_msg_gps_inject_data_get_target_system(const mavlin
  */
 static inline uint8_t mavlink_msg_gps_inject_data_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  1);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  1);
+#endif
 }
 
 /**
@@ -241,7 +260,11 @@ static inline uint8_t mavlink_msg_gps_inject_data_get_target_component(const mav
  */
 static inline uint8_t mavlink_msg_gps_inject_data_get_len(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -251,7 +274,11 @@ static inline uint8_t mavlink_msg_gps_inject_data_get_len(const mavlink_message_
  */
 static inline uint16_t mavlink_msg_gps_inject_data_get_data(const mavlink_message_t* msg, uint8_t *data)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, data, 110,  3);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), data, 110,  3);
+#endif
 }
 
 /**
@@ -262,7 +289,7 @@ static inline uint16_t mavlink_msg_gps_inject_data_get_data(const mavlink_messag
  */
 static inline void mavlink_msg_gps_inject_data_decode(const mavlink_message_t* msg, mavlink_gps_inject_data_t* gps_inject_data)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	gps_inject_data->target_system = mavlink_msg_gps_inject_data_get_target_system(msg);
 	gps_inject_data->target_component = mavlink_msg_gps_inject_data_get_target_component(msg);
 	gps_inject_data->len = mavlink_msg_gps_inject_data_get_len(msg);

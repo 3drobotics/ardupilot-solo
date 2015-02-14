@@ -1,5 +1,9 @@
 // MESSAGE RADIO PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_RADIO 166
 
 typedef struct __mavlink_radio_t
@@ -64,6 +68,16 @@ static inline uint16_t mavlink_msg_radio_pack(uint8_t system_id, uint8_t compone
 	_mav_put_uint8_t(buf, 8, remnoise);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_RADIO_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, rxerrors);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 2, fixed);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 4, rssi);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 5, remrssi);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 6, txbuf);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 7, noise);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 8, remnoise);
+	
+	
 #else
 	mavlink_radio_t packet;
 	packet.rxerrors = rxerrors;
@@ -268,7 +282,11 @@ static inline void mavlink_msg_radio_send_buf(mavlink_message_t *msgbuf, mavlink
  */
 static inline uint8_t mavlink_msg_radio_get_rssi(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  4);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -278,7 +296,11 @@ static inline uint8_t mavlink_msg_radio_get_rssi(const mavlink_message_t* msg)
  */
 static inline uint8_t mavlink_msg_radio_get_remrssi(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  5);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  5);
+#endif
 }
 
 /**
@@ -288,7 +310,11 @@ static inline uint8_t mavlink_msg_radio_get_remrssi(const mavlink_message_t* msg
  */
 static inline uint8_t mavlink_msg_radio_get_txbuf(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  6);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  6);
+#endif
 }
 
 /**
@@ -298,7 +324,11 @@ static inline uint8_t mavlink_msg_radio_get_txbuf(const mavlink_message_t* msg)
  */
 static inline uint8_t mavlink_msg_radio_get_noise(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  7);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  7);
+#endif
 }
 
 /**
@@ -308,7 +338,11 @@ static inline uint8_t mavlink_msg_radio_get_noise(const mavlink_message_t* msg)
  */
 static inline uint8_t mavlink_msg_radio_get_remnoise(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  8);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -318,7 +352,11 @@ static inline uint8_t mavlink_msg_radio_get_remnoise(const mavlink_message_t* ms
  */
 static inline uint16_t mavlink_msg_radio_get_rxerrors(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -328,7 +366,11 @@ static inline uint16_t mavlink_msg_radio_get_rxerrors(const mavlink_message_t* m
  */
 static inline uint16_t mavlink_msg_radio_get_fixed(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  2);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -339,7 +381,7 @@ static inline uint16_t mavlink_msg_radio_get_fixed(const mavlink_message_t* msg)
  */
 static inline void mavlink_msg_radio_decode(const mavlink_message_t* msg, mavlink_radio_t* radio)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	radio->rxerrors = mavlink_msg_radio_get_rxerrors(msg);
 	radio->fixed = mavlink_msg_radio_get_fixed(msg);
 	radio->rssi = mavlink_msg_radio_get_rssi(msg);

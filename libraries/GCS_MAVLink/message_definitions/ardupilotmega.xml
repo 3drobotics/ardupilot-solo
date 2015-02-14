@@ -478,34 +478,31 @@
       <field type="float" name="v3">test variable3</field>
       <field type="float" name="v4">test variable4</field>
     </message>
-
+        
     <message name="GIMBAL_FEEDBACK" id="183">
       <description>3 axis gimbal mesuraments</description>
-      <field name="target_system" type="uint8_t">System ID</field>
-      <field name="target_component" type="uint8_t">Component ID</field>
+      <field type="uint8_t" name="target_system">System ID</field>
+      <field type="uint8_t" name="target_component">Component ID</field>
       <field type="uint8_t" name="id">Message identifier</field>
-      <field type="float" name="accx">X acceleration m/s/s</field>
-      <field type="float" name="accy">Y acceleration m/s/s</field>
-      <field type="float" name="accz">Z acceleration m/s/s</field> 
-      <field type="float" name="gyrox">Angular speed around X axis rad/s</field>
-      <field type="float" name="gyroy">Angular speed around Y axis rad/s</field>
-      <field type="float" name="gyroz">Angular speed around Z axis rad/s</field>
-      <field type="int16_t" name="joint_az"> Azimuth joint angle (-10000,10000)</field>
-      <field type="int16_t" name="joint_roll"> Roll joint angle (-10000,10000)</field>
-      <field type="int16_t" name="joint_el"> Elevation joint angle (-10000,10000)</field>
+      <field type="float" name="accx">Delta velocity X, m/s</field>
+      <field type="float" name="accy">Delta velocity Y, m/s</field>
+      <field type="float" name="accz">Delta velocity Z, m/s</field> 
+      <field type="float" name="gyrox">Delta angle X, radians</field>
+      <field type="float" name="gyroy">Delta angle Y, radians</field>
+      <field type="float" name="gyroz">Delta angle X, radians</field>
+      <field type="float" name="joint_az"> Joint AZ, radians</field>
+      <field type="float" name="joint_roll"> Joint ROLL, radians</field>
+      <field type="float" name="joint_el"> Joint EL, radians</field>
     </message>
 
     <message name="GIMBAL_CONTROL" id="184">
       <description>Control message for rate gimbal</description>
-      <field name="target_system" type="uint8_t">System ID</field>
-      <field name="target_component" type="uint8_t">Component ID</field>
+      <field type="uint8_t" name="target_system">System ID</field>
+      <field type="uint8_t" name="target_component">Component ID</field>
       <field type="uint8_t" name="id">Message identifier</field>
-      <field type="float" name="ratex">Desired angular speed around X axis rad/s</field>
-      <field type="float" name="ratey">Desired angular speed around Y axis rad/s</field>
-      <field type="float" name="ratez">Desired angular speed around Z axis rad/s</field>
-      <field type="float" name="gyro_cal_x">gyro X calibration</field>
-      <field type="float" name="gyro_cal_y">gyro Y calibration</field>
-      <field type="float" name="gyro_cal_z">gyro Z calibration</field>
+      <field type="float" name="ratex">Demanded angular rate X, rad/s</field>
+      <field type="float" name="ratey">Demanded angular rate Y, rad/s</field>
+      <field type="float" name="ratez">Demanded angular rate Z, rad/s</field>
     </message>
 
     <message name="AUTOPILOT_VERSION_REQUEST" id="185">

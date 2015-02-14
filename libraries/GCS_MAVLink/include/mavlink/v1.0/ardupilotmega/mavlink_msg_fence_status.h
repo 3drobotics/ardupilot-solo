@@ -1,5 +1,9 @@
 // MESSAGE FENCE_STATUS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_FENCE_STATUS 162
 
 typedef struct __mavlink_fence_status_t
@@ -52,6 +56,13 @@ static inline uint16_t mavlink_msg_fence_status_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint8_t(buf, 7, breach_type);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_FENCE_STATUS_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, breach_time);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 4, breach_count);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 6, breach_status);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 7, breach_type);
+	
+	
 #else
 	mavlink_fence_status_t packet;
 	packet.breach_time = breach_time;
@@ -229,7 +240,11 @@ static inline void mavlink_msg_fence_status_send_buf(mavlink_message_t *msgbuf, 
  */
 static inline uint8_t mavlink_msg_fence_status_get_breach_status(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  6);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  6);
+#endif
 }
 
 /**
@@ -239,7 +254,11 @@ static inline uint8_t mavlink_msg_fence_status_get_breach_status(const mavlink_m
  */
 static inline uint16_t mavlink_msg_fence_status_get_breach_count(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  4);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -249,7 +268,11 @@ static inline uint16_t mavlink_msg_fence_status_get_breach_count(const mavlink_m
  */
 static inline uint8_t mavlink_msg_fence_status_get_breach_type(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  7);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  7);
+#endif
 }
 
 /**
@@ -259,7 +282,11 @@ static inline uint8_t mavlink_msg_fence_status_get_breach_type(const mavlink_mes
  */
 static inline uint32_t mavlink_msg_fence_status_get_breach_time(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -270,7 +297,7 @@ static inline uint32_t mavlink_msg_fence_status_get_breach_time(const mavlink_me
  */
 static inline void mavlink_msg_fence_status_decode(const mavlink_message_t* msg, mavlink_fence_status_t* fence_status)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	fence_status->breach_time = mavlink_msg_fence_status_get_breach_time(msg);
 	fence_status->breach_count = mavlink_msg_fence_status_get_breach_count(msg);
 	fence_status->breach_status = mavlink_msg_fence_status_get_breach_status(msg);

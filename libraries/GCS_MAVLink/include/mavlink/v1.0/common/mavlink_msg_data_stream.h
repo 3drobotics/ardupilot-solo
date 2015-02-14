@@ -1,5 +1,9 @@
 // MESSAGE DATA_STREAM PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_DATA_STREAM 67
 
 typedef struct __mavlink_data_stream_t
@@ -48,6 +52,12 @@ static inline uint16_t mavlink_msg_data_stream_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint8_t(buf, 3, on_off);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_DATA_STREAM_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, message_rate);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, stream_id);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 3, on_off);
+	
+	
 #else
 	mavlink_data_stream_t packet;
 	packet.message_rate = message_rate;
@@ -216,7 +226,11 @@ static inline void mavlink_msg_data_stream_send_buf(mavlink_message_t *msgbuf, m
  */
 static inline uint8_t mavlink_msg_data_stream_get_stream_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -226,7 +240,11 @@ static inline uint8_t mavlink_msg_data_stream_get_stream_id(const mavlink_messag
  */
 static inline uint16_t mavlink_msg_data_stream_get_message_rate(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -236,7 +254,11 @@ static inline uint16_t mavlink_msg_data_stream_get_message_rate(const mavlink_me
  */
 static inline uint8_t mavlink_msg_data_stream_get_on_off(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  3);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  3);
+#endif
 }
 
 /**
@@ -247,7 +269,7 @@ static inline uint8_t mavlink_msg_data_stream_get_on_off(const mavlink_message_t
  */
 static inline void mavlink_msg_data_stream_decode(const mavlink_message_t* msg, mavlink_data_stream_t* data_stream)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	data_stream->message_rate = mavlink_msg_data_stream_get_message_rate(msg);
 	data_stream->stream_id = mavlink_msg_data_stream_get_stream_id(msg);
 	data_stream->on_off = mavlink_msg_data_stream_get_on_off(msg);

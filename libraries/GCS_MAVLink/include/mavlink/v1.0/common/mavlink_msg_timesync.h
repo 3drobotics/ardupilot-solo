@@ -1,5 +1,9 @@
 // MESSAGE TIMESYNC PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_TIMESYNC 111
 
 typedef struct __mavlink_timesync_t
@@ -44,6 +48,11 @@ static inline uint16_t mavlink_msg_timesync_pack(uint8_t system_id, uint8_t comp
 	_mav_put_int64_t(buf, 8, ts1);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_TIMESYNC_LEN);
+#elif MAVLINK_C2000
+		mav_put_int64_t_c2000(&(msg->payload64[0]), 0, tc1);
+		mav_put_int64_t_c2000(&(msg->payload64[0]), 8, ts1);
+	
+	
 #else
 	mavlink_timesync_t packet;
 	packet.tc1 = tc1;
@@ -203,7 +212,11 @@ static inline void mavlink_msg_timesync_send_buf(mavlink_message_t *msgbuf, mavl
  */
 static inline int64_t mavlink_msg_timesync_get_tc1(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int64_t(msg,  0);
+#else
+	return mav_get_int64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -213,7 +226,11 @@ static inline int64_t mavlink_msg_timesync_get_tc1(const mavlink_message_t* msg)
  */
 static inline int64_t mavlink_msg_timesync_get_ts1(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int64_t(msg,  8);
+#else
+	return mav_get_int64_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -224,7 +241,7 @@ static inline int64_t mavlink_msg_timesync_get_ts1(const mavlink_message_t* msg)
  */
 static inline void mavlink_msg_timesync_decode(const mavlink_message_t* msg, mavlink_timesync_t* timesync)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	timesync->tc1 = mavlink_msg_timesync_get_tc1(msg);
 	timesync->ts1 = mavlink_msg_timesync_get_ts1(msg);
 #else

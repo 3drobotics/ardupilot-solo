@@ -1,5 +1,9 @@
 // MESSAGE WIND PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_WIND 168
 
 typedef struct __mavlink_wind_t
@@ -48,6 +52,12 @@ static inline uint16_t mavlink_msg_wind_pack(uint8_t system_id, uint8_t componen
 	_mav_put_float(buf, 8, speed_z);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_WIND_LEN);
+#elif MAVLINK_C2000
+		mav_put_float_c2000(&(msg->payload64[0]), 0, direction);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, speed);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, speed_z);
+	
+	
 #else
 	mavlink_wind_t packet;
 	packet.direction = direction;
@@ -216,7 +226,11 @@ static inline void mavlink_msg_wind_send_buf(mavlink_message_t *msgbuf, mavlink_
  */
 static inline float mavlink_msg_wind_get_direction(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -226,7 +240,11 @@ static inline float mavlink_msg_wind_get_direction(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_wind_get_speed(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -236,7 +254,11 @@ static inline float mavlink_msg_wind_get_speed(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_wind_get_speed_z(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -247,7 +269,7 @@ static inline float mavlink_msg_wind_get_speed_z(const mavlink_message_t* msg)
  */
 static inline void mavlink_msg_wind_decode(const mavlink_message_t* msg, mavlink_wind_t* wind)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	wind->direction = mavlink_msg_wind_get_direction(msg);
 	wind->speed = mavlink_msg_wind_get_speed(msg);
 	wind->speed_z = mavlink_msg_wind_get_speed_z(msg);

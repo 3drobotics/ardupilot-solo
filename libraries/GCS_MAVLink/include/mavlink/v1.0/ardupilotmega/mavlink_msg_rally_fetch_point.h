@@ -1,5 +1,9 @@
 // MESSAGE RALLY_FETCH_POINT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_RALLY_FETCH_POINT 176
 
 typedef struct __mavlink_rally_fetch_point_t
@@ -48,6 +52,12 @@ static inline uint16_t mavlink_msg_rally_fetch_point_pack(uint8_t system_id, uin
 	_mav_put_uint8_t(buf, 2, idx);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_RALLY_FETCH_POINT_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 0, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 1, target_component);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, idx);
+	
+	
 #else
 	mavlink_rally_fetch_point_t packet;
 	packet.target_system = target_system;
@@ -216,7 +226,11 @@ static inline void mavlink_msg_rally_fetch_point_send_buf(mavlink_message_t *msg
  */
 static inline uint8_t mavlink_msg_rally_fetch_point_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  0);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -226,7 +240,11 @@ static inline uint8_t mavlink_msg_rally_fetch_point_get_target_system(const mavl
  */
 static inline uint8_t mavlink_msg_rally_fetch_point_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  1);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  1);
+#endif
 }
 
 /**
@@ -236,7 +254,11 @@ static inline uint8_t mavlink_msg_rally_fetch_point_get_target_component(const m
  */
 static inline uint8_t mavlink_msg_rally_fetch_point_get_idx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -247,7 +269,7 @@ static inline uint8_t mavlink_msg_rally_fetch_point_get_idx(const mavlink_messag
  */
 static inline void mavlink_msg_rally_fetch_point_decode(const mavlink_message_t* msg, mavlink_rally_fetch_point_t* rally_fetch_point)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	rally_fetch_point->target_system = mavlink_msg_rally_fetch_point_get_target_system(msg);
 	rally_fetch_point->target_component = mavlink_msg_rally_fetch_point_get_target_component(msg);
 	rally_fetch_point->idx = mavlink_msg_rally_fetch_point_get_idx(msg);

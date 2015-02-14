@@ -1,5 +1,9 @@
 // MESSAGE ENCAPSULATED_DATA PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_ENCAPSULATED_DATA 131
 
 typedef struct __mavlink_encapsulated_data_t
@@ -43,6 +47,11 @@ static inline uint16_t mavlink_msg_encapsulated_data_pack(uint8_t system_id, uin
 	_mav_put_uint16_t(buf, 0, seqnr);
 	_mav_put_uint8_t_array(buf, 2, data, 253);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_ENCAPSULATED_DATA_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, seqnr);
+	
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), data, 2, 253);
+	
 #else
 	mavlink_encapsulated_data_t packet;
 	packet.seqnr = seqnr;
@@ -195,7 +204,11 @@ static inline void mavlink_msg_encapsulated_data_send_buf(mavlink_message_t *msg
  */
 static inline uint16_t mavlink_msg_encapsulated_data_get_seqnr(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -205,7 +218,11 @@ static inline uint16_t mavlink_msg_encapsulated_data_get_seqnr(const mavlink_mes
  */
 static inline uint16_t mavlink_msg_encapsulated_data_get_data(const mavlink_message_t* msg, uint8_t *data)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, data, 253,  2);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), data, 253,  2);
+#endif
 }
 
 /**
@@ -216,7 +233,7 @@ static inline uint16_t mavlink_msg_encapsulated_data_get_data(const mavlink_mess
  */
 static inline void mavlink_msg_encapsulated_data_decode(const mavlink_message_t* msg, mavlink_encapsulated_data_t* encapsulated_data)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	encapsulated_data->seqnr = mavlink_msg_encapsulated_data_get_seqnr(msg);
 	mavlink_msg_encapsulated_data_get_data(msg, encapsulated_data->data);
 #else

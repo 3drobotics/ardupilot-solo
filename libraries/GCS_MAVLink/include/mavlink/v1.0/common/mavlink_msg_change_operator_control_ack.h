@@ -1,5 +1,9 @@
 // MESSAGE CHANGE_OPERATOR_CONTROL_ACK PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK 6
 
 typedef struct __mavlink_change_operator_control_ack_t
@@ -48,6 +52,12 @@ static inline uint16_t mavlink_msg_change_operator_control_ack_pack(uint8_t syst
 	_mav_put_uint8_t(buf, 2, ack);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 0, gcs_system_id);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 1, control_request);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, ack);
+	
+	
 #else
 	mavlink_change_operator_control_ack_t packet;
 	packet.gcs_system_id = gcs_system_id;
@@ -216,7 +226,11 @@ static inline void mavlink_msg_change_operator_control_ack_send_buf(mavlink_mess
  */
 static inline uint8_t mavlink_msg_change_operator_control_ack_get_gcs_system_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  0);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -226,7 +240,11 @@ static inline uint8_t mavlink_msg_change_operator_control_ack_get_gcs_system_id(
  */
 static inline uint8_t mavlink_msg_change_operator_control_ack_get_control_request(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  1);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  1);
+#endif
 }
 
 /**
@@ -236,7 +254,11 @@ static inline uint8_t mavlink_msg_change_operator_control_ack_get_control_reques
  */
 static inline uint8_t mavlink_msg_change_operator_control_ack_get_ack(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -247,7 +269,7 @@ static inline uint8_t mavlink_msg_change_operator_control_ack_get_ack(const mavl
  */
 static inline void mavlink_msg_change_operator_control_ack_decode(const mavlink_message_t* msg, mavlink_change_operator_control_ack_t* change_operator_control_ack)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	change_operator_control_ack->gcs_system_id = mavlink_msg_change_operator_control_ack_get_gcs_system_id(msg);
 	change_operator_control_ack->control_request = mavlink_msg_change_operator_control_ack_get_control_request(msg);
 	change_operator_control_ack->ack = mavlink_msg_change_operator_control_ack_get_ack(msg);

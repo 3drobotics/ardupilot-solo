@@ -1,5 +1,9 @@
 // MESSAGE DATA_TRANSMISSION_HANDSHAKE PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE 130
 
 typedef struct __mavlink_data_transmission_handshake_t
@@ -64,6 +68,16 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_pack(uint8_t syst
 	_mav_put_uint8_t(buf, 12, jpg_quality);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, size);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 4, width);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 6, height);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 8, packets);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 10, type);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 11, payload);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 12, jpg_quality);
+	
+	
 #else
 	mavlink_data_transmission_handshake_t packet;
 	packet.size = size;
@@ -268,7 +282,11 @@ static inline void mavlink_msg_data_transmission_handshake_send_buf(mavlink_mess
  */
 static inline uint8_t mavlink_msg_data_transmission_handshake_get_type(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  10);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  10);
+#endif
 }
 
 /**
@@ -278,7 +296,11 @@ static inline uint8_t mavlink_msg_data_transmission_handshake_get_type(const mav
  */
 static inline uint32_t mavlink_msg_data_transmission_handshake_get_size(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -288,7 +310,11 @@ static inline uint32_t mavlink_msg_data_transmission_handshake_get_size(const ma
  */
 static inline uint16_t mavlink_msg_data_transmission_handshake_get_width(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  4);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -298,7 +324,11 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_get_width(const m
  */
 static inline uint16_t mavlink_msg_data_transmission_handshake_get_height(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  6);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  6);
+#endif
 }
 
 /**
@@ -308,7 +338,11 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_get_height(const 
  */
 static inline uint16_t mavlink_msg_data_transmission_handshake_get_packets(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  8);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -318,7 +352,11 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_get_packets(const
  */
 static inline uint8_t mavlink_msg_data_transmission_handshake_get_payload(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  11);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  11);
+#endif
 }
 
 /**
@@ -328,7 +366,11 @@ static inline uint8_t mavlink_msg_data_transmission_handshake_get_payload(const 
  */
 static inline uint8_t mavlink_msg_data_transmission_handshake_get_jpg_quality(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  12);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -339,7 +381,7 @@ static inline uint8_t mavlink_msg_data_transmission_handshake_get_jpg_quality(co
  */
 static inline void mavlink_msg_data_transmission_handshake_decode(const mavlink_message_t* msg, mavlink_data_transmission_handshake_t* data_transmission_handshake)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	data_transmission_handshake->size = mavlink_msg_data_transmission_handshake_get_size(msg);
 	data_transmission_handshake->width = mavlink_msg_data_transmission_handshake_get_width(msg);
 	data_transmission_handshake->height = mavlink_msg_data_transmission_handshake_get_height(msg);

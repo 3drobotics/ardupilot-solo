@@ -21,6 +21,10 @@
 #define MAVLINK_CRC_EXTRA 1
 #endif
 
+#ifndef MAVLINK_C2000
+#define MAVLINK_C2000 0
+#endif
+
 #include "version.h"
 #include "ardupilotmega.h"
 

@@ -1,5 +1,9 @@
 // MESSAGE DATA64 PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_DATA64 171
 
 typedef struct __mavlink_data64_t
@@ -47,6 +51,12 @@ static inline uint16_t mavlink_msg_data64_pack(uint8_t system_id, uint8_t compon
 	_mav_put_uint8_t(buf, 1, len);
 	_mav_put_uint8_t_array(buf, 2, data, 64);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_DATA64_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 0, type);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 1, len);
+	
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), data, 2, 64);
+	
 #else
 	mavlink_data64_t packet;
 	packet.type = type;
@@ -208,7 +218,11 @@ static inline void mavlink_msg_data64_send_buf(mavlink_message_t *msgbuf, mavlin
  */
 static inline uint8_t mavlink_msg_data64_get_type(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  0);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -218,7 +232,11 @@ static inline uint8_t mavlink_msg_data64_get_type(const mavlink_message_t* msg)
  */
 static inline uint8_t mavlink_msg_data64_get_len(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  1);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  1);
+#endif
 }
 
 /**
@@ -228,7 +246,11 @@ static inline uint8_t mavlink_msg_data64_get_len(const mavlink_message_t* msg)
  */
 static inline uint16_t mavlink_msg_data64_get_data(const mavlink_message_t* msg, uint8_t *data)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, data, 64,  2);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), data, 64,  2);
+#endif
 }
 
 /**
@@ -239,7 +261,7 @@ static inline uint16_t mavlink_msg_data64_get_data(const mavlink_message_t* msg,
  */
 static inline void mavlink_msg_data64_decode(const mavlink_message_t* msg, mavlink_data64_t* data64)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	data64->type = mavlink_msg_data64_get_type(msg);
 	data64->len = mavlink_msg_data64_get_len(msg);
 	mavlink_msg_data64_get_data(msg, data64->data);

@@ -1,5 +1,9 @@
 // MESSAGE AUTOPILOT_VERSION PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_AUTOPILOT_VERSION 148
 
 typedef struct __mavlink_autopilot_version_t
@@ -81,6 +85,20 @@ static inline uint16_t mavlink_msg_autopilot_version_pack(uint8_t system_id, uin
 	_mav_put_uint8_t_array(buf, 44, middleware_custom_version, 8);
 	_mav_put_uint8_t_array(buf, 52, os_custom_version, 8);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_AUTOPILOT_VERSION_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, capabilities);
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 8, uid);
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 16, flight_sw_version);
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 20, middleware_sw_version);
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 24, os_sw_version);
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 28, board_version);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 32, vendor_id);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 34, product_id);
+	
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), flight_custom_version, 36, 8);
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), middleware_custom_version, 44, 8);
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), os_custom_version, 52, 8);
+	
 #else
 	mavlink_autopilot_version_t packet;
 	packet.capabilities = capabilities;
@@ -314,7 +332,11 @@ static inline void mavlink_msg_autopilot_version_send_buf(mavlink_message_t *msg
  */
 static inline uint64_t mavlink_msg_autopilot_version_get_capabilities(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -324,7 +346,11 @@ static inline uint64_t mavlink_msg_autopilot_version_get_capabilities(const mavl
  */
 static inline uint32_t mavlink_msg_autopilot_version_get_flight_sw_version(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  16);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -334,7 +360,11 @@ static inline uint32_t mavlink_msg_autopilot_version_get_flight_sw_version(const
  */
 static inline uint32_t mavlink_msg_autopilot_version_get_middleware_sw_version(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  20);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -344,7 +374,11 @@ static inline uint32_t mavlink_msg_autopilot_version_get_middleware_sw_version(c
  */
 static inline uint32_t mavlink_msg_autopilot_version_get_os_sw_version(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  24);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -354,7 +388,11 @@ static inline uint32_t mavlink_msg_autopilot_version_get_os_sw_version(const mav
  */
 static inline uint32_t mavlink_msg_autopilot_version_get_board_version(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  28);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -364,7 +402,11 @@ static inline uint32_t mavlink_msg_autopilot_version_get_board_version(const mav
  */
 static inline uint16_t mavlink_msg_autopilot_version_get_flight_custom_version(const mavlink_message_t* msg, uint8_t *flight_custom_version)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, flight_custom_version, 8,  36);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), flight_custom_version, 8,  36);
+#endif
 }
 
 /**
@@ -374,7 +416,11 @@ static inline uint16_t mavlink_msg_autopilot_version_get_flight_custom_version(c
  */
 static inline uint16_t mavlink_msg_autopilot_version_get_middleware_custom_version(const mavlink_message_t* msg, uint8_t *middleware_custom_version)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, middleware_custom_version, 8,  44);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), middleware_custom_version, 8,  44);
+#endif
 }
 
 /**
@@ -384,7 +430,11 @@ static inline uint16_t mavlink_msg_autopilot_version_get_middleware_custom_versi
  */
 static inline uint16_t mavlink_msg_autopilot_version_get_os_custom_version(const mavlink_message_t* msg, uint8_t *os_custom_version)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, os_custom_version, 8,  52);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), os_custom_version, 8,  52);
+#endif
 }
 
 /**
@@ -394,7 +444,11 @@ static inline uint16_t mavlink_msg_autopilot_version_get_os_custom_version(const
  */
 static inline uint16_t mavlink_msg_autopilot_version_get_vendor_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  32);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  32);
+#endif
 }
 
 /**
@@ -404,7 +458,11 @@ static inline uint16_t mavlink_msg_autopilot_version_get_vendor_id(const mavlink
  */
 static inline uint16_t mavlink_msg_autopilot_version_get_product_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  34);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  34);
+#endif
 }
 
 /**
@@ -414,7 +472,11 @@ static inline uint16_t mavlink_msg_autopilot_version_get_product_id(const mavlin
  */
 static inline uint64_t mavlink_msg_autopilot_version_get_uid(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  8);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -425,7 +487,7 @@ static inline uint64_t mavlink_msg_autopilot_version_get_uid(const mavlink_messa
  */
 static inline void mavlink_msg_autopilot_version_decode(const mavlink_message_t* msg, mavlink_autopilot_version_t* autopilot_version)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	autopilot_version->capabilities = mavlink_msg_autopilot_version_get_capabilities(msg);
 	autopilot_version->uid = mavlink_msg_autopilot_version_get_uid(msg);
 	autopilot_version->flight_sw_version = mavlink_msg_autopilot_version_get_flight_sw_version(msg);

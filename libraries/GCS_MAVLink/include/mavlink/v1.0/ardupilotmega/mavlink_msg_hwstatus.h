@@ -1,5 +1,9 @@
 // MESSAGE HWSTATUS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_HWSTATUS 165
 
 typedef struct __mavlink_hwstatus_t
@@ -44,6 +48,11 @@ static inline uint16_t mavlink_msg_hwstatus_pack(uint8_t system_id, uint8_t comp
 	_mav_put_uint8_t(buf, 2, I2Cerr);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_HWSTATUS_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, Vcc);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, I2Cerr);
+	
+	
 #else
 	mavlink_hwstatus_t packet;
 	packet.Vcc = Vcc;
@@ -203,7 +212,11 @@ static inline void mavlink_msg_hwstatus_send_buf(mavlink_message_t *msgbuf, mavl
  */
 static inline uint16_t mavlink_msg_hwstatus_get_Vcc(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -213,7 +226,11 @@ static inline uint16_t mavlink_msg_hwstatus_get_Vcc(const mavlink_message_t* msg
  */
 static inline uint8_t mavlink_msg_hwstatus_get_I2Cerr(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -224,7 +241,7 @@ static inline uint8_t mavlink_msg_hwstatus_get_I2Cerr(const mavlink_message_t* m
  */
 static inline void mavlink_msg_hwstatus_decode(const mavlink_message_t* msg, mavlink_hwstatus_t* hwstatus)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	hwstatus->Vcc = mavlink_msg_hwstatus_get_Vcc(msg);
 	hwstatus->I2Cerr = mavlink_msg_hwstatus_get_I2Cerr(msg);
 #else

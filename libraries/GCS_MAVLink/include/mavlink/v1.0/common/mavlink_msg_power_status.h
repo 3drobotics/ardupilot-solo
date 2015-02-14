@@ -1,5 +1,9 @@
 // MESSAGE POWER_STATUS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_POWER_STATUS 125
 
 typedef struct __mavlink_power_status_t
@@ -48,6 +52,12 @@ static inline uint16_t mavlink_msg_power_status_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint16_t(buf, 4, flags);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_POWER_STATUS_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, Vcc);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 2, Vservo);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 4, flags);
+	
+	
 #else
 	mavlink_power_status_t packet;
 	packet.Vcc = Vcc;
@@ -216,7 +226,11 @@ static inline void mavlink_msg_power_status_send_buf(mavlink_message_t *msgbuf, 
  */
 static inline uint16_t mavlink_msg_power_status_get_Vcc(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -226,7 +240,11 @@ static inline uint16_t mavlink_msg_power_status_get_Vcc(const mavlink_message_t*
  */
 static inline uint16_t mavlink_msg_power_status_get_Vservo(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  2);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -236,7 +254,11 @@ static inline uint16_t mavlink_msg_power_status_get_Vservo(const mavlink_message
  */
 static inline uint16_t mavlink_msg_power_status_get_flags(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  4);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -247,7 +269,7 @@ static inline uint16_t mavlink_msg_power_status_get_flags(const mavlink_message_
  */
 static inline void mavlink_msg_power_status_decode(const mavlink_message_t* msg, mavlink_power_status_t* power_status)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	power_status->Vcc = mavlink_msg_power_status_get_Vcc(msg);
 	power_status->Vservo = mavlink_msg_power_status_get_Vservo(msg);
 	power_status->flags = mavlink_msg_power_status_get_flags(msg);

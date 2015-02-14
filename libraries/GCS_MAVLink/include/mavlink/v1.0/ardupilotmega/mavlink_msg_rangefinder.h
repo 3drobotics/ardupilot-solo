@@ -1,5 +1,9 @@
 // MESSAGE RANGEFINDER PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_RANGEFINDER 173
 
 typedef struct __mavlink_rangefinder_t
@@ -44,6 +48,11 @@ static inline uint16_t mavlink_msg_rangefinder_pack(uint8_t system_id, uint8_t c
 	_mav_put_float(buf, 4, voltage);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_RANGEFINDER_LEN);
+#elif MAVLINK_C2000
+		mav_put_float_c2000(&(msg->payload64[0]), 0, distance);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, voltage);
+	
+	
 #else
 	mavlink_rangefinder_t packet;
 	packet.distance = distance;
@@ -203,7 +212,11 @@ static inline void mavlink_msg_rangefinder_send_buf(mavlink_message_t *msgbuf, m
  */
 static inline float mavlink_msg_rangefinder_get_distance(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -213,7 +226,11 @@ static inline float mavlink_msg_rangefinder_get_distance(const mavlink_message_t
  */
 static inline float mavlink_msg_rangefinder_get_voltage(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -224,7 +241,7 @@ static inline float mavlink_msg_rangefinder_get_voltage(const mavlink_message_t*
  */
 static inline void mavlink_msg_rangefinder_decode(const mavlink_message_t* msg, mavlink_rangefinder_t* rangefinder)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	rangefinder->distance = mavlink_msg_rangefinder_get_distance(msg);
 	rangefinder->voltage = mavlink_msg_rangefinder_get_voltage(msg);
 #else

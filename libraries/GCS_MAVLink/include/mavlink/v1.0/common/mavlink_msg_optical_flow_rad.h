@@ -1,5 +1,9 @@
 // MESSAGE OPTICAL_FLOW_RAD PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_OPTICAL_FLOW_RAD 106
 
 typedef struct __mavlink_optical_flow_rad_t
@@ -84,6 +88,21 @@ static inline uint16_t mavlink_msg_optical_flow_rad_pack(uint8_t system_id, uint
 	_mav_put_uint8_t(buf, 43, quality);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OPTICAL_FLOW_RAD_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 8, integration_time_us);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, integrated_x);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, integrated_y);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, integrated_xgyro);
+		mav_put_float_c2000(&(msg->payload64[0]), 24, integrated_ygyro);
+		mav_put_float_c2000(&(msg->payload64[0]), 28, integrated_zgyro);
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 32, time_delta_distance_us);
+		mav_put_float_c2000(&(msg->payload64[0]), 36, distance);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 40, temperature);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 42, sensor_id);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 43, quality);
+	
+	
 #else
 	mavlink_optical_flow_rad_t packet;
 	packet.time_usec = time_usec;
@@ -333,7 +352,11 @@ static inline void mavlink_msg_optical_flow_rad_send_buf(mavlink_message_t *msgb
  */
 static inline uint64_t mavlink_msg_optical_flow_rad_get_time_usec(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -343,7 +366,11 @@ static inline uint64_t mavlink_msg_optical_flow_rad_get_time_usec(const mavlink_
  */
 static inline uint8_t mavlink_msg_optical_flow_rad_get_sensor_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  42);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  42);
+#endif
 }
 
 /**
@@ -353,7 +380,11 @@ static inline uint8_t mavlink_msg_optical_flow_rad_get_sensor_id(const mavlink_m
  */
 static inline uint32_t mavlink_msg_optical_flow_rad_get_integration_time_us(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  8);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -363,7 +394,11 @@ static inline uint32_t mavlink_msg_optical_flow_rad_get_integration_time_us(cons
  */
 static inline float mavlink_msg_optical_flow_rad_get_integrated_x(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -373,7 +408,11 @@ static inline float mavlink_msg_optical_flow_rad_get_integrated_x(const mavlink_
  */
 static inline float mavlink_msg_optical_flow_rad_get_integrated_y(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -383,7 +422,11 @@ static inline float mavlink_msg_optical_flow_rad_get_integrated_y(const mavlink_
  */
 static inline float mavlink_msg_optical_flow_rad_get_integrated_xgyro(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -393,7 +436,11 @@ static inline float mavlink_msg_optical_flow_rad_get_integrated_xgyro(const mavl
  */
 static inline float mavlink_msg_optical_flow_rad_get_integrated_ygyro(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -403,7 +450,11 @@ static inline float mavlink_msg_optical_flow_rad_get_integrated_ygyro(const mavl
  */
 static inline float mavlink_msg_optical_flow_rad_get_integrated_zgyro(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -413,7 +464,11 @@ static inline float mavlink_msg_optical_flow_rad_get_integrated_zgyro(const mavl
  */
 static inline int16_t mavlink_msg_optical_flow_rad_get_temperature(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  40);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  40);
+#endif
 }
 
 /**
@@ -423,7 +478,11 @@ static inline int16_t mavlink_msg_optical_flow_rad_get_temperature(const mavlink
  */
 static inline uint8_t mavlink_msg_optical_flow_rad_get_quality(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  43);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  43);
+#endif
 }
 
 /**
@@ -433,7 +492,11 @@ static inline uint8_t mavlink_msg_optical_flow_rad_get_quality(const mavlink_mes
  */
 static inline uint32_t mavlink_msg_optical_flow_rad_get_time_delta_distance_us(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  32);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  32);
+#endif
 }
 
 /**
@@ -443,7 +506,11 @@ static inline uint32_t mavlink_msg_optical_flow_rad_get_time_delta_distance_us(c
  */
 static inline float mavlink_msg_optical_flow_rad_get_distance(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  36);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  36);
+#endif
 }
 
 /**
@@ -454,7 +521,7 @@ static inline float mavlink_msg_optical_flow_rad_get_distance(const mavlink_mess
  */
 static inline void mavlink_msg_optical_flow_rad_decode(const mavlink_message_t* msg, mavlink_optical_flow_rad_t* optical_flow_rad)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	optical_flow_rad->time_usec = mavlink_msg_optical_flow_rad_get_time_usec(msg);
 	optical_flow_rad->integration_time_us = mavlink_msg_optical_flow_rad_get_integration_time_us(msg);
 	optical_flow_rad->integrated_x = mavlink_msg_optical_flow_rad_get_integrated_x(msg);

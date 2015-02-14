@@ -1,5 +1,9 @@
 // MESSAGE PING PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_PING 4
 
 typedef struct __mavlink_ping_t
@@ -52,6 +56,13 @@ static inline uint16_t mavlink_msg_ping_pack(uint8_t system_id, uint8_t componen
 	_mav_put_uint8_t(buf, 13, target_component);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_PING_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 8, seq);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 12, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 13, target_component);
+	
+	
 #else
 	mavlink_ping_t packet;
 	packet.time_usec = time_usec;
@@ -229,7 +240,11 @@ static inline void mavlink_msg_ping_send_buf(mavlink_message_t *msgbuf, mavlink_
  */
 static inline uint64_t mavlink_msg_ping_get_time_usec(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -239,7 +254,11 @@ static inline uint64_t mavlink_msg_ping_get_time_usec(const mavlink_message_t* m
  */
 static inline uint32_t mavlink_msg_ping_get_seq(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  8);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -249,7 +268,11 @@ static inline uint32_t mavlink_msg_ping_get_seq(const mavlink_message_t* msg)
  */
 static inline uint8_t mavlink_msg_ping_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  12);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -259,7 +282,11 @@ static inline uint8_t mavlink_msg_ping_get_target_system(const mavlink_message_t
  */
 static inline uint8_t mavlink_msg_ping_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  13);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  13);
+#endif
 }
 
 /**
@@ -270,7 +297,7 @@ static inline uint8_t mavlink_msg_ping_get_target_component(const mavlink_messag
  */
 static inline void mavlink_msg_ping_decode(const mavlink_message_t* msg, mavlink_ping_t* ping)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	ping->time_usec = mavlink_msg_ping_get_time_usec(msg);
 	ping->seq = mavlink_msg_ping_get_seq(msg);
 	ping->target_system = mavlink_msg_ping_get_target_system(msg);

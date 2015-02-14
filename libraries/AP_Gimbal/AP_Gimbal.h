@@ -48,8 +48,12 @@ public:
 
 private:
 
-    enum GIMBAL_AXIS{
+    enum GIMBAL_JOINTS{
         AZ,ROLL,EL
+    };
+
+    enum GIMBAL_AXIS{
+        X,Y,Z
     };
 
     struct Gimbal_State {

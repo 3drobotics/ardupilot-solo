@@ -1,5 +1,9 @@
 // MESSAGE PARAM_REQUEST_READ PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_PARAM_REQUEST_READ 20
 
 typedef struct __mavlink_param_request_read_t
@@ -51,6 +55,13 @@ static inline uint16_t mavlink_msg_param_request_read_pack(uint8_t system_id, ui
 	_mav_put_uint8_t(buf, 3, target_component);
 	_mav_put_char_array(buf, 4, param_id, 16);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_PARAM_REQUEST_READ_LEN);
+#elif MAVLINK_C2000
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 0, param_index);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 3, target_component);
+	
+		mav_put_char_array_c2000(&(msg->payload64[0]), param_id, 4, 16);
+	
 #else
 	mavlink_param_request_read_t packet;
 	packet.param_index = param_index;
@@ -221,7 +232,11 @@ static inline void mavlink_msg_param_request_read_send_buf(mavlink_message_t *ms
  */
 static inline uint8_t mavlink_msg_param_request_read_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -231,7 +246,11 @@ static inline uint8_t mavlink_msg_param_request_read_get_target_system(const mav
  */
 static inline uint8_t mavlink_msg_param_request_read_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  3);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  3);
+#endif
 }
 
 /**
@@ -241,7 +260,11 @@ static inline uint8_t mavlink_msg_param_request_read_get_target_component(const 
  */
 static inline uint16_t mavlink_msg_param_request_read_get_param_id(const mavlink_message_t* msg, char *param_id)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_char_array(msg, param_id, 16,  4);
+#else
+	return mav_get_char_array_c2000(&(msg->payload64[0]), param_id, 16,  4);
+#endif
 }
 
 /**
@@ -251,7 +274,11 @@ static inline uint16_t mavlink_msg_param_request_read_get_param_id(const mavlink
  */
 static inline int16_t mavlink_msg_param_request_read_get_param_index(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  0);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -262,7 +289,7 @@ static inline int16_t mavlink_msg_param_request_read_get_param_index(const mavli
  */
 static inline void mavlink_msg_param_request_read_decode(const mavlink_message_t* msg, mavlink_param_request_read_t* param_request_read)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	param_request_read->param_index = mavlink_msg_param_request_read_get_param_index(msg);
 	param_request_read->target_system = mavlink_msg_param_request_read_get_target_system(msg);
 	param_request_read->target_component = mavlink_msg_param_request_read_get_target_component(msg);

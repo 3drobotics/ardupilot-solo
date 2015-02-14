@@ -1,5 +1,9 @@
 // MESSAGE FENCE_POINT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_FENCE_POINT 160
 
 typedef struct __mavlink_fence_point_t
@@ -60,6 +64,15 @@ static inline uint16_t mavlink_msg_fence_point_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint8_t(buf, 11, count);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_FENCE_POINT_LEN);
+#elif MAVLINK_C2000
+		mav_put_float_c2000(&(msg->payload64[0]), 0, lat);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, lng);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 8, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 9, target_component);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 10, idx);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 11, count);
+	
+	
 #else
 	mavlink_fence_point_t packet;
 	packet.lat = lat;
@@ -255,7 +268,11 @@ static inline void mavlink_msg_fence_point_send_buf(mavlink_message_t *msgbuf, m
  */
 static inline uint8_t mavlink_msg_fence_point_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  8);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -265,7 +282,11 @@ static inline uint8_t mavlink_msg_fence_point_get_target_system(const mavlink_me
  */
 static inline uint8_t mavlink_msg_fence_point_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  9);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  9);
+#endif
 }
 
 /**
@@ -275,7 +296,11 @@ static inline uint8_t mavlink_msg_fence_point_get_target_component(const mavlink
  */
 static inline uint8_t mavlink_msg_fence_point_get_idx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  10);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  10);
+#endif
 }
 
 /**
@@ -285,7 +310,11 @@ static inline uint8_t mavlink_msg_fence_point_get_idx(const mavlink_message_t* m
  */
 static inline uint8_t mavlink_msg_fence_point_get_count(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  11);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  11);
+#endif
 }
 
 /**
@@ -295,7 +324,11 @@ static inline uint8_t mavlink_msg_fence_point_get_count(const mavlink_message_t*
  */
 static inline float mavlink_msg_fence_point_get_lat(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -305,7 +338,11 @@ static inline float mavlink_msg_fence_point_get_lat(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_fence_point_get_lng(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -316,7 +353,7 @@ static inline float mavlink_msg_fence_point_get_lng(const mavlink_message_t* msg
  */
 static inline void mavlink_msg_fence_point_decode(const mavlink_message_t* msg, mavlink_fence_point_t* fence_point)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	fence_point->lat = mavlink_msg_fence_point_get_lat(msg);
 	fence_point->lng = mavlink_msg_fence_point_get_lng(msg);
 	fence_point->target_system = mavlink_msg_fence_point_get_target_system(msg);

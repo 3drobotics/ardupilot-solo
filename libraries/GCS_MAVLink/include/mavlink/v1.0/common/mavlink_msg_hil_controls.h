@@ -1,5 +1,9 @@
 // MESSAGE HIL_CONTROLS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_HIL_CONTROLS 91
 
 typedef struct __mavlink_hil_controls_t
@@ -80,6 +84,20 @@ static inline uint16_t mavlink_msg_hil_controls_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint8_t(buf, 41, nav_mode);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_HIL_CONTROLS_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, roll_ailerons);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, pitch_elevator);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, yaw_rudder);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, throttle);
+		mav_put_float_c2000(&(msg->payload64[0]), 24, aux1);
+		mav_put_float_c2000(&(msg->payload64[0]), 28, aux2);
+		mav_put_float_c2000(&(msg->payload64[0]), 32, aux3);
+		mav_put_float_c2000(&(msg->payload64[0]), 36, aux4);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 40, mode);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 41, nav_mode);
+	
+	
 #else
 	mavlink_hil_controls_t packet;
 	packet.time_usec = time_usec;
@@ -320,7 +338,11 @@ static inline void mavlink_msg_hil_controls_send_buf(mavlink_message_t *msgbuf, 
  */
 static inline uint64_t mavlink_msg_hil_controls_get_time_usec(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -330,7 +352,11 @@ static inline uint64_t mavlink_msg_hil_controls_get_time_usec(const mavlink_mess
  */
 static inline float mavlink_msg_hil_controls_get_roll_ailerons(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -340,7 +366,11 @@ static inline float mavlink_msg_hil_controls_get_roll_ailerons(const mavlink_mes
  */
 static inline float mavlink_msg_hil_controls_get_pitch_elevator(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -350,7 +380,11 @@ static inline float mavlink_msg_hil_controls_get_pitch_elevator(const mavlink_me
  */
 static inline float mavlink_msg_hil_controls_get_yaw_rudder(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -360,7 +394,11 @@ static inline float mavlink_msg_hil_controls_get_yaw_rudder(const mavlink_messag
  */
 static inline float mavlink_msg_hil_controls_get_throttle(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -370,7 +408,11 @@ static inline float mavlink_msg_hil_controls_get_throttle(const mavlink_message_
  */
 static inline float mavlink_msg_hil_controls_get_aux1(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -380,7 +422,11 @@ static inline float mavlink_msg_hil_controls_get_aux1(const mavlink_message_t* m
  */
 static inline float mavlink_msg_hil_controls_get_aux2(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -390,7 +436,11 @@ static inline float mavlink_msg_hil_controls_get_aux2(const mavlink_message_t* m
  */
 static inline float mavlink_msg_hil_controls_get_aux3(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  32);
+#endif
 }
 
 /**
@@ -400,7 +450,11 @@ static inline float mavlink_msg_hil_controls_get_aux3(const mavlink_message_t* m
  */
 static inline float mavlink_msg_hil_controls_get_aux4(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  36);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  36);
+#endif
 }
 
 /**
@@ -410,7 +464,11 @@ static inline float mavlink_msg_hil_controls_get_aux4(const mavlink_message_t* m
  */
 static inline uint8_t mavlink_msg_hil_controls_get_mode(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  40);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  40);
+#endif
 }
 
 /**
@@ -420,7 +478,11 @@ static inline uint8_t mavlink_msg_hil_controls_get_mode(const mavlink_message_t*
  */
 static inline uint8_t mavlink_msg_hil_controls_get_nav_mode(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  41);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  41);
+#endif
 }
 
 /**
@@ -431,7 +493,7 @@ static inline uint8_t mavlink_msg_hil_controls_get_nav_mode(const mavlink_messag
  */
 static inline void mavlink_msg_hil_controls_decode(const mavlink_message_t* msg, mavlink_hil_controls_t* hil_controls)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	hil_controls->time_usec = mavlink_msg_hil_controls_get_time_usec(msg);
 	hil_controls->roll_ailerons = mavlink_msg_hil_controls_get_roll_ailerons(msg);
 	hil_controls->pitch_elevator = mavlink_msg_hil_controls_get_pitch_elevator(msg);

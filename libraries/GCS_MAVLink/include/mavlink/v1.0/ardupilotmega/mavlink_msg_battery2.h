@@ -1,5 +1,9 @@
 // MESSAGE BATTERY2 PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_BATTERY2 181
 
 typedef struct __mavlink_battery2_t
@@ -44,6 +48,11 @@ static inline uint16_t mavlink_msg_battery2_pack(uint8_t system_id, uint8_t comp
 	_mav_put_int16_t(buf, 2, current_battery);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_BATTERY2_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, voltage);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 2, current_battery);
+	
+	
 #else
 	mavlink_battery2_t packet;
 	packet.voltage = voltage;
@@ -203,7 +212,11 @@ static inline void mavlink_msg_battery2_send_buf(mavlink_message_t *msgbuf, mavl
  */
 static inline uint16_t mavlink_msg_battery2_get_voltage(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -213,7 +226,11 @@ static inline uint16_t mavlink_msg_battery2_get_voltage(const mavlink_message_t*
  */
 static inline int16_t mavlink_msg_battery2_get_current_battery(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  2);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -224,7 +241,7 @@ static inline int16_t mavlink_msg_battery2_get_current_battery(const mavlink_mes
  */
 static inline void mavlink_msg_battery2_decode(const mavlink_message_t* msg, mavlink_battery2_t* battery2)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	battery2->voltage = mavlink_msg_battery2_get_voltage(msg);
 	battery2->current_battery = mavlink_msg_battery2_get_current_battery(msg);
 #else

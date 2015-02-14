@@ -1,5 +1,9 @@
 // MESSAGE MANUAL_SETPOINT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_MANUAL_SETPOINT 81
 
 typedef struct __mavlink_manual_setpoint_t
@@ -64,6 +68,16 @@ static inline uint16_t mavlink_msg_manual_setpoint_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 21, manual_override_switch);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MANUAL_SETPOINT_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, roll);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, pitch);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, yaw);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, thrust);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 20, mode_switch);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 21, manual_override_switch);
+	
+	
 #else
 	mavlink_manual_setpoint_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -268,7 +282,11 @@ static inline void mavlink_msg_manual_setpoint_send_buf(mavlink_message_t *msgbu
  */
 static inline uint32_t mavlink_msg_manual_setpoint_get_time_boot_ms(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -278,7 +296,11 @@ static inline uint32_t mavlink_msg_manual_setpoint_get_time_boot_ms(const mavlin
  */
 static inline float mavlink_msg_manual_setpoint_get_roll(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -288,7 +310,11 @@ static inline float mavlink_msg_manual_setpoint_get_roll(const mavlink_message_t
  */
 static inline float mavlink_msg_manual_setpoint_get_pitch(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -298,7 +324,11 @@ static inline float mavlink_msg_manual_setpoint_get_pitch(const mavlink_message_
  */
 static inline float mavlink_msg_manual_setpoint_get_yaw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -308,7 +338,11 @@ static inline float mavlink_msg_manual_setpoint_get_yaw(const mavlink_message_t*
  */
 static inline float mavlink_msg_manual_setpoint_get_thrust(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -318,7 +352,11 @@ static inline float mavlink_msg_manual_setpoint_get_thrust(const mavlink_message
  */
 static inline uint8_t mavlink_msg_manual_setpoint_get_mode_switch(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  20);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -328,7 +366,11 @@ static inline uint8_t mavlink_msg_manual_setpoint_get_mode_switch(const mavlink_
  */
 static inline uint8_t mavlink_msg_manual_setpoint_get_manual_override_switch(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  21);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  21);
+#endif
 }
 
 /**
@@ -339,7 +381,7 @@ static inline uint8_t mavlink_msg_manual_setpoint_get_manual_override_switch(con
  */
 static inline void mavlink_msg_manual_setpoint_decode(const mavlink_message_t* msg, mavlink_manual_setpoint_t* manual_setpoint)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	manual_setpoint->time_boot_ms = mavlink_msg_manual_setpoint_get_time_boot_ms(msg);
 	manual_setpoint->roll = mavlink_msg_manual_setpoint_get_roll(msg);
 	manual_setpoint->pitch = mavlink_msg_manual_setpoint_get_pitch(msg);

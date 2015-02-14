@@ -65,7 +65,6 @@ static inline uint16_t crc_calculate(const uint8_t* pBuffer, uint16_t length)
         return crcTmp;
 }
 
-
 /**
  * @brief Accumulate the X.25 CRC by adding an array of bytes
  *

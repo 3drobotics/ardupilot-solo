@@ -1,5 +1,9 @@
 // MESSAGE MEMINFO PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_MEMINFO 152
 
 typedef struct __mavlink_meminfo_t
@@ -44,6 +48,11 @@ static inline uint16_t mavlink_msg_meminfo_pack(uint8_t system_id, uint8_t compo
 	_mav_put_uint16_t(buf, 2, freemem);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MEMINFO_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, brkval);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 2, freemem);
+	
+	
 #else
 	mavlink_meminfo_t packet;
 	packet.brkval = brkval;
@@ -203,7 +212,11 @@ static inline void mavlink_msg_meminfo_send_buf(mavlink_message_t *msgbuf, mavli
  */
 static inline uint16_t mavlink_msg_meminfo_get_brkval(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -213,7 +226,11 @@ static inline uint16_t mavlink_msg_meminfo_get_brkval(const mavlink_message_t* m
  */
 static inline uint16_t mavlink_msg_meminfo_get_freemem(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  2);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -224,7 +241,7 @@ static inline uint16_t mavlink_msg_meminfo_get_freemem(const mavlink_message_t* 
  */
 static inline void mavlink_msg_meminfo_decode(const mavlink_message_t* msg, mavlink_meminfo_t* meminfo)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	meminfo->brkval = mavlink_msg_meminfo_get_brkval(msg);
 	meminfo->freemem = mavlink_msg_meminfo_get_freemem(msg);
 #else

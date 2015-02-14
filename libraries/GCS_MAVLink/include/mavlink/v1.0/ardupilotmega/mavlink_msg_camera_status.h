@@ -1,5 +1,9 @@
 // MESSAGE CAMERA_STATUS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_CAMERA_STATUS 179
 
 typedef struct __mavlink_camera_status_t
@@ -72,6 +76,18 @@ static inline uint16_t mavlink_msg_camera_status_pack(uint8_t system_id, uint8_t
 	_mav_put_uint8_t(buf, 28, event_id);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_CAMERA_STATUS_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, p1);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, p2);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, p3);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, p4);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 24, img_idx);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 26, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 27, cam_idx);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 28, event_id);
+	
+	
 #else
 	mavlink_camera_status_t packet;
 	packet.time_usec = time_usec;
@@ -294,7 +310,11 @@ static inline void mavlink_msg_camera_status_send_buf(mavlink_message_t *msgbuf,
  */
 static inline uint64_t mavlink_msg_camera_status_get_time_usec(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -304,7 +324,11 @@ static inline uint64_t mavlink_msg_camera_status_get_time_usec(const mavlink_mes
  */
 static inline uint8_t mavlink_msg_camera_status_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  26);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  26);
+#endif
 }
 
 /**
@@ -314,7 +338,11 @@ static inline uint8_t mavlink_msg_camera_status_get_target_system(const mavlink_
  */
 static inline uint8_t mavlink_msg_camera_status_get_cam_idx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  27);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  27);
+#endif
 }
 
 /**
@@ -324,7 +352,11 @@ static inline uint8_t mavlink_msg_camera_status_get_cam_idx(const mavlink_messag
  */
 static inline uint16_t mavlink_msg_camera_status_get_img_idx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  24);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -334,7 +366,11 @@ static inline uint16_t mavlink_msg_camera_status_get_img_idx(const mavlink_messa
  */
 static inline uint8_t mavlink_msg_camera_status_get_event_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  28);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -344,7 +380,11 @@ static inline uint8_t mavlink_msg_camera_status_get_event_id(const mavlink_messa
  */
 static inline float mavlink_msg_camera_status_get_p1(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -354,7 +394,11 @@ static inline float mavlink_msg_camera_status_get_p1(const mavlink_message_t* ms
  */
 static inline float mavlink_msg_camera_status_get_p2(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -364,7 +408,11 @@ static inline float mavlink_msg_camera_status_get_p2(const mavlink_message_t* ms
  */
 static inline float mavlink_msg_camera_status_get_p3(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -374,7 +422,11 @@ static inline float mavlink_msg_camera_status_get_p3(const mavlink_message_t* ms
  */
 static inline float mavlink_msg_camera_status_get_p4(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -385,7 +437,7 @@ static inline float mavlink_msg_camera_status_get_p4(const mavlink_message_t* ms
  */
 static inline void mavlink_msg_camera_status_decode(const mavlink_message_t* msg, mavlink_camera_status_t* camera_status)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	camera_status->time_usec = mavlink_msg_camera_status_get_time_usec(msg);
 	camera_status->p1 = mavlink_msg_camera_status_get_p1(msg);
 	camera_status->p2 = mavlink_msg_camera_status_get_p2(msg);

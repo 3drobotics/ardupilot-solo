@@ -1,5 +1,9 @@
 // MESSAGE GPS_STATUS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_GPS_STATUS 25
 
 typedef struct __mavlink_gps_status_t
@@ -63,6 +67,15 @@ static inline uint16_t mavlink_msg_gps_status_pack(uint8_t system_id, uint8_t co
 	_mav_put_uint8_t_array(buf, 61, satellite_azimuth, 20);
 	_mav_put_uint8_t_array(buf, 81, satellite_snr, 20);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_GPS_STATUS_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 0, satellites_visible);
+	
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), satellite_prn, 1, 20);
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), satellite_used, 21, 20);
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), satellite_elevation, 41, 20);
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), satellite_azimuth, 61, 20);
+		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), satellite_snr, 81, 20);
+	
 #else
 	mavlink_gps_status_t packet;
 	packet.satellites_visible = satellites_visible;
@@ -251,7 +264,11 @@ static inline void mavlink_msg_gps_status_send_buf(mavlink_message_t *msgbuf, ma
  */
 static inline uint8_t mavlink_msg_gps_status_get_satellites_visible(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  0);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -261,7 +278,11 @@ static inline uint8_t mavlink_msg_gps_status_get_satellites_visible(const mavlin
  */
 static inline uint16_t mavlink_msg_gps_status_get_satellite_prn(const mavlink_message_t* msg, uint8_t *satellite_prn)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, satellite_prn, 20,  1);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), satellite_prn, 20,  1);
+#endif
 }
 
 /**
@@ -271,7 +292,11 @@ static inline uint16_t mavlink_msg_gps_status_get_satellite_prn(const mavlink_me
  */
 static inline uint16_t mavlink_msg_gps_status_get_satellite_used(const mavlink_message_t* msg, uint8_t *satellite_used)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, satellite_used, 20,  21);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), satellite_used, 20,  21);
+#endif
 }
 
 /**
@@ -281,7 +306,11 @@ static inline uint16_t mavlink_msg_gps_status_get_satellite_used(const mavlink_m
  */
 static inline uint16_t mavlink_msg_gps_status_get_satellite_elevation(const mavlink_message_t* msg, uint8_t *satellite_elevation)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, satellite_elevation, 20,  41);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), satellite_elevation, 20,  41);
+#endif
 }
 
 /**
@@ -291,7 +320,11 @@ static inline uint16_t mavlink_msg_gps_status_get_satellite_elevation(const mavl
  */
 static inline uint16_t mavlink_msg_gps_status_get_satellite_azimuth(const mavlink_message_t* msg, uint8_t *satellite_azimuth)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, satellite_azimuth, 20,  61);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), satellite_azimuth, 20,  61);
+#endif
 }
 
 /**
@@ -301,7 +334,11 @@ static inline uint16_t mavlink_msg_gps_status_get_satellite_azimuth(const mavlin
  */
 static inline uint16_t mavlink_msg_gps_status_get_satellite_snr(const mavlink_message_t* msg, uint8_t *satellite_snr)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, satellite_snr, 20,  81);
+#else
+	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), satellite_snr, 20,  81);
+#endif
 }
 
 /**
@@ -312,7 +349,7 @@ static inline uint16_t mavlink_msg_gps_status_get_satellite_snr(const mavlink_me
  */
 static inline void mavlink_msg_gps_status_decode(const mavlink_message_t* msg, mavlink_gps_status_t* gps_status)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	gps_status->satellites_visible = mavlink_msg_gps_status_get_satellites_visible(msg);
 	mavlink_msg_gps_status_get_satellite_prn(msg, gps_status->satellite_prn);
 	mavlink_msg_gps_status_get_satellite_used(msg, gps_status->satellite_used);

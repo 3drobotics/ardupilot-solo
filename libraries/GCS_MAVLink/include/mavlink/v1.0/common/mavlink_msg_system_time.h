@@ -1,5 +1,9 @@
 // MESSAGE SYSTEM_TIME PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_SYSTEM_TIME 2
 
 typedef struct __mavlink_system_time_t
@@ -44,6 +48,11 @@ static inline uint16_t mavlink_msg_system_time_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint32_t(buf, 8, time_boot_ms);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SYSTEM_TIME_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_unix_usec);
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 8, time_boot_ms);
+	
+	
 #else
 	mavlink_system_time_t packet;
 	packet.time_unix_usec = time_unix_usec;
@@ -203,7 +212,11 @@ static inline void mavlink_msg_system_time_send_buf(mavlink_message_t *msgbuf, m
  */
 static inline uint64_t mavlink_msg_system_time_get_time_unix_usec(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -213,7 +226,11 @@ static inline uint64_t mavlink_msg_system_time_get_time_unix_usec(const mavlink_
  */
 static inline uint32_t mavlink_msg_system_time_get_time_boot_ms(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  8);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -224,7 +241,7 @@ static inline uint32_t mavlink_msg_system_time_get_time_boot_ms(const mavlink_me
  */
 static inline void mavlink_msg_system_time_decode(const mavlink_message_t* msg, mavlink_system_time_t* system_time)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	system_time->time_unix_usec = mavlink_msg_system_time_get_time_unix_usec(msg);
 	system_time->time_boot_ms = mavlink_msg_system_time_get_time_boot_ms(msg);
 #else
