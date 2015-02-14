@@ -35,7 +35,6 @@ public:
         AP_Param::setup_object_defaults(this, var_info);
         _sysid = sysid;
         _compid = compid;
-        _initialised = false;        
     }
         
     // MAVLink methods
@@ -44,59 +43,11 @@ public:
     // hook for eeprom variables
     static const struct AP_Param::GroupInfo        var_info[];
 
-private:
-    uint8_t _sysid;
-    uint8_t _compid;
-
-    enum GIMBAL_JOINTS{
-        AZ,ROLL,EL
-    };
-
-    enum GIMBAL_AXIS{
-        X,Y,Z
-    };
-
-    struct Measurament {
-        uint8_t id;
-        Vector3f delta_angles;
-        Vector3f delta_velocity;
-        Vector3f joint_angles;
-    } _measurament;
-
-
-    Vector3f gimbalRateDemVec;       // degrees/s    
-
-
-    const AP_AHRS_NavEKF             &_ahrs;             //  Rotation matrix from earth to plane.
-
-    // internal variables
-    bool _initialised;              // true once the driver has been initialised
-
-    // state of small EKF for gimbal
-    SmallEKF _ekf;
-
-    void                    send_control();
-    void                    update_state();
-    void                    decode_feedback(mavlink_message_t *msg);
-    void                    update_targets_from_rc();
-
-    // Auxiliary math functions
-    Vector3f quaternion_to_vector(Quaternion quat);
-    Matrix3f vetor312_to_rotation_matrix(Vector3f vector);
-
-    // Control loop functions
-    Vector3f getGimbalRateDemVecYaw(Quaternion quatEst);
-    Vector3f getGimbalRateDemVecTilt(Quaternion quatEst);
-    Vector3f getGimbalRateDemVecForward(Quaternion quatEst);
-
-    
+private:  
     float const delta_time = 1.0/100.0;
 
-        // maximum vehicle yaw rate in rad/sec
+    // maximum vehicle yaw rate in rad/sec
     float const vehYawRateLim = 1.0f;
-
-    // gimbal yaw offset relative to vehicle reference frame in radians, used to centre relative to visual or mechanical limits
-    float const gimbalYawOffset = 0.03f;
 
     // filtered yaw rate from the vehicle
     float vehicleYawRateFilt = 0.0f;
@@ -120,7 +71,35 @@ private:
     float const _tilt_angle_max = 0.0f*100;     // max tilt in 0.01 degree units
     float const _max_tilt_rate = 0.5f;          // max tilt rate in rad/s
 
+    struct Measurament {
+        uint8_t id;
+        Vector3f delta_angles;
+        Vector3f delta_velocity;
+        Vector3f joint_angles;
+    } _measurament;
+    
+    const AP_AHRS_NavEKF    &_ahrs;     //  Main EKF    
+    SmallEKF    _ekf;                   // state of small EKF for gimbal
+    Vector3f    gimbalRateDemVec;       // degrees/s   
     Vector3f    _angle_ef_target_rad;   // desired earth-frame roll, tilt and pan angles in radians
+    uint8_t _sysid;                     
+    uint8_t _compid;
+
+
+    void send_control();
+    void update_state();
+    void decode_feedback(mavlink_message_t *msg);
+    void update_targets_from_rc();
+
+    // Auxiliary math functions
+    Vector3f quaternion_to_vector(Quaternion quat);
+    Matrix3f vetor312_to_rotation_matrix(Vector3f vector);
+
+    // Control loop functions
+    Vector3f getGimbalRateDemVecYaw(Quaternion quatEst);
+    Vector3f getGimbalRateDemVecTilt(Quaternion quatEst);
+    Vector3f getGimbalRateDemVecForward(Quaternion quatEst);
+
 };
 
 #endif // __AP_MOUNT_H__
