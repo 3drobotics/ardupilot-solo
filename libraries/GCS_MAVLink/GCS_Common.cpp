@@ -37,12 +37,6 @@ GCS_MAVLINK::init(AP_HAL::UARTDriver *port, mavlink_channel_t mav_chan)
     _port = port;
     chan = mav_chan;
 
-    if (port == (AP_HAL::BetterStream*)hal.uartE) { 
-        mavlink_comm_3_port = port;
-        chan = MAVLINK_COMM_3;
-        initialised = true;
-    }
-
     switch (chan) {
         case MAVLINK_COMM_0:
             mavlink_comm_0_port = _port;
@@ -52,9 +46,13 @@ GCS_MAVLINK::init(AP_HAL::UARTDriver *port, mavlink_channel_t mav_chan)
             mavlink_comm_1_port = _port;
             initialised = true;
             break;
-        case MAVLINK_COMM_2:
 #if MAVLINK_COMM_NUM_BUFFERS > 2
+        case MAVLINK_COMM_2:
             mavlink_comm_2_port = _port;
+            initialised = true;
+            break;
+        case MAVLINK_COMM_3:
+            mavlink_comm_3_port = _port;
             initialised = true;
             break;
 #endif
@@ -146,7 +144,7 @@ GCS_MAVLINK::setup_uart(AP_HAL::UARTDriver *port, uint32_t baudrate, uint16_t rx
     port->begin(baudrate);
 
     // and init the gcs instance
-    init(port);
+    init(port,MAVLINK_COMM_3);
 }
 
 uint16_t
