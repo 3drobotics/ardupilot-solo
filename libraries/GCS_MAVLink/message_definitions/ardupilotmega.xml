@@ -508,5 +508,11 @@
       <field type="float" name="gyro_cal_z">gyro Z calibration</field>
     </message>
 
+    <message name="AUTOPILOT_VERSION_REQUEST" id="185">
+        <description>Request the autopilot version from the system/component.</description>
+        <field type="uint8_t" name="target_system">System ID</field>
+        <field type="uint8_t" name="target_component">Component ID</field>
+    </message>
+
      </messages>
 </mavlink>
