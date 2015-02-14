@@ -1,5 +1,9 @@
 // MESSAGE SET_MODE PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_SET_MODE 11
 
 typedef struct __mavlink_set_mode_t
@@ -48,6 +52,12 @@ static inline uint16_t mavlink_msg_set_mode_pack(uint8_t system_id, uint8_t comp
 	_mav_put_uint8_t(buf, 5, base_mode);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SET_MODE_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, custom_mode);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 4, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 5, base_mode);
+	
+	
 #else
 	mavlink_set_mode_t packet;
 	packet.custom_mode = custom_mode;
@@ -216,7 +226,11 @@ static inline void mavlink_msg_set_mode_send_buf(mavlink_message_t *msgbuf, mavl
  */
 static inline uint8_t mavlink_msg_set_mode_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  4);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -226,7 +240,11 @@ static inline uint8_t mavlink_msg_set_mode_get_target_system(const mavlink_messa
  */
 static inline uint8_t mavlink_msg_set_mode_get_base_mode(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  5);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  5);
+#endif
 }
 
 /**
@@ -236,7 +254,11 @@ static inline uint8_t mavlink_msg_set_mode_get_base_mode(const mavlink_message_t
  */
 static inline uint32_t mavlink_msg_set_mode_get_custom_mode(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -247,7 +269,7 @@ static inline uint32_t mavlink_msg_set_mode_get_custom_mode(const mavlink_messag
  */
 static inline void mavlink_msg_set_mode_decode(const mavlink_message_t* msg, mavlink_set_mode_t* set_mode)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	set_mode->custom_mode = mavlink_msg_set_mode_get_custom_mode(msg);
 	set_mode->target_system = mavlink_msg_set_mode_get_target_system(msg);
 	set_mode->base_mode = mavlink_msg_set_mode_get_base_mode(msg);

@@ -1,5 +1,9 @@
 // MESSAGE MOUNT_STATUS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_MOUNT_STATUS 158
 
 typedef struct __mavlink_mount_status_t
@@ -56,6 +60,14 @@ static inline uint16_t mavlink_msg_mount_status_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint8_t(buf, 13, target_component);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MOUNT_STATUS_LEN);
+#elif MAVLINK_C2000
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 0, pointing_a);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, pointing_b);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 8, pointing_c);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 12, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 13, target_component);
+	
+	
 #else
 	mavlink_mount_status_t packet;
 	packet.pointing_a = pointing_a;
@@ -242,7 +254,11 @@ static inline void mavlink_msg_mount_status_send_buf(mavlink_message_t *msgbuf, 
  */
 static inline uint8_t mavlink_msg_mount_status_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  12);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -252,7 +268,11 @@ static inline uint8_t mavlink_msg_mount_status_get_target_system(const mavlink_m
  */
 static inline uint8_t mavlink_msg_mount_status_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  13);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  13);
+#endif
 }
 
 /**
@@ -262,7 +282,11 @@ static inline uint8_t mavlink_msg_mount_status_get_target_component(const mavlin
  */
 static inline int32_t mavlink_msg_mount_status_get_pointing_a(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  0);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -272,7 +296,11 @@ static inline int32_t mavlink_msg_mount_status_get_pointing_a(const mavlink_mess
  */
 static inline int32_t mavlink_msg_mount_status_get_pointing_b(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -282,7 +310,11 @@ static inline int32_t mavlink_msg_mount_status_get_pointing_b(const mavlink_mess
  */
 static inline int32_t mavlink_msg_mount_status_get_pointing_c(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  8);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -293,7 +325,7 @@ static inline int32_t mavlink_msg_mount_status_get_pointing_c(const mavlink_mess
  */
 static inline void mavlink_msg_mount_status_decode(const mavlink_message_t* msg, mavlink_mount_status_t* mount_status)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	mount_status->pointing_a = mavlink_msg_mount_status_get_pointing_a(msg);
 	mount_status->pointing_b = mavlink_msg_mount_status_get_pointing_b(msg);
 	mount_status->pointing_c = mavlink_msg_mount_status_get_pointing_c(msg);

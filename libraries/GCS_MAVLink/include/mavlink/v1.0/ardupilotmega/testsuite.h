@@ -1574,7 +1574,7 @@ static void mavlink_test_gimbal_feedback(uint8_t system_id, uint8_t component_id
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
 	mavlink_gimbal_feedback_t packet_in = {
-		17.0,45.0,73.0,101.0,129.0,157.0,18483,18587,18691,223,34,101
+		17.0,45.0,73.0,101.0,129.0,157.0,185.0,213.0,241.0,113,180,247
     };
 	mavlink_gimbal_feedback_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
@@ -1628,16 +1628,13 @@ static void mavlink_test_gimbal_control(uint8_t system_id, uint8_t component_id,
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
 	mavlink_gimbal_control_t packet_in = {
-		17.0,45.0,73.0,101.0,129.0,157.0,77,144,211
+		17.0,45.0,73.0,41,108,175
     };
 	mavlink_gimbal_control_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         	packet1.ratex = packet_in.ratex;
         	packet1.ratey = packet_in.ratey;
         	packet1.ratez = packet_in.ratez;
-        	packet1.gyro_cal_x = packet_in.gyro_cal_x;
-        	packet1.gyro_cal_y = packet_in.gyro_cal_y;
-        	packet1.gyro_cal_z = packet_in.gyro_cal_z;
         	packet1.target_system = packet_in.target_system;
         	packet1.target_component = packet_in.target_component;
         	packet1.id = packet_in.id;
@@ -1650,12 +1647,12 @@ static void mavlink_test_gimbal_control(uint8_t system_id, uint8_t component_id,
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_gimbal_control_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.id , packet1.ratex , packet1.ratey , packet1.ratez , packet1.gyro_cal_x , packet1.gyro_cal_y , packet1.gyro_cal_z );
+	mavlink_msg_gimbal_control_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.id , packet1.ratex , packet1.ratey , packet1.ratez );
 	mavlink_msg_gimbal_control_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_gimbal_control_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.id , packet1.ratex , packet1.ratey , packet1.ratez , packet1.gyro_cal_x , packet1.gyro_cal_y , packet1.gyro_cal_z );
+	mavlink_msg_gimbal_control_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.id , packet1.ratex , packet1.ratey , packet1.ratez );
 	mavlink_msg_gimbal_control_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -1668,7 +1665,7 @@ static void mavlink_test_gimbal_control(uint8_t system_id, uint8_t component_id,
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_gimbal_control_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.id , packet1.ratex , packet1.ratey , packet1.ratez , packet1.gyro_cal_x , packet1.gyro_cal_y , packet1.gyro_cal_z );
+	mavlink_msg_gimbal_control_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.id , packet1.ratex , packet1.ratey , packet1.ratez );
 	mavlink_msg_gimbal_control_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }

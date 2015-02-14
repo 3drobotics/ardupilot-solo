@@ -1,5 +1,9 @@
 // MESSAGE SIM_STATE PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_SIM_STATE 108
 
 typedef struct __mavlink_sim_state_t
@@ -120,6 +124,30 @@ static inline uint16_t mavlink_msg_sim_state_pack(uint8_t system_id, uint8_t com
 	_mav_put_float(buf, 80, vd);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SIM_STATE_LEN);
+#elif MAVLINK_C2000
+		mav_put_float_c2000(&(msg->payload64[0]), 0, q1);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, q2);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, q3);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, q4);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, roll);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, pitch);
+		mav_put_float_c2000(&(msg->payload64[0]), 24, yaw);
+		mav_put_float_c2000(&(msg->payload64[0]), 28, xacc);
+		mav_put_float_c2000(&(msg->payload64[0]), 32, yacc);
+		mav_put_float_c2000(&(msg->payload64[0]), 36, zacc);
+		mav_put_float_c2000(&(msg->payload64[0]), 40, xgyro);
+		mav_put_float_c2000(&(msg->payload64[0]), 44, ygyro);
+		mav_put_float_c2000(&(msg->payload64[0]), 48, zgyro);
+		mav_put_float_c2000(&(msg->payload64[0]), 52, lat);
+		mav_put_float_c2000(&(msg->payload64[0]), 56, lon);
+		mav_put_float_c2000(&(msg->payload64[0]), 60, alt);
+		mav_put_float_c2000(&(msg->payload64[0]), 64, std_dev_horz);
+		mav_put_float_c2000(&(msg->payload64[0]), 68, std_dev_vert);
+		mav_put_float_c2000(&(msg->payload64[0]), 72, vn);
+		mav_put_float_c2000(&(msg->payload64[0]), 76, ve);
+		mav_put_float_c2000(&(msg->payload64[0]), 80, vd);
+	
+	
 #else
 	mavlink_sim_state_t packet;
 	packet.q1 = q1;
@@ -450,7 +478,11 @@ static inline void mavlink_msg_sim_state_send_buf(mavlink_message_t *msgbuf, mav
  */
 static inline float mavlink_msg_sim_state_get_q1(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -460,7 +492,11 @@ static inline float mavlink_msg_sim_state_get_q1(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_q2(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -470,7 +506,11 @@ static inline float mavlink_msg_sim_state_get_q2(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_q3(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -480,7 +520,11 @@ static inline float mavlink_msg_sim_state_get_q3(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_q4(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -490,7 +534,11 @@ static inline float mavlink_msg_sim_state_get_q4(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_roll(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -500,7 +548,11 @@ static inline float mavlink_msg_sim_state_get_roll(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_pitch(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -510,7 +562,11 @@ static inline float mavlink_msg_sim_state_get_pitch(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_sim_state_get_yaw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -520,7 +576,11 @@ static inline float mavlink_msg_sim_state_get_yaw(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_xacc(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -530,7 +590,11 @@ static inline float mavlink_msg_sim_state_get_xacc(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_yacc(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  32);
+#endif
 }
 
 /**
@@ -540,7 +604,11 @@ static inline float mavlink_msg_sim_state_get_yacc(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_zacc(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  36);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  36);
+#endif
 }
 
 /**
@@ -550,7 +618,11 @@ static inline float mavlink_msg_sim_state_get_zacc(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_xgyro(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  40);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  40);
+#endif
 }
 
 /**
@@ -560,7 +632,11 @@ static inline float mavlink_msg_sim_state_get_xgyro(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_sim_state_get_ygyro(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  44);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  44);
+#endif
 }
 
 /**
@@ -570,7 +646,11 @@ static inline float mavlink_msg_sim_state_get_ygyro(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_sim_state_get_zgyro(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  48);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  48);
+#endif
 }
 
 /**
@@ -580,7 +660,11 @@ static inline float mavlink_msg_sim_state_get_zgyro(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_sim_state_get_lat(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  52);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  52);
+#endif
 }
 
 /**
@@ -590,7 +674,11 @@ static inline float mavlink_msg_sim_state_get_lat(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_lon(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  56);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  56);
+#endif
 }
 
 /**
@@ -600,7 +688,11 @@ static inline float mavlink_msg_sim_state_get_lon(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_alt(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  60);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  60);
+#endif
 }
 
 /**
@@ -610,7 +702,11 @@ static inline float mavlink_msg_sim_state_get_alt(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_std_dev_horz(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  64);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  64);
+#endif
 }
 
 /**
@@ -620,7 +716,11 @@ static inline float mavlink_msg_sim_state_get_std_dev_horz(const mavlink_message
  */
 static inline float mavlink_msg_sim_state_get_std_dev_vert(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  68);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  68);
+#endif
 }
 
 /**
@@ -630,7 +730,11 @@ static inline float mavlink_msg_sim_state_get_std_dev_vert(const mavlink_message
  */
 static inline float mavlink_msg_sim_state_get_vn(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  72);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  72);
+#endif
 }
 
 /**
@@ -640,7 +744,11 @@ static inline float mavlink_msg_sim_state_get_vn(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_ve(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  76);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  76);
+#endif
 }
 
 /**
@@ -650,7 +758,11 @@ static inline float mavlink_msg_sim_state_get_ve(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_sim_state_get_vd(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  80);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  80);
+#endif
 }
 
 /**
@@ -661,7 +773,7 @@ static inline float mavlink_msg_sim_state_get_vd(const mavlink_message_t* msg)
  */
 static inline void mavlink_msg_sim_state_decode(const mavlink_message_t* msg, mavlink_sim_state_t* sim_state)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	sim_state->q1 = mavlink_msg_sim_state_get_q1(msg);
 	sim_state->q2 = mavlink_msg_sim_state_get_q2(msg);
 	sim_state->q3 = mavlink_msg_sim_state_get_q3(msg);

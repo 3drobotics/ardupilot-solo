@@ -1,5 +1,9 @@
 // MESSAGE AHRS2 PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_AHRS2 178
 
 typedef struct __mavlink_ahrs2_t
@@ -60,6 +64,15 @@ static inline uint16_t mavlink_msg_ahrs2_pack(uint8_t system_id, uint8_t compone
 	_mav_put_int32_t(buf, 20, lng);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_AHRS2_LEN);
+#elif MAVLINK_C2000
+		mav_put_float_c2000(&(msg->payload64[0]), 0, roll);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, pitch);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, yaw);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, altitude);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 16, lat);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 20, lng);
+	
+	
 #else
 	mavlink_ahrs2_t packet;
 	packet.roll = roll;
@@ -255,7 +268,11 @@ static inline void mavlink_msg_ahrs2_send_buf(mavlink_message_t *msgbuf, mavlink
  */
 static inline float mavlink_msg_ahrs2_get_roll(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -265,7 +282,11 @@ static inline float mavlink_msg_ahrs2_get_roll(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs2_get_pitch(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -275,7 +296,11 @@ static inline float mavlink_msg_ahrs2_get_pitch(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs2_get_yaw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -285,7 +310,11 @@ static inline float mavlink_msg_ahrs2_get_yaw(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs2_get_altitude(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -295,7 +324,11 @@ static inline float mavlink_msg_ahrs2_get_altitude(const mavlink_message_t* msg)
  */
 static inline int32_t mavlink_msg_ahrs2_get_lat(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  16);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -305,7 +338,11 @@ static inline int32_t mavlink_msg_ahrs2_get_lat(const mavlink_message_t* msg)
  */
 static inline int32_t mavlink_msg_ahrs2_get_lng(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  20);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -316,7 +353,7 @@ static inline int32_t mavlink_msg_ahrs2_get_lng(const mavlink_message_t* msg)
  */
 static inline void mavlink_msg_ahrs2_decode(const mavlink_message_t* msg, mavlink_ahrs2_t* ahrs2)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	ahrs2->roll = mavlink_msg_ahrs2_get_roll(msg);
 	ahrs2->pitch = mavlink_msg_ahrs2_get_pitch(msg);
 	ahrs2->yaw = mavlink_msg_ahrs2_get_yaw(msg);

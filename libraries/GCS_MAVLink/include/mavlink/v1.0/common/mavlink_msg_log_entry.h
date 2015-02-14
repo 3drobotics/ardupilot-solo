@@ -1,5 +1,9 @@
 // MESSAGE LOG_ENTRY PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_LOG_ENTRY 118
 
 typedef struct __mavlink_log_entry_t
@@ -56,6 +60,14 @@ static inline uint16_t mavlink_msg_log_entry_pack(uint8_t system_id, uint8_t com
 	_mav_put_uint16_t(buf, 12, last_log_num);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_LOG_ENTRY_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_utc);
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 4, size);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 8, id);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 10, num_logs);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 12, last_log_num);
+	
+	
 #else
 	mavlink_log_entry_t packet;
 	packet.time_utc = time_utc;
@@ -242,7 +254,11 @@ static inline void mavlink_msg_log_entry_send_buf(mavlink_message_t *msgbuf, mav
  */
 static inline uint16_t mavlink_msg_log_entry_get_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  8);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -252,7 +268,11 @@ static inline uint16_t mavlink_msg_log_entry_get_id(const mavlink_message_t* msg
  */
 static inline uint16_t mavlink_msg_log_entry_get_num_logs(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  10);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  10);
+#endif
 }
 
 /**
@@ -262,7 +282,11 @@ static inline uint16_t mavlink_msg_log_entry_get_num_logs(const mavlink_message_
  */
 static inline uint16_t mavlink_msg_log_entry_get_last_log_num(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  12);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -272,7 +296,11 @@ static inline uint16_t mavlink_msg_log_entry_get_last_log_num(const mavlink_mess
  */
 static inline uint32_t mavlink_msg_log_entry_get_time_utc(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -282,7 +310,11 @@ static inline uint32_t mavlink_msg_log_entry_get_time_utc(const mavlink_message_
  */
 static inline uint32_t mavlink_msg_log_entry_get_size(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  4);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -293,7 +325,7 @@ static inline uint32_t mavlink_msg_log_entry_get_size(const mavlink_message_t* m
  */
 static inline void mavlink_msg_log_entry_decode(const mavlink_message_t* msg, mavlink_log_entry_t* log_entry)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	log_entry->time_utc = mavlink_msg_log_entry_get_time_utc(msg);
 	log_entry->size = mavlink_msg_log_entry_get_size(msg);
 	log_entry->id = mavlink_msg_log_entry_get_id(msg);

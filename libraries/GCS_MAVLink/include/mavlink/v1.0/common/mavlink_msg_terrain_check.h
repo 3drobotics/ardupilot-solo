@@ -1,5 +1,9 @@
 // MESSAGE TERRAIN_CHECK PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_TERRAIN_CHECK 135
 
 typedef struct __mavlink_terrain_check_t
@@ -44,6 +48,11 @@ static inline uint16_t mavlink_msg_terrain_check_pack(uint8_t system_id, uint8_t
 	_mav_put_int32_t(buf, 4, lon);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_TERRAIN_CHECK_LEN);
+#elif MAVLINK_C2000
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 0, lat);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, lon);
+	
+	
 #else
 	mavlink_terrain_check_t packet;
 	packet.lat = lat;
@@ -203,7 +212,11 @@ static inline void mavlink_msg_terrain_check_send_buf(mavlink_message_t *msgbuf,
  */
 static inline int32_t mavlink_msg_terrain_check_get_lat(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  0);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -213,7 +226,11 @@ static inline int32_t mavlink_msg_terrain_check_get_lat(const mavlink_message_t*
  */
 static inline int32_t mavlink_msg_terrain_check_get_lon(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -224,7 +241,7 @@ static inline int32_t mavlink_msg_terrain_check_get_lon(const mavlink_message_t*
  */
 static inline void mavlink_msg_terrain_check_decode(const mavlink_message_t* msg, mavlink_terrain_check_t* terrain_check)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	terrain_check->lat = mavlink_msg_terrain_check_get_lat(msg);
 	terrain_check->lon = mavlink_msg_terrain_check_get_lon(msg);
 #else

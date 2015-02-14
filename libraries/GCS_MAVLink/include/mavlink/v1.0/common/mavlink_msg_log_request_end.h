@@ -1,5 +1,9 @@
 // MESSAGE LOG_REQUEST_END PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_LOG_REQUEST_END 122
 
 typedef struct __mavlink_log_request_end_t
@@ -44,6 +48,11 @@ static inline uint16_t mavlink_msg_log_request_end_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 1, target_component);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_LOG_REQUEST_END_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 0, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 1, target_component);
+	
+	
 #else
 	mavlink_log_request_end_t packet;
 	packet.target_system = target_system;
@@ -203,7 +212,11 @@ static inline void mavlink_msg_log_request_end_send_buf(mavlink_message_t *msgbu
  */
 static inline uint8_t mavlink_msg_log_request_end_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  0);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -213,7 +226,11 @@ static inline uint8_t mavlink_msg_log_request_end_get_target_system(const mavlin
  */
 static inline uint8_t mavlink_msg_log_request_end_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  1);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  1);
+#endif
 }
 
 /**
@@ -224,7 +241,7 @@ static inline uint8_t mavlink_msg_log_request_end_get_target_component(const mav
  */
 static inline void mavlink_msg_log_request_end_decode(const mavlink_message_t* msg, mavlink_log_request_end_t* log_request_end)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	log_request_end->target_system = mavlink_msg_log_request_end_get_target_system(msg);
 	log_request_end->target_component = mavlink_msg_log_request_end_get_target_component(msg);
 #else

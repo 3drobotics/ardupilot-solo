@@ -1,5 +1,9 @@
 // MESSAGE DISTANCE_SENSOR PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_DISTANCE_SENSOR 132
 
 typedef struct __mavlink_distance_sensor_t
@@ -68,6 +72,17 @@ static inline uint16_t mavlink_msg_distance_sensor_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 13, covariance);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_DISTANCE_SENSOR_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 4, min_distance);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 6, max_distance);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 8, current_distance);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 10, type);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 11, id);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 12, orientation);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 13, covariance);
+	
+	
 #else
 	mavlink_distance_sensor_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -281,7 +296,11 @@ static inline void mavlink_msg_distance_sensor_send_buf(mavlink_message_t *msgbu
  */
 static inline uint32_t mavlink_msg_distance_sensor_get_time_boot_ms(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -291,7 +310,11 @@ static inline uint32_t mavlink_msg_distance_sensor_get_time_boot_ms(const mavlin
  */
 static inline uint16_t mavlink_msg_distance_sensor_get_min_distance(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  4);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -301,7 +324,11 @@ static inline uint16_t mavlink_msg_distance_sensor_get_min_distance(const mavlin
  */
 static inline uint16_t mavlink_msg_distance_sensor_get_max_distance(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  6);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  6);
+#endif
 }
 
 /**
@@ -311,7 +338,11 @@ static inline uint16_t mavlink_msg_distance_sensor_get_max_distance(const mavlin
  */
 static inline uint16_t mavlink_msg_distance_sensor_get_current_distance(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  8);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -321,7 +352,11 @@ static inline uint16_t mavlink_msg_distance_sensor_get_current_distance(const ma
  */
 static inline uint8_t mavlink_msg_distance_sensor_get_type(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  10);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  10);
+#endif
 }
 
 /**
@@ -331,7 +366,11 @@ static inline uint8_t mavlink_msg_distance_sensor_get_type(const mavlink_message
  */
 static inline uint8_t mavlink_msg_distance_sensor_get_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  11);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  11);
+#endif
 }
 
 /**
@@ -341,7 +380,11 @@ static inline uint8_t mavlink_msg_distance_sensor_get_id(const mavlink_message_t
  */
 static inline uint8_t mavlink_msg_distance_sensor_get_orientation(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  12);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -351,7 +394,11 @@ static inline uint8_t mavlink_msg_distance_sensor_get_orientation(const mavlink_
  */
 static inline uint8_t mavlink_msg_distance_sensor_get_covariance(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  13);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  13);
+#endif
 }
 
 /**
@@ -362,7 +409,7 @@ static inline uint8_t mavlink_msg_distance_sensor_get_covariance(const mavlink_m
  */
 static inline void mavlink_msg_distance_sensor_decode(const mavlink_message_t* msg, mavlink_distance_sensor_t* distance_sensor)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	distance_sensor->time_boot_ms = mavlink_msg_distance_sensor_get_time_boot_ms(msg);
 	distance_sensor->min_distance = mavlink_msg_distance_sensor_get_min_distance(msg);
 	distance_sensor->max_distance = mavlink_msg_distance_sensor_get_max_distance(msg);

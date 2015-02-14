@@ -1,5 +1,9 @@
 // MESSAGE HIL_RC_INPUTS_RAW PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_HIL_RC_INPUTS_RAW 92
 
 typedef struct __mavlink_hil_rc_inputs_raw_t
@@ -92,6 +96,23 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_pack(uint8_t system_id, uin
 	_mav_put_uint8_t(buf, 32, rssi);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_HIL_RC_INPUTS_RAW_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 8, chan1_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 10, chan2_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 12, chan3_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 14, chan4_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 16, chan5_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 18, chan6_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 20, chan7_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 22, chan8_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 24, chan9_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 26, chan10_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 28, chan11_raw);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 30, chan12_raw);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 32, rssi);
+	
+	
 #else
 	mavlink_hil_rc_inputs_raw_t packet;
 	packet.time_usec = time_usec;
@@ -359,7 +380,11 @@ static inline void mavlink_msg_hil_rc_inputs_raw_send_buf(mavlink_message_t *msg
  */
 static inline uint64_t mavlink_msg_hil_rc_inputs_raw_get_time_usec(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -369,7 +394,11 @@ static inline uint64_t mavlink_msg_hil_rc_inputs_raw_get_time_usec(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan1_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  8);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -379,7 +408,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan1_raw(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan2_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  10);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  10);
+#endif
 }
 
 /**
@@ -389,7 +422,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan2_raw(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan3_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  12);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -399,7 +436,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan3_raw(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan4_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  14);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  14);
+#endif
 }
 
 /**
@@ -409,7 +450,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan4_raw(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan5_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  16);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -419,7 +464,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan5_raw(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan6_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  18);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  18);
+#endif
 }
 
 /**
@@ -429,7 +478,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan6_raw(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan7_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  20);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -439,7 +492,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan7_raw(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan8_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  22);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  22);
+#endif
 }
 
 /**
@@ -449,7 +506,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan8_raw(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan9_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  24);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -459,7 +520,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan9_raw(const mavlink
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan10_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  26);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  26);
+#endif
 }
 
 /**
@@ -469,7 +534,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan10_raw(const mavlin
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan11_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  28);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -479,7 +548,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan11_raw(const mavlin
  */
 static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan12_raw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  30);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  30);
+#endif
 }
 
 /**
@@ -489,7 +562,11 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_get_chan12_raw(const mavlin
  */
 static inline uint8_t mavlink_msg_hil_rc_inputs_raw_get_rssi(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  32);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  32);
+#endif
 }
 
 /**
@@ -500,7 +577,7 @@ static inline uint8_t mavlink_msg_hil_rc_inputs_raw_get_rssi(const mavlink_messa
  */
 static inline void mavlink_msg_hil_rc_inputs_raw_decode(const mavlink_message_t* msg, mavlink_hil_rc_inputs_raw_t* hil_rc_inputs_raw)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	hil_rc_inputs_raw->time_usec = mavlink_msg_hil_rc_inputs_raw_get_time_usec(msg);
 	hil_rc_inputs_raw->chan1_raw = mavlink_msg_hil_rc_inputs_raw_get_chan1_raw(msg);
 	hil_rc_inputs_raw->chan2_raw = mavlink_msg_hil_rc_inputs_raw_get_chan2_raw(msg);

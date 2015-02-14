@@ -1,5 +1,9 @@
 // MESSAGE NAMED_VALUE_FLOAT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_NAMED_VALUE_FLOAT 251
 
 typedef struct __mavlink_named_value_float_t
@@ -47,6 +51,12 @@ static inline uint16_t mavlink_msg_named_value_float_pack(uint8_t system_id, uin
 	_mav_put_float(buf, 4, value);
 	_mav_put_char_array(buf, 8, name, 10);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, value);
+	
+		mav_put_char_array_c2000(&(msg->payload64[0]), name, 8, 10);
+	
 #else
 	mavlink_named_value_float_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -208,7 +218,11 @@ static inline void mavlink_msg_named_value_float_send_buf(mavlink_message_t *msg
  */
 static inline uint32_t mavlink_msg_named_value_float_get_time_boot_ms(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -218,7 +232,11 @@ static inline uint32_t mavlink_msg_named_value_float_get_time_boot_ms(const mavl
  */
 static inline uint16_t mavlink_msg_named_value_float_get_name(const mavlink_message_t* msg, char *name)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_char_array(msg, name, 10,  8);
+#else
+	return mav_get_char_array_c2000(&(msg->payload64[0]), name, 10,  8);
+#endif
 }
 
 /**
@@ -228,7 +246,11 @@ static inline uint16_t mavlink_msg_named_value_float_get_name(const mavlink_mess
  */
 static inline float mavlink_msg_named_value_float_get_value(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -239,7 +261,7 @@ static inline float mavlink_msg_named_value_float_get_value(const mavlink_messag
  */
 static inline void mavlink_msg_named_value_float_decode(const mavlink_message_t* msg, mavlink_named_value_float_t* named_value_float)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	named_value_float->time_boot_ms = mavlink_msg_named_value_float_get_time_boot_ms(msg);
 	named_value_float->value = mavlink_msg_named_value_float_get_value(msg);
 	mavlink_msg_named_value_float_get_name(msg, named_value_float->name);

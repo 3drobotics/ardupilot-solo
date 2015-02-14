@@ -1,5 +1,9 @@
 // MESSAGE VICON_POSITION_ESTIMATE PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE 104
 
 typedef struct __mavlink_vicon_position_estimate_t
@@ -64,6 +68,16 @@ static inline uint16_t mavlink_msg_vicon_position_estimate_pack(uint8_t system_i
 	_mav_put_float(buf, 28, yaw);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, usec);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, x);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, y);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, z);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, roll);
+		mav_put_float_c2000(&(msg->payload64[0]), 24, pitch);
+		mav_put_float_c2000(&(msg->payload64[0]), 28, yaw);
+	
+	
 #else
 	mavlink_vicon_position_estimate_t packet;
 	packet.usec = usec;
@@ -268,7 +282,11 @@ static inline void mavlink_msg_vicon_position_estimate_send_buf(mavlink_message_
  */
 static inline uint64_t mavlink_msg_vicon_position_estimate_get_usec(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
+#else
+	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -278,7 +296,11 @@ static inline uint64_t mavlink_msg_vicon_position_estimate_get_usec(const mavlin
  */
 static inline float mavlink_msg_vicon_position_estimate_get_x(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -288,7 +310,11 @@ static inline float mavlink_msg_vicon_position_estimate_get_x(const mavlink_mess
  */
 static inline float mavlink_msg_vicon_position_estimate_get_y(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -298,7 +324,11 @@ static inline float mavlink_msg_vicon_position_estimate_get_y(const mavlink_mess
  */
 static inline float mavlink_msg_vicon_position_estimate_get_z(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -308,7 +338,11 @@ static inline float mavlink_msg_vicon_position_estimate_get_z(const mavlink_mess
  */
 static inline float mavlink_msg_vicon_position_estimate_get_roll(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -318,7 +352,11 @@ static inline float mavlink_msg_vicon_position_estimate_get_roll(const mavlink_m
  */
 static inline float mavlink_msg_vicon_position_estimate_get_pitch(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -328,7 +366,11 @@ static inline float mavlink_msg_vicon_position_estimate_get_pitch(const mavlink_
  */
 static inline float mavlink_msg_vicon_position_estimate_get_yaw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -339,7 +381,7 @@ static inline float mavlink_msg_vicon_position_estimate_get_yaw(const mavlink_me
  */
 static inline void mavlink_msg_vicon_position_estimate_decode(const mavlink_message_t* msg, mavlink_vicon_position_estimate_t* vicon_position_estimate)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	vicon_position_estimate->usec = mavlink_msg_vicon_position_estimate_get_usec(msg);
 	vicon_position_estimate->x = mavlink_msg_vicon_position_estimate_get_x(msg);
 	vicon_position_estimate->y = mavlink_msg_vicon_position_estimate_get_y(msg);

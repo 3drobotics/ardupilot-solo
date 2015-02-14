@@ -1,5 +1,9 @@
 // MESSAGE AIRSPEED_AUTOCAL PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_AIRSPEED_AUTOCAL 174
 
 typedef struct __mavlink_airspeed_autocal_t
@@ -84,6 +88,21 @@ static inline uint16_t mavlink_msg_airspeed_autocal_pack(uint8_t system_id, uint
 	_mav_put_float(buf, 44, Pcz);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_AIRSPEED_AUTOCAL_LEN);
+#elif MAVLINK_C2000
+		mav_put_float_c2000(&(msg->payload64[0]), 0, vx);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, vy);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, vz);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, diff_pressure);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, EAS2TAS);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, ratio);
+		mav_put_float_c2000(&(msg->payload64[0]), 24, state_x);
+		mav_put_float_c2000(&(msg->payload64[0]), 28, state_y);
+		mav_put_float_c2000(&(msg->payload64[0]), 32, state_z);
+		mav_put_float_c2000(&(msg->payload64[0]), 36, Pax);
+		mav_put_float_c2000(&(msg->payload64[0]), 40, Pby);
+		mav_put_float_c2000(&(msg->payload64[0]), 44, Pcz);
+	
+	
 #else
 	mavlink_airspeed_autocal_t packet;
 	packet.vx = vx;
@@ -333,7 +352,11 @@ static inline void mavlink_msg_airspeed_autocal_send_buf(mavlink_message_t *msgb
  */
 static inline float mavlink_msg_airspeed_autocal_get_vx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -343,7 +366,11 @@ static inline float mavlink_msg_airspeed_autocal_get_vx(const mavlink_message_t*
  */
 static inline float mavlink_msg_airspeed_autocal_get_vy(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -353,7 +380,11 @@ static inline float mavlink_msg_airspeed_autocal_get_vy(const mavlink_message_t*
  */
 static inline float mavlink_msg_airspeed_autocal_get_vz(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -363,7 +394,11 @@ static inline float mavlink_msg_airspeed_autocal_get_vz(const mavlink_message_t*
  */
 static inline float mavlink_msg_airspeed_autocal_get_diff_pressure(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -373,7 +408,11 @@ static inline float mavlink_msg_airspeed_autocal_get_diff_pressure(const mavlink
  */
 static inline float mavlink_msg_airspeed_autocal_get_EAS2TAS(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -383,7 +422,11 @@ static inline float mavlink_msg_airspeed_autocal_get_EAS2TAS(const mavlink_messa
  */
 static inline float mavlink_msg_airspeed_autocal_get_ratio(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -393,7 +436,11 @@ static inline float mavlink_msg_airspeed_autocal_get_ratio(const mavlink_message
  */
 static inline float mavlink_msg_airspeed_autocal_get_state_x(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -403,7 +450,11 @@ static inline float mavlink_msg_airspeed_autocal_get_state_x(const mavlink_messa
  */
 static inline float mavlink_msg_airspeed_autocal_get_state_y(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -413,7 +464,11 @@ static inline float mavlink_msg_airspeed_autocal_get_state_y(const mavlink_messa
  */
 static inline float mavlink_msg_airspeed_autocal_get_state_z(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  32);
+#endif
 }
 
 /**
@@ -423,7 +478,11 @@ static inline float mavlink_msg_airspeed_autocal_get_state_z(const mavlink_messa
  */
 static inline float mavlink_msg_airspeed_autocal_get_Pax(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  36);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  36);
+#endif
 }
 
 /**
@@ -433,7 +492,11 @@ static inline float mavlink_msg_airspeed_autocal_get_Pax(const mavlink_message_t
  */
 static inline float mavlink_msg_airspeed_autocal_get_Pby(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  40);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  40);
+#endif
 }
 
 /**
@@ -443,7 +506,11 @@ static inline float mavlink_msg_airspeed_autocal_get_Pby(const mavlink_message_t
  */
 static inline float mavlink_msg_airspeed_autocal_get_Pcz(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  44);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  44);
+#endif
 }
 
 /**
@@ -454,7 +521,7 @@ static inline float mavlink_msg_airspeed_autocal_get_Pcz(const mavlink_message_t
  */
 static inline void mavlink_msg_airspeed_autocal_decode(const mavlink_message_t* msg, mavlink_airspeed_autocal_t* airspeed_autocal)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	airspeed_autocal->vx = mavlink_msg_airspeed_autocal_get_vx(msg);
 	airspeed_autocal->vy = mavlink_msg_airspeed_autocal_get_vy(msg);
 	airspeed_autocal->vz = mavlink_msg_airspeed_autocal_get_vz(msg);

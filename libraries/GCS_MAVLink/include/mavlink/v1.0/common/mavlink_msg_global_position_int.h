@@ -1,5 +1,9 @@
 // MESSAGE GLOBAL_POSITION_INT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_GLOBAL_POSITION_INT 33
 
 typedef struct __mavlink_global_position_int_t
@@ -72,6 +76,18 @@ static inline uint16_t mavlink_msg_global_position_int_pack(uint8_t system_id, u
 	_mav_put_uint16_t(buf, 26, hdg);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_GLOBAL_POSITION_INT_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, lat);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 8, lon);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 12, alt);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 16, relative_alt);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 20, vx);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 22, vy);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 24, vz);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 26, hdg);
+	
+	
 #else
 	mavlink_global_position_int_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -294,7 +310,11 @@ static inline void mavlink_msg_global_position_int_send_buf(mavlink_message_t *m
  */
 static inline uint32_t mavlink_msg_global_position_int_get_time_boot_ms(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -304,7 +324,11 @@ static inline uint32_t mavlink_msg_global_position_int_get_time_boot_ms(const ma
  */
 static inline int32_t mavlink_msg_global_position_int_get_lat(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -314,7 +338,11 @@ static inline int32_t mavlink_msg_global_position_int_get_lat(const mavlink_mess
  */
 static inline int32_t mavlink_msg_global_position_int_get_lon(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  8);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -324,7 +352,11 @@ static inline int32_t mavlink_msg_global_position_int_get_lon(const mavlink_mess
  */
 static inline int32_t mavlink_msg_global_position_int_get_alt(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  12);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -334,7 +366,11 @@ static inline int32_t mavlink_msg_global_position_int_get_alt(const mavlink_mess
  */
 static inline int32_t mavlink_msg_global_position_int_get_relative_alt(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  16);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -344,7 +380,11 @@ static inline int32_t mavlink_msg_global_position_int_get_relative_alt(const mav
  */
 static inline int16_t mavlink_msg_global_position_int_get_vx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  20);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -354,7 +394,11 @@ static inline int16_t mavlink_msg_global_position_int_get_vx(const mavlink_messa
  */
 static inline int16_t mavlink_msg_global_position_int_get_vy(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  22);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  22);
+#endif
 }
 
 /**
@@ -364,7 +408,11 @@ static inline int16_t mavlink_msg_global_position_int_get_vy(const mavlink_messa
  */
 static inline int16_t mavlink_msg_global_position_int_get_vz(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  24);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -374,7 +422,11 @@ static inline int16_t mavlink_msg_global_position_int_get_vz(const mavlink_messa
  */
 static inline uint16_t mavlink_msg_global_position_int_get_hdg(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  26);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  26);
+#endif
 }
 
 /**
@@ -385,7 +437,7 @@ static inline uint16_t mavlink_msg_global_position_int_get_hdg(const mavlink_mes
  */
 static inline void mavlink_msg_global_position_int_decode(const mavlink_message_t* msg, mavlink_global_position_int_t* global_position_int)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	global_position_int->time_boot_ms = mavlink_msg_global_position_int_get_time_boot_ms(msg);
 	global_position_int->lat = mavlink_msg_global_position_int_get_lat(msg);
 	global_position_int->lon = mavlink_msg_global_position_int_get_lon(msg);

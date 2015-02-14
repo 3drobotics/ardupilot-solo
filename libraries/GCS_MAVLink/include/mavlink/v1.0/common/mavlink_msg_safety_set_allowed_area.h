@@ -1,5 +1,9 @@
 // MESSAGE SAFETY_SET_ALLOWED_AREA PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA 54
 
 typedef struct __mavlink_safety_set_allowed_area_t
@@ -72,6 +76,18 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_pack(uint8_t system_i
 	_mav_put_uint8_t(buf, 26, frame);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
+#elif MAVLINK_C2000
+		mav_put_float_c2000(&(msg->payload64[0]), 0, p1x);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, p1y);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, p1z);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, p2x);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, p2y);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, p2z);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 24, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 25, target_component);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 26, frame);
+	
+	
 #else
 	mavlink_safety_set_allowed_area_t packet;
 	packet.p1x = p1x;
@@ -294,7 +310,11 @@ static inline void mavlink_msg_safety_set_allowed_area_send_buf(mavlink_message_
  */
 static inline uint8_t mavlink_msg_safety_set_allowed_area_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  24);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -304,7 +324,11 @@ static inline uint8_t mavlink_msg_safety_set_allowed_area_get_target_system(cons
  */
 static inline uint8_t mavlink_msg_safety_set_allowed_area_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  25);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  25);
+#endif
 }
 
 /**
@@ -314,7 +338,11 @@ static inline uint8_t mavlink_msg_safety_set_allowed_area_get_target_component(c
  */
 static inline uint8_t mavlink_msg_safety_set_allowed_area_get_frame(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  26);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  26);
+#endif
 }
 
 /**
@@ -324,7 +352,11 @@ static inline uint8_t mavlink_msg_safety_set_allowed_area_get_frame(const mavlin
  */
 static inline float mavlink_msg_safety_set_allowed_area_get_p1x(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -334,7 +366,11 @@ static inline float mavlink_msg_safety_set_allowed_area_get_p1x(const mavlink_me
  */
 static inline float mavlink_msg_safety_set_allowed_area_get_p1y(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -344,7 +380,11 @@ static inline float mavlink_msg_safety_set_allowed_area_get_p1y(const mavlink_me
  */
 static inline float mavlink_msg_safety_set_allowed_area_get_p1z(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -354,7 +394,11 @@ static inline float mavlink_msg_safety_set_allowed_area_get_p1z(const mavlink_me
  */
 static inline float mavlink_msg_safety_set_allowed_area_get_p2x(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -364,7 +408,11 @@ static inline float mavlink_msg_safety_set_allowed_area_get_p2x(const mavlink_me
  */
 static inline float mavlink_msg_safety_set_allowed_area_get_p2y(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -374,7 +422,11 @@ static inline float mavlink_msg_safety_set_allowed_area_get_p2y(const mavlink_me
  */
 static inline float mavlink_msg_safety_set_allowed_area_get_p2z(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -385,7 +437,7 @@ static inline float mavlink_msg_safety_set_allowed_area_get_p2z(const mavlink_me
  */
 static inline void mavlink_msg_safety_set_allowed_area_decode(const mavlink_message_t* msg, mavlink_safety_set_allowed_area_t* safety_set_allowed_area)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	safety_set_allowed_area->p1x = mavlink_msg_safety_set_allowed_area_get_p1x(msg);
 	safety_set_allowed_area->p1y = mavlink_msg_safety_set_allowed_area_get_p1y(msg);
 	safety_set_allowed_area->p1z = mavlink_msg_safety_set_allowed_area_get_p1z(msg);

@@ -1,5 +1,9 @@
 // MESSAGE BATTERY_STATUS PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_BATTERY_STATUS 147
 
 typedef struct __mavlink_battery_status_t
@@ -71,6 +75,18 @@ static inline uint16_t mavlink_msg_battery_status_pack(uint8_t system_id, uint8_
 	_mav_put_int8_t(buf, 35, battery_remaining);
 	_mav_put_uint16_t_array(buf, 10, voltages, 10);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
+#elif MAVLINK_C2000
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 0, current_consumed);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, energy_consumed);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 8, temperature);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 30, current_battery);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 32, id);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 33, battery_function);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 34, type);
+		mav_put_int8_t_c2000(&(msg->payload64[0]), 35, battery_remaining);
+	
+		mav_put_uint16_t_array_c2000(&(msg->payload64[0]), voltages, 10, 10);
+	
 #else
 	mavlink_battery_status_t packet;
 	packet.current_consumed = current_consumed;
@@ -286,7 +302,11 @@ static inline void mavlink_msg_battery_status_send_buf(mavlink_message_t *msgbuf
  */
 static inline uint8_t mavlink_msg_battery_status_get_id(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  32);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  32);
+#endif
 }
 
 /**
@@ -296,7 +316,11 @@ static inline uint8_t mavlink_msg_battery_status_get_id(const mavlink_message_t*
  */
 static inline uint8_t mavlink_msg_battery_status_get_battery_function(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  33);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  33);
+#endif
 }
 
 /**
@@ -306,7 +330,11 @@ static inline uint8_t mavlink_msg_battery_status_get_battery_function(const mavl
  */
 static inline uint8_t mavlink_msg_battery_status_get_type(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  34);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  34);
+#endif
 }
 
 /**
@@ -316,7 +344,11 @@ static inline uint8_t mavlink_msg_battery_status_get_type(const mavlink_message_
  */
 static inline int16_t mavlink_msg_battery_status_get_temperature(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  8);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -326,7 +358,11 @@ static inline int16_t mavlink_msg_battery_status_get_temperature(const mavlink_m
  */
 static inline uint16_t mavlink_msg_battery_status_get_voltages(const mavlink_message_t* msg, uint16_t *voltages)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t_array(msg, voltages, 10,  10);
+#else
+	return mav_get_uint16_t_array_c2000(&(msg->payload64[0]), voltages, 10,  10);
+#endif
 }
 
 /**
@@ -336,7 +372,11 @@ static inline uint16_t mavlink_msg_battery_status_get_voltages(const mavlink_mes
  */
 static inline int16_t mavlink_msg_battery_status_get_current_battery(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  30);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  30);
+#endif
 }
 
 /**
@@ -346,7 +386,11 @@ static inline int16_t mavlink_msg_battery_status_get_current_battery(const mavli
  */
 static inline int32_t mavlink_msg_battery_status_get_current_consumed(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  0);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -356,7 +400,11 @@ static inline int32_t mavlink_msg_battery_status_get_current_consumed(const mavl
  */
 static inline int32_t mavlink_msg_battery_status_get_energy_consumed(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -366,7 +414,11 @@ static inline int32_t mavlink_msg_battery_status_get_energy_consumed(const mavli
  */
 static inline int8_t mavlink_msg_battery_status_get_battery_remaining(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int8_t(msg,  35);
+#else
+	return mav_get_int8_t_c2000(&(msg->payload64[0]),  35);
+#endif
 }
 
 /**
@@ -377,7 +429,7 @@ static inline int8_t mavlink_msg_battery_status_get_battery_remaining(const mavl
  */
 static inline void mavlink_msg_battery_status_decode(const mavlink_message_t* msg, mavlink_battery_status_t* battery_status)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	battery_status->current_consumed = mavlink_msg_battery_status_get_current_consumed(msg);
 	battery_status->energy_consumed = mavlink_msg_battery_status_get_energy_consumed(msg);
 	battery_status->temperature = mavlink_msg_battery_status_get_temperature(msg);

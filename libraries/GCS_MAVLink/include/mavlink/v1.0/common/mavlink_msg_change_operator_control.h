@@ -1,5 +1,9 @@
 // MESSAGE CHANGE_OPERATOR_CONTROL PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL 5
 
 typedef struct __mavlink_change_operator_control_t
@@ -51,6 +55,13 @@ static inline uint16_t mavlink_msg_change_operator_control_pack(uint8_t system_i
 	_mav_put_uint8_t(buf, 2, version);
 	_mav_put_char_array(buf, 3, passkey, 25);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 0, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 1, control_request);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, version);
+	
+		mav_put_char_array_c2000(&(msg->payload64[0]), passkey, 3, 25);
+	
 #else
 	mavlink_change_operator_control_t packet;
 	packet.target_system = target_system;
@@ -221,7 +232,11 @@ static inline void mavlink_msg_change_operator_control_send_buf(mavlink_message_
  */
 static inline uint8_t mavlink_msg_change_operator_control_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  0);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -231,7 +246,11 @@ static inline uint8_t mavlink_msg_change_operator_control_get_target_system(cons
  */
 static inline uint8_t mavlink_msg_change_operator_control_get_control_request(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  1);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  1);
+#endif
 }
 
 /**
@@ -241,7 +260,11 @@ static inline uint8_t mavlink_msg_change_operator_control_get_control_request(co
  */
 static inline uint8_t mavlink_msg_change_operator_control_get_version(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -251,7 +274,11 @@ static inline uint8_t mavlink_msg_change_operator_control_get_version(const mavl
  */
 static inline uint16_t mavlink_msg_change_operator_control_get_passkey(const mavlink_message_t* msg, char *passkey)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_char_array(msg, passkey, 25,  3);
+#else
+	return mav_get_char_array_c2000(&(msg->payload64[0]), passkey, 25,  3);
+#endif
 }
 
 /**
@@ -262,7 +289,7 @@ static inline uint16_t mavlink_msg_change_operator_control_get_passkey(const mav
  */
 static inline void mavlink_msg_change_operator_control_decode(const mavlink_message_t* msg, mavlink_change_operator_control_t* change_operator_control)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	change_operator_control->target_system = mavlink_msg_change_operator_control_get_target_system(msg);
 	change_operator_control->control_request = mavlink_msg_change_operator_control_get_control_request(msg);
 	change_operator_control->version = mavlink_msg_change_operator_control_get_version(msg);

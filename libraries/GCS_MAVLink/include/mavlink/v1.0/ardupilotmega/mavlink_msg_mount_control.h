@@ -1,5 +1,9 @@
 // MESSAGE MOUNT_CONTROL PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_MOUNT_CONTROL 157
 
 typedef struct __mavlink_mount_control_t
@@ -60,6 +64,15 @@ static inline uint16_t mavlink_msg_mount_control_pack(uint8_t system_id, uint8_t
 	_mav_put_uint8_t(buf, 14, save_position);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MOUNT_CONTROL_LEN);
+#elif MAVLINK_C2000
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 0, input_a);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, input_b);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 8, input_c);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 12, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 13, target_component);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 14, save_position);
+	
+	
 #else
 	mavlink_mount_control_t packet;
 	packet.input_a = input_a;
@@ -255,7 +268,11 @@ static inline void mavlink_msg_mount_control_send_buf(mavlink_message_t *msgbuf,
  */
 static inline uint8_t mavlink_msg_mount_control_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  12);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -265,7 +282,11 @@ static inline uint8_t mavlink_msg_mount_control_get_target_system(const mavlink_
  */
 static inline uint8_t mavlink_msg_mount_control_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  13);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  13);
+#endif
 }
 
 /**
@@ -275,7 +296,11 @@ static inline uint8_t mavlink_msg_mount_control_get_target_component(const mavli
  */
 static inline int32_t mavlink_msg_mount_control_get_input_a(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  0);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -285,7 +310,11 @@ static inline int32_t mavlink_msg_mount_control_get_input_a(const mavlink_messag
  */
 static inline int32_t mavlink_msg_mount_control_get_input_b(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -295,7 +324,11 @@ static inline int32_t mavlink_msg_mount_control_get_input_b(const mavlink_messag
  */
 static inline int32_t mavlink_msg_mount_control_get_input_c(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  8);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -305,7 +338,11 @@ static inline int32_t mavlink_msg_mount_control_get_input_c(const mavlink_messag
  */
 static inline uint8_t mavlink_msg_mount_control_get_save_position(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  14);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  14);
+#endif
 }
 
 /**
@@ -316,7 +353,7 @@ static inline uint8_t mavlink_msg_mount_control_get_save_position(const mavlink_
  */
 static inline void mavlink_msg_mount_control_decode(const mavlink_message_t* msg, mavlink_mount_control_t* mount_control)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	mount_control->input_a = mavlink_msg_mount_control_get_input_a(msg);
 	mount_control->input_b = mavlink_msg_mount_control_get_input_b(msg);
 	mount_control->input_c = mavlink_msg_mount_control_get_input_c(msg);

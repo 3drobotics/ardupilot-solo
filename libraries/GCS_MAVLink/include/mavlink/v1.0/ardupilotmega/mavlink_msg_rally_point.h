@@ -1,5 +1,9 @@
 // MESSAGE RALLY_POINT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_RALLY_POINT 175
 
 typedef struct __mavlink_rally_point_t
@@ -76,6 +80,19 @@ static inline uint16_t mavlink_msg_rally_point_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint8_t(buf, 18, flags);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_RALLY_POINT_LEN);
+#elif MAVLINK_C2000
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 0, lat);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, lng);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 8, alt);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 10, break_alt);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 12, land_dir);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 14, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 15, target_component);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 16, idx);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 17, count);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 18, flags);
+	
+	
 #else
 	mavlink_rally_point_t packet;
 	packet.lat = lat;
@@ -307,7 +324,11 @@ static inline void mavlink_msg_rally_point_send_buf(mavlink_message_t *msgbuf, m
  */
 static inline uint8_t mavlink_msg_rally_point_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  14);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  14);
+#endif
 }
 
 /**
@@ -317,7 +338,11 @@ static inline uint8_t mavlink_msg_rally_point_get_target_system(const mavlink_me
  */
 static inline uint8_t mavlink_msg_rally_point_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  15);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  15);
+#endif
 }
 
 /**
@@ -327,7 +352,11 @@ static inline uint8_t mavlink_msg_rally_point_get_target_component(const mavlink
  */
 static inline uint8_t mavlink_msg_rally_point_get_idx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  16);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -337,7 +366,11 @@ static inline uint8_t mavlink_msg_rally_point_get_idx(const mavlink_message_t* m
  */
 static inline uint8_t mavlink_msg_rally_point_get_count(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  17);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  17);
+#endif
 }
 
 /**
@@ -347,7 +380,11 @@ static inline uint8_t mavlink_msg_rally_point_get_count(const mavlink_message_t*
  */
 static inline int32_t mavlink_msg_rally_point_get_lat(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  0);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -357,7 +394,11 @@ static inline int32_t mavlink_msg_rally_point_get_lat(const mavlink_message_t* m
  */
 static inline int32_t mavlink_msg_rally_point_get_lng(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -367,7 +408,11 @@ static inline int32_t mavlink_msg_rally_point_get_lng(const mavlink_message_t* m
  */
 static inline int16_t mavlink_msg_rally_point_get_alt(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  8);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -377,7 +422,11 @@ static inline int16_t mavlink_msg_rally_point_get_alt(const mavlink_message_t* m
  */
 static inline int16_t mavlink_msg_rally_point_get_break_alt(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  10);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  10);
+#endif
 }
 
 /**
@@ -387,7 +436,11 @@ static inline int16_t mavlink_msg_rally_point_get_break_alt(const mavlink_messag
  */
 static inline uint16_t mavlink_msg_rally_point_get_land_dir(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  12);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -397,7 +450,11 @@ static inline uint16_t mavlink_msg_rally_point_get_land_dir(const mavlink_messag
  */
 static inline uint8_t mavlink_msg_rally_point_get_flags(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  18);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  18);
+#endif
 }
 
 /**
@@ -408,7 +465,7 @@ static inline uint8_t mavlink_msg_rally_point_get_flags(const mavlink_message_t*
  */
 static inline void mavlink_msg_rally_point_decode(const mavlink_message_t* msg, mavlink_rally_point_t* rally_point)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	rally_point->lat = mavlink_msg_rally_point_get_lat(msg);
 	rally_point->lng = mavlink_msg_rally_point_get_lng(msg);
 	rally_point->alt = mavlink_msg_rally_point_get_alt(msg);

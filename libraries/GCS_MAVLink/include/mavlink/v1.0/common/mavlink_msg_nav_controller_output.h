@@ -1,5 +1,9 @@
 // MESSAGE NAV_CONTROLLER_OUTPUT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT 62
 
 typedef struct __mavlink_nav_controller_output_t
@@ -68,6 +72,17 @@ static inline uint16_t mavlink_msg_nav_controller_output_pack(uint8_t system_id,
 	_mav_put_uint16_t(buf, 24, wp_dist);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT_LEN);
+#elif MAVLINK_C2000
+		mav_put_float_c2000(&(msg->payload64[0]), 0, nav_roll);
+		mav_put_float_c2000(&(msg->payload64[0]), 4, nav_pitch);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, alt_error);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, aspd_error);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, xtrack_error);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 20, nav_bearing);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 22, target_bearing);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 24, wp_dist);
+	
+	
 #else
 	mavlink_nav_controller_output_t packet;
 	packet.nav_roll = nav_roll;
@@ -281,7 +296,11 @@ static inline void mavlink_msg_nav_controller_output_send_buf(mavlink_message_t 
  */
 static inline float mavlink_msg_nav_controller_output_get_nav_roll(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -291,7 +310,11 @@ static inline float mavlink_msg_nav_controller_output_get_nav_roll(const mavlink
  */
 static inline float mavlink_msg_nav_controller_output_get_nav_pitch(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -301,7 +324,11 @@ static inline float mavlink_msg_nav_controller_output_get_nav_pitch(const mavlin
  */
 static inline int16_t mavlink_msg_nav_controller_output_get_nav_bearing(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  20);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -311,7 +338,11 @@ static inline int16_t mavlink_msg_nav_controller_output_get_nav_bearing(const ma
  */
 static inline int16_t mavlink_msg_nav_controller_output_get_target_bearing(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  22);
+#else
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  22);
+#endif
 }
 
 /**
@@ -321,7 +352,11 @@ static inline int16_t mavlink_msg_nav_controller_output_get_target_bearing(const
  */
 static inline uint16_t mavlink_msg_nav_controller_output_get_wp_dist(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  24);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -331,7 +366,11 @@ static inline uint16_t mavlink_msg_nav_controller_output_get_wp_dist(const mavli
  */
 static inline float mavlink_msg_nav_controller_output_get_alt_error(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -341,7 +380,11 @@ static inline float mavlink_msg_nav_controller_output_get_alt_error(const mavlin
  */
 static inline float mavlink_msg_nav_controller_output_get_aspd_error(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -351,7 +394,11 @@ static inline float mavlink_msg_nav_controller_output_get_aspd_error(const mavli
  */
 static inline float mavlink_msg_nav_controller_output_get_xtrack_error(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -362,7 +409,7 @@ static inline float mavlink_msg_nav_controller_output_get_xtrack_error(const mav
  */
 static inline void mavlink_msg_nav_controller_output_decode(const mavlink_message_t* msg, mavlink_nav_controller_output_t* nav_controller_output)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	nav_controller_output->nav_roll = mavlink_msg_nav_controller_output_get_nav_roll(msg);
 	nav_controller_output->nav_pitch = mavlink_msg_nav_controller_output_get_nav_pitch(msg);
 	nav_controller_output->alt_error = mavlink_msg_nav_controller_output_get_alt_error(msg);

@@ -1,5 +1,9 @@
 // MESSAGE MISSION_ITEM_REACHED PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_MISSION_ITEM_REACHED 46
 
 typedef struct __mavlink_mission_item_reached_t
@@ -40,6 +44,10 @@ static inline uint16_t mavlink_msg_mission_item_reached_pack(uint8_t system_id, 
 	_mav_put_uint16_t(buf, 0, seq);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MISSION_ITEM_REACHED_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, seq);
+	
+	
 #else
 	mavlink_mission_item_reached_t packet;
 	packet.seq = seq;
@@ -190,7 +198,11 @@ static inline void mavlink_msg_mission_item_reached_send_buf(mavlink_message_t *
  */
 static inline uint16_t mavlink_msg_mission_item_reached_get_seq(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -201,7 +213,7 @@ static inline uint16_t mavlink_msg_mission_item_reached_get_seq(const mavlink_me
  */
 static inline void mavlink_msg_mission_item_reached_decode(const mavlink_message_t* msg, mavlink_mission_item_reached_t* mission_item_reached)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	mission_item_reached->seq = mavlink_msg_mission_item_reached_get_seq(msg);
 #else
 	memcpy(mission_item_reached, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_MISSION_ITEM_REACHED_LEN);

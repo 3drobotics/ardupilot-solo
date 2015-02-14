@@ -1,5 +1,9 @@
 // MESSAGE SET_POSITION_TARGET_GLOBAL_INT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT 86
 
 typedef struct __mavlink_set_position_target_global_int_t
@@ -100,6 +104,25 @@ static inline uint16_t mavlink_msg_set_position_target_global_int_pack(uint8_t s
 	_mav_put_uint8_t(buf, 52, coordinate_frame);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, lat_int);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 8, lon_int);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, alt);
+		mav_put_float_c2000(&(msg->payload64[0]), 16, vx);
+		mav_put_float_c2000(&(msg->payload64[0]), 20, vy);
+		mav_put_float_c2000(&(msg->payload64[0]), 24, vz);
+		mav_put_float_c2000(&(msg->payload64[0]), 28, afx);
+		mav_put_float_c2000(&(msg->payload64[0]), 32, afy);
+		mav_put_float_c2000(&(msg->payload64[0]), 36, afz);
+		mav_put_float_c2000(&(msg->payload64[0]), 40, yaw);
+		mav_put_float_c2000(&(msg->payload64[0]), 44, yaw_rate);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 48, type_mask);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 50, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 51, target_component);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 52, coordinate_frame);
+	
+	
 #else
 	mavlink_set_position_target_global_int_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -385,7 +408,11 @@ static inline void mavlink_msg_set_position_target_global_int_send_buf(mavlink_m
  */
 static inline uint32_t mavlink_msg_set_position_target_global_int_get_time_boot_ms(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
+#else
+	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -395,7 +422,11 @@ static inline uint32_t mavlink_msg_set_position_target_global_int_get_time_boot_
  */
 static inline uint8_t mavlink_msg_set_position_target_global_int_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  50);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  50);
+#endif
 }
 
 /**
@@ -405,7 +436,11 @@ static inline uint8_t mavlink_msg_set_position_target_global_int_get_target_syst
  */
 static inline uint8_t mavlink_msg_set_position_target_global_int_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  51);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  51);
+#endif
 }
 
 /**
@@ -415,7 +450,11 @@ static inline uint8_t mavlink_msg_set_position_target_global_int_get_target_comp
  */
 static inline uint8_t mavlink_msg_set_position_target_global_int_get_coordinate_frame(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  52);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  52);
+#endif
 }
 
 /**
@@ -425,7 +464,11 @@ static inline uint8_t mavlink_msg_set_position_target_global_int_get_coordinate_
  */
 static inline uint16_t mavlink_msg_set_position_target_global_int_get_type_mask(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  48);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  48);
+#endif
 }
 
 /**
@@ -435,7 +478,11 @@ static inline uint16_t mavlink_msg_set_position_target_global_int_get_type_mask(
  */
 static inline int32_t mavlink_msg_set_position_target_global_int_get_lat_int(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -445,7 +492,11 @@ static inline int32_t mavlink_msg_set_position_target_global_int_get_lat_int(con
  */
 static inline int32_t mavlink_msg_set_position_target_global_int_get_lon_int(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  8);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -455,7 +506,11 @@ static inline int32_t mavlink_msg_set_position_target_global_int_get_lon_int(con
  */
 static inline float mavlink_msg_set_position_target_global_int_get_alt(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -465,7 +520,11 @@ static inline float mavlink_msg_set_position_target_global_int_get_alt(const mav
  */
 static inline float mavlink_msg_set_position_target_global_int_get_vx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -475,7 +534,11 @@ static inline float mavlink_msg_set_position_target_global_int_get_vx(const mavl
  */
 static inline float mavlink_msg_set_position_target_global_int_get_vy(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -485,7 +548,11 @@ static inline float mavlink_msg_set_position_target_global_int_get_vy(const mavl
  */
 static inline float mavlink_msg_set_position_target_global_int_get_vz(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  24);
+#endif
 }
 
 /**
@@ -495,7 +562,11 @@ static inline float mavlink_msg_set_position_target_global_int_get_vz(const mavl
  */
 static inline float mavlink_msg_set_position_target_global_int_get_afx(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  28);
+#endif
 }
 
 /**
@@ -505,7 +576,11 @@ static inline float mavlink_msg_set_position_target_global_int_get_afx(const mav
  */
 static inline float mavlink_msg_set_position_target_global_int_get_afy(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  32);
+#endif
 }
 
 /**
@@ -515,7 +590,11 @@ static inline float mavlink_msg_set_position_target_global_int_get_afy(const mav
  */
 static inline float mavlink_msg_set_position_target_global_int_get_afz(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  36);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  36);
+#endif
 }
 
 /**
@@ -525,7 +604,11 @@ static inline float mavlink_msg_set_position_target_global_int_get_afz(const mav
  */
 static inline float mavlink_msg_set_position_target_global_int_get_yaw(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  40);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  40);
+#endif
 }
 
 /**
@@ -535,7 +618,11 @@ static inline float mavlink_msg_set_position_target_global_int_get_yaw(const mav
  */
 static inline float mavlink_msg_set_position_target_global_int_get_yaw_rate(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  44);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  44);
+#endif
 }
 
 /**
@@ -546,7 +633,7 @@ static inline float mavlink_msg_set_position_target_global_int_get_yaw_rate(cons
  */
 static inline void mavlink_msg_set_position_target_global_int_decode(const mavlink_message_t* msg, mavlink_set_position_target_global_int_t* set_position_target_global_int)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	set_position_target_global_int->time_boot_ms = mavlink_msg_set_position_target_global_int_get_time_boot_ms(msg);
 	set_position_target_global_int->lat_int = mavlink_msg_set_position_target_global_int_get_lat_int(msg);
 	set_position_target_global_int->lon_int = mavlink_msg_set_position_target_global_int_get_lon_int(msg);

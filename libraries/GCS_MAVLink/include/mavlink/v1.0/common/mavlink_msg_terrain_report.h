@@ -1,5 +1,9 @@
 // MESSAGE TERRAIN_REPORT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_TERRAIN_REPORT 136
 
 typedef struct __mavlink_terrain_report_t
@@ -64,6 +68,16 @@ static inline uint16_t mavlink_msg_terrain_report_pack(uint8_t system_id, uint8_
 	_mav_put_uint16_t(buf, 20, loaded);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_TERRAIN_REPORT_LEN);
+#elif MAVLINK_C2000
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 0, lat);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, lon);
+		mav_put_float_c2000(&(msg->payload64[0]), 8, terrain_height);
+		mav_put_float_c2000(&(msg->payload64[0]), 12, current_height);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 16, spacing);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 18, pending);
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 20, loaded);
+	
+	
 #else
 	mavlink_terrain_report_t packet;
 	packet.lat = lat;
@@ -268,7 +282,11 @@ static inline void mavlink_msg_terrain_report_send_buf(mavlink_message_t *msgbuf
  */
 static inline int32_t mavlink_msg_terrain_report_get_lat(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  0);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -278,7 +296,11 @@ static inline int32_t mavlink_msg_terrain_report_get_lat(const mavlink_message_t
  */
 static inline int32_t mavlink_msg_terrain_report_get_lon(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -288,7 +310,11 @@ static inline int32_t mavlink_msg_terrain_report_get_lon(const mavlink_message_t
  */
 static inline uint16_t mavlink_msg_terrain_report_get_spacing(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  16);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  16);
+#endif
 }
 
 /**
@@ -298,7 +324,11 @@ static inline uint16_t mavlink_msg_terrain_report_get_spacing(const mavlink_mess
  */
 static inline float mavlink_msg_terrain_report_get_terrain_height(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -308,7 +338,11 @@ static inline float mavlink_msg_terrain_report_get_terrain_height(const mavlink_
  */
 static inline float mavlink_msg_terrain_report_get_current_height(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
+#else
+	return mav_get_float_c2000(&(msg->payload64[0]),  12);
+#endif
 }
 
 /**
@@ -318,7 +352,11 @@ static inline float mavlink_msg_terrain_report_get_current_height(const mavlink_
  */
 static inline uint16_t mavlink_msg_terrain_report_get_pending(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  18);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  18);
+#endif
 }
 
 /**
@@ -328,7 +366,11 @@ static inline uint16_t mavlink_msg_terrain_report_get_pending(const mavlink_mess
  */
 static inline uint16_t mavlink_msg_terrain_report_get_loaded(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  20);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  20);
+#endif
 }
 
 /**
@@ -339,7 +381,7 @@ static inline uint16_t mavlink_msg_terrain_report_get_loaded(const mavlink_messa
  */
 static inline void mavlink_msg_terrain_report_decode(const mavlink_message_t* msg, mavlink_terrain_report_t* terrain_report)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	terrain_report->lat = mavlink_msg_terrain_report_get_lat(msg);
 	terrain_report->lon = mavlink_msg_terrain_report_get_lon(msg);
 	terrain_report->terrain_height = mavlink_msg_terrain_report_get_terrain_height(msg);

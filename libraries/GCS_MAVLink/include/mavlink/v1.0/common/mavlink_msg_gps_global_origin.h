@@ -1,5 +1,9 @@
 // MESSAGE GPS_GLOBAL_ORIGIN PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN 49
 
 typedef struct __mavlink_gps_global_origin_t
@@ -48,6 +52,12 @@ static inline uint16_t mavlink_msg_gps_global_origin_pack(uint8_t system_id, uin
 	_mav_put_int32_t(buf, 8, altitude);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN_LEN);
+#elif MAVLINK_C2000
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 0, latitude);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 4, longitude);
+		mav_put_int32_t_c2000(&(msg->payload64[0]), 8, altitude);
+	
+	
 #else
 	mavlink_gps_global_origin_t packet;
 	packet.latitude = latitude;
@@ -216,7 +226,11 @@ static inline void mavlink_msg_gps_global_origin_send_buf(mavlink_message_t *msg
  */
 static inline int32_t mavlink_msg_gps_global_origin_get_latitude(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  0);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -226,7 +240,11 @@ static inline int32_t mavlink_msg_gps_global_origin_get_latitude(const mavlink_m
  */
 static inline int32_t mavlink_msg_gps_global_origin_get_longitude(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  4);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  4);
+#endif
 }
 
 /**
@@ -236,7 +254,11 @@ static inline int32_t mavlink_msg_gps_global_origin_get_longitude(const mavlink_
  */
 static inline int32_t mavlink_msg_gps_global_origin_get_altitude(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  8);
+#else
+	return mav_get_int32_t_c2000(&(msg->payload64[0]),  8);
+#endif
 }
 
 /**
@@ -247,7 +269,7 @@ static inline int32_t mavlink_msg_gps_global_origin_get_altitude(const mavlink_m
  */
 static inline void mavlink_msg_gps_global_origin_decode(const mavlink_message_t* msg, mavlink_gps_global_origin_t* gps_global_origin)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	gps_global_origin->latitude = mavlink_msg_gps_global_origin_get_latitude(msg);
 	gps_global_origin->longitude = mavlink_msg_gps_global_origin_get_longitude(msg);
 	gps_global_origin->altitude = mavlink_msg_gps_global_origin_get_altitude(msg);

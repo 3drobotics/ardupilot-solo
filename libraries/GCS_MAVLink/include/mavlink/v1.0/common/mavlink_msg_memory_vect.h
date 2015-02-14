@@ -1,5 +1,9 @@
 // MESSAGE MEMORY_VECT PACKING
 
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
 #define MAVLINK_MSG_ID_MEMORY_VECT 249
 
 typedef struct __mavlink_memory_vect_t
@@ -51,6 +55,13 @@ static inline uint16_t mavlink_msg_memory_vect_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint8_t(buf, 3, type);
 	_mav_put_int8_t_array(buf, 4, value, 32);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MEMORY_VECT_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, address);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, ver);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 3, type);
+	
+		mav_put_int8_t_array_c2000(&(msg->payload64[0]), value, 4, 32);
+	
 #else
 	mavlink_memory_vect_t packet;
 	packet.address = address;
@@ -221,7 +232,11 @@ static inline void mavlink_msg_memory_vect_send_buf(mavlink_message_t *msgbuf, m
  */
 static inline uint16_t mavlink_msg_memory_vect_get_address(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
+#else
+	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -231,7 +246,11 @@ static inline uint16_t mavlink_msg_memory_vect_get_address(const mavlink_message
  */
 static inline uint8_t mavlink_msg_memory_vect_get_ver(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
+#endif
 }
 
 /**
@@ -241,7 +260,11 @@ static inline uint8_t mavlink_msg_memory_vect_get_ver(const mavlink_message_t* m
  */
 static inline uint8_t mavlink_msg_memory_vect_get_type(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  3);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  3);
+#endif
 }
 
 /**
@@ -251,7 +274,11 @@ static inline uint8_t mavlink_msg_memory_vect_get_type(const mavlink_message_t* 
  */
 static inline uint16_t mavlink_msg_memory_vect_get_value(const mavlink_message_t* msg, int8_t *value)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_int8_t_array(msg, value, 32,  4);
+#else
+	return mav_get_int8_t_array_c2000(&(msg->payload64[0]), value, 32,  4);
+#endif
 }
 
 /**
@@ -262,7 +289,7 @@ static inline uint16_t mavlink_msg_memory_vect_get_value(const mavlink_message_t
  */
 static inline void mavlink_msg_memory_vect_decode(const mavlink_message_t* msg, mavlink_memory_vect_t* memory_vect)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	memory_vect->address = mavlink_msg_memory_vect_get_address(msg);
 	memory_vect->ver = mavlink_msg_memory_vect_get_ver(msg);
 	memory_vect->type = mavlink_msg_memory_vect_get_type(msg);
