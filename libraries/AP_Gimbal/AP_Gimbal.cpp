@@ -19,6 +19,7 @@ static float angRateLimit = 0.5f;
 
 void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
 {
+    update_targets_from_rc();
     decode_feedback(msg);
     update_state();
     if (_ekf.getStatus()){
@@ -111,7 +112,7 @@ void AP_Gimbal::update_state()
         // Calculate a demanded quaternion using the demanded roll and pitch and estimated yaw (yaw is slaved to the vehicle)
         Quaternion quatDem;
         //TODO receive target from AP_Mount
-        quatDem.from_euler(0, 0, eulerEst.z);
+        quatDem.from_euler(0, _angle_ef_target_rad.y, eulerEst.z);
 
         //divide the demanded quaternion by the estimated to get the error
         Quaternion quatErr = quatDem / quatEst;
@@ -162,6 +163,22 @@ void AP_Gimbal::send_control()
 
     mavlink_msg_gimbal_control_encode(1, 1, &msg, &control);
     GCS_MAVLINK::routing.forward(&msg);
+}
 
+// returns the angle (degrees*100) that the RC_Channel input is receiving
+int32_t angle_input(RC_Channel* rc, int16_t angle_min, int16_t angle_max)
+{
+    return (rc->get_reverse() ? -1 : 1) * (rc->radio_in - rc->radio_min) * (int32_t)(angle_max - angle_min) / (rc->radio_max - rc->radio_min) + (rc->get_reverse() ? angle_max : angle_min);
+}
 
+// returns the angle (radians) that the RC_Channel input is receiving
+float angle_input_rad(RC_Channel* rc, int16_t angle_min, int16_t angle_max)
+{
+    return radians(angle_input(rc, angle_min, angle_max)*0.01f);
+}
+
+// update_targets_from_rc - updates angle targets using input from receiver
+void AP_Gimbal::update_targets_from_rc()
+{
+    _angle_ef_target_rad.y = angle_input_rad(RC_Channel::rc_channel(tilt_rc_in-1), _tilt_angle_min, _tilt_angle_max);
 }

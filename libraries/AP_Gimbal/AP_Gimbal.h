@@ -79,6 +79,7 @@ private:
     void                    send_control();
     void                    update_state();
     void                    decode_feedback(mavlink_message_t *msg);
+    void                    update_targets_from_rc();
 
     
     float const delta_time = 1.0/100.0;
@@ -104,6 +105,13 @@ private:
 
     // These are corrections (in radians) applied to the to the gimbal joint (x,y,z = roll,pitch,yaw) measurements
     Vector3f const _joint_offsets;
+
+
+    uint8_t const tilt_rc_in = 6; 
+    float const _tilt_angle_min = -90.0f*100;   // min tilt in 0.01 degree units
+    float const _tilt_angle_max = 0.0f*100;     // max tilt in 0.01 degree units
+
+    Vector3f    _angle_ef_target_rad;   // desired earth-frame roll, tilt and pan angles in radians
 };
 
 #endif // __AP_MOUNT_H__
