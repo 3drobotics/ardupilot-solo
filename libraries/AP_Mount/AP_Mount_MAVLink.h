@@ -55,7 +55,7 @@ private:
     SmallEKF _ekf;
 
     // keep last gimbal report
-    mavlink_gimbal_report_t _gimbal_report;
+    mavlink_gimbal_feedback_t _gimbal_report;
 };
 #endif // AP_AHRS_NAVEKF_AVAILABLE
 

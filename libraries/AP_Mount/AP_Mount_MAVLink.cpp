@@ -97,18 +97,18 @@ void AP_Mount_MAVLink::status_msg(mavlink_channel_t chan)
 void AP_Mount_MAVLink::handle_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg)
 {
     // just save it for future processing and reporting to GCS for now
-    mavlink_msg_gimbal_report_decode(msg, &_gimbal_report);
+    mavlink_msg_gimbal_feedback_decode(msg, &_gimbal_report);
 
-    Vector3f delta_angles(_gimbal_report.delta_angle_x,
-                          _gimbal_report.delta_angle_y,
-                          _gimbal_report.delta_angle_z);
-    Vector3f delta_velocity(_gimbal_report.delta_velocity_x,
-                            _gimbal_report.delta_velocity_y,
-                            _gimbal_report.delta_velocity_z);
+    Vector3f delta_angles(_gimbal_report.gyrox,
+                          _gimbal_report.gyroy,
+                          _gimbal_report.gyroz);
+    Vector3f delta_velocity(_gimbal_report.accx,
+                            _gimbal_report.accy,
+                            _gimbal_report.accz);
     Vector3f joint_angles(_gimbal_report.joint_roll,
-                          _gimbal_report.joint_pitch,
-                          _gimbal_report.joint_yaw);
-    _ekf.RunEKF(_gimbal_report.delta_time, delta_angles, delta_velocity, joint_angles);
+                          _gimbal_report.joint_el,
+                          _gimbal_report.joint_az);
+    //_ekf.RunEKF(_gimbal_report.delta_time, delta_angles, delta_velocity, joint_angles);
 
     // get the gyro bias data
     Vector3f gyroBias;
@@ -148,12 +148,14 @@ void AP_Mount_MAVLink::handle_gimbal_report(mavlink_channel_t chan, mavlink_mess
         rateDemand = rateDemand * (0.5f / length);
     }
 
+/*
     // send the gimbal control message
     mavlink_msg_gimbal_control_send(chan, 
                                     msg->sysid,
                                     msg->compid,
                                     rateDemand.x, rateDemand.y, rateDemand.z, // demanded rates
                                     gyroBias.x, gyroBias.y, gyroBias.z);
+                                    */
 }
 
 /*
@@ -161,6 +163,7 @@ void AP_Mount_MAVLink::handle_gimbal_report(mavlink_channel_t chan, mavlink_mess
  */
 void AP_Mount_MAVLink::send_gimbal_report(mavlink_channel_t chan)
 {
+    /*
     mavlink_msg_gimbal_report_send(chan, 
                                    0, 0, // send as broadcast
                                    _gimbal_report.delta_time, 
@@ -173,6 +176,7 @@ void AP_Mount_MAVLink::send_gimbal_report(mavlink_channel_t chan)
                                    _gimbal_report.joint_roll, 
                                    _gimbal_report.joint_pitch, 
                                    _gimbal_report.joint_yaw);
+                                   */
     float tilt;
     Vector3f velocity, euler, gyroBias;
     _ekf.getDebug(tilt, velocity, euler, gyroBias);
