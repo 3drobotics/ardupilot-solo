@@ -1008,7 +1008,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_GIMBAL_FEEDBACK:
     {
-        handle_gimbal_report(camera_mount, msg);
+        //handle_gimbal_report(camera_mount, msg);
         gimbal.receive_feedback(msg);
         break;
     }
