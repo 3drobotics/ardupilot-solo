@@ -180,5 +180,13 @@ float angle_input_rad(RC_Channel* rc, int16_t angle_min, int16_t angle_max)
 // update_targets_from_rc - updates angle targets using input from receiver
 void AP_Gimbal::update_targets_from_rc()
 {
-    _angle_ef_target_rad.y = angle_input_rad(RC_Channel::rc_channel(tilt_rc_in-1), _tilt_angle_min, _tilt_angle_max);
+    float tilt = angle_input_rad(RC_Channel::rc_channel(tilt_rc_in-1), _tilt_angle_min, _tilt_angle_max);
+    float rate = (tilt - _angle_ef_target_rad.y) / delta_time;
+    if(rate > _max_tilt_rate){
+        _angle_ef_target_rad.y += delta_time*_max_tilt_rate;
+    }else if(rate < -_max_tilt_rate){
+        _angle_ef_target_rad.y -= delta_time*_max_tilt_rate;
+    }else{
+        _angle_ef_target_rad.y = tilt;
+    }
 }
