@@ -149,6 +149,7 @@ static void init_ardupilot()
 #if MAVLINK_COMM_NUM_BUFFERS > 2
     // setup serial port for telem2
     gcs[2].setup_uart(serial_manager, AP_SerialManager::SerialProtocol_MAVLink2);
+    gcs[3].setup_uart(hal.uartE, map_baudrate(115), 128, 128);
 #endif
 
 #if FRSKY_TELEM_ENABLED == ENABLED
@@ -273,6 +274,10 @@ static void init_ardupilot()
     // mid-flight, so set the serial ports non-blocking once we are
     // ready to fly
     serial_manager.set_blocking_writes_all(false);
+
+    if (hal.uartE != NULL) {
+        hal.uartE->set_blocking_writes(false);
+    }
 
     cliSerial->print_P(PSTR("\nReady to FLY "));
 
