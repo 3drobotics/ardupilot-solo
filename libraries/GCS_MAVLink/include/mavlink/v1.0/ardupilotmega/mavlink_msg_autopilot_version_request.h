@@ -1,6 +1,10 @@
 // MESSAGE AUTOPILOT_VERSION_REQUEST PACKING
 
-#define MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST 183
+#if MAVLINK_C2000
+#include "protocol_c2000.h"
+#endif
+
+#define MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST 185
 
 typedef struct __mavlink_autopilot_version_request_t
 {
@@ -9,10 +13,10 @@ typedef struct __mavlink_autopilot_version_request_t
 } mavlink_autopilot_version_request_t;
 
 #define MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST_LEN 2
-#define MAVLINK_MSG_ID_183_LEN 2
+#define MAVLINK_MSG_ID_185_LEN 2
 
 #define MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST_CRC 85
-#define MAVLINK_MSG_ID_183_CRC 85
+#define MAVLINK_MSG_ID_185_CRC 85
 
 
 
@@ -44,6 +48,11 @@ static inline uint16_t mavlink_msg_autopilot_version_request_pack(uint8_t system
 	_mav_put_uint8_t(buf, 1, target_component);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST_LEN);
+#elif MAVLINK_C2000
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 0, target_system);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 1, target_component);
+	
+	
 #else
 	mavlink_autopilot_version_request_t packet;
 	packet.target_system = target_system;
@@ -203,7 +212,11 @@ static inline void mavlink_msg_autopilot_version_request_send_buf(mavlink_messag
  */
 static inline uint8_t mavlink_msg_autopilot_version_request_get_target_system(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  0);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  0);
+#endif
 }
 
 /**
@@ -213,7 +226,11 @@ static inline uint8_t mavlink_msg_autopilot_version_request_get_target_system(co
  */
 static inline uint8_t mavlink_msg_autopilot_version_request_get_target_component(const mavlink_message_t* msg)
 {
+#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  1);
+#else
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  1);
+#endif
 }
 
 /**
@@ -224,7 +241,7 @@ static inline uint8_t mavlink_msg_autopilot_version_request_get_target_component
  */
 static inline void mavlink_msg_autopilot_version_request_decode(const mavlink_message_t* msg, mavlink_autopilot_version_request_t* autopilot_version_request)
 {
-#if MAVLINK_NEED_BYTE_SWAP
+#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	autopilot_version_request->target_system = mavlink_msg_autopilot_version_request_get_target_system(msg);
 	autopilot_version_request->target_component = mavlink_msg_autopilot_version_request_get_target_component(msg);
 #else
