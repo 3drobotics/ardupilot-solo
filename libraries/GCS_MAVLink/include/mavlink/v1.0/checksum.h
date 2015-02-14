@@ -5,8 +5,6 @@ extern "C" {
 #ifndef _CHECKSUM_H_
 #define _CHECKSUM_H_
 
-#include "protocol_c2000.h"
-
 /**
  *
  *  CALCULATE THE CHECKSUM
