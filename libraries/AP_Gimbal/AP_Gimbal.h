@@ -65,7 +65,6 @@ private:
 
 
     Vector3f gimbalRateDemVec;       // degrees/s    
-    float vehicleYawRateDem;        // vehicle yaw rate demand
 
 
     const AP_AHRS_NavEKF             &_ahrs;             //  Rotation matrix from earth to plane.
@@ -84,6 +83,12 @@ private:
     // Auxiliary math functions
     Vector3f quaternion_to_vector(Quaternion quat);
     Matrix3f vetor312_to_rotation_matrix(Vector3f vector);
+
+    // Control loop functions
+    Vector3f getGimbalRateDemVecYaw(Quaternion quatEst);
+    Vector3f getGimbalRateDemVecTilt(Quaternion quatEst);
+    Vector3f getGimbalRateDemVecForward(Quaternion quatEst);
+
     
     float const delta_time = 1.0/100.0;
 
