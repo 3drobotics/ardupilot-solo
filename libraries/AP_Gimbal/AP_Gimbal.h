@@ -110,6 +110,7 @@ private:
     uint8_t const tilt_rc_in = 6; 
     float const _tilt_angle_min = -90.0f*100;   // min tilt in 0.01 degree units
     float const _tilt_angle_max = 0.0f*100;     // max tilt in 0.01 degree units
+    float const _max_tilt_rate = 0.5f;          // max tilt rate in rad/s
 
     Vector3f    _angle_ef_target_rad;   // desired earth-frame roll, tilt and pan angles in radians
 };
