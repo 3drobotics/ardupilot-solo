@@ -106,6 +106,18 @@ void AP_Gimbal::update_state()
     Quaternion quatEst;
     _ekf.getQuat(quatEst);
  
+    // Add the control rate vectors
+    gimbalRateDemVec = getGimbalRateDemVecYaw(quatEst) + getGimbalRateDemVecTilt(quatEst) + getGimbalRateDemVecForward(quatEst);
+
+    //Compensate for gyro bias
+    //TODO send the gyro bias to the gimbal        
+    Vector3f gyroBias;
+    _ekf.getGyroBias(gyroBias);
+    gimbalRateDemVec+= gyroBias;
+}
+
+Vector3f AP_Gimbal::getGimbalRateDemVecYaw(Quaternion quatEst)
+{
         // Define rotation from vehicle to gimbal using a 312 rotation sequence
         Matrix3f Tvg = vetor312_to_rotation_matrix(_measurament.joint_angles);
 
@@ -131,7 +143,11 @@ void AP_Gimbal::update_state()
 
         // rotate into gimbal frame to calculate the gimbal rate vector required to keep the yaw gimbal centred
         gimbalRateDemVecYaw = Tvg * gimbalRateDemVecYaw;
+        return gimbalRateDemVecYaw;
+}
 
+Vector3f AP_Gimbal::getGimbalRateDemVecTilt(Quaternion quatEst)
+{
         // Calculate the gimbal 321 Euler angle estimates relative to earth frame
         Vector3f eulerEst;
         quatEst.to_euler(eulerEst.x, eulerEst.y, eulerEst.z);
@@ -146,7 +162,11 @@ void AP_Gimbal::update_state()
 
         // multiply the angle error vector by a gain to calculate a demanded gimbal rate required to control tilt
         Vector3f gimbalRateDemVecTilt = quaternion_to_vector(quatErr) * K_gimbalRate;
+        return gimbalRateDemVecTilt;
+}
 
+Vector3f AP_Gimbal::getGimbalRateDemVecForward(Quaternion quatEst)
+{
         // quaternion demanded at the previous time step
         static Quaternion lastQuatDem;
 
@@ -158,20 +178,9 @@ void AP_Gimbal::update_state()
 
         // convert to a rotation vector and divide by delta time to obtain a forward path rate demand
         Vector3f gimbalRateDemVecForward = quaternion_to_vector(deltaQuat) * (1.0f / delta_time);
-
-        // Add the yaw and tilt control rate vectors
-        gimbalRateDemVec = gimbalRateDemVecYaw + gimbalRateDemVecTilt + gimbalRateDemVecForward;
-
-        // the copter should not be using the gimbal yaw rate demand in this mode of operation, so we set it to zero
-        vehicleYawRateDem = 0.0f;
-
-        //Compensate for gyro bias
-        //TODO send the gyro bias to the gimbal        
-        Vector3f gyroBias;
-        _ekf.getGyroBias(gyroBias);
-        gimbalRateDemVec+= gyroBias;
-
+        return gimbalRateDemVecForward;
 }
+
 
 void AP_Gimbal::send_control()
 {
