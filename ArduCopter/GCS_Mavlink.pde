@@ -612,9 +612,9 @@ bool GCS_MAVLINK::try_send_message(enum ap_message id)
 #endif
         break;
 
-    case MSG_GIMBAL_REPORT:
+    case MSG_GIMBAL_FEEDBACK:
 #if MOUNT == ENABLED
-        CHECK_PAYLOAD_SIZE(GIMBAL_REPORT);
+        CHECK_PAYLOAD_SIZE(GIMBAL_FEEDBACK);
         camera_mount.send_gimbal_report(chan);
 #endif
         break;
@@ -847,7 +847,7 @@ GCS_MAVLINK::data_stream_send(void)
 #endif
         send_message(MSG_MOUNT_STATUS);
         send_message(MSG_OPTICAL_FLOW);
-        send_message(MSG_GIMBAL_REPORT);
+        send_message(MSG_GIMBAL_FEEDBACK);
     }
 }
 
