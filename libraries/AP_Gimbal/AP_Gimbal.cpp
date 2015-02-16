@@ -31,9 +31,9 @@ void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
     //::printf("joint_angles=(%+1.2f %+1.2f %+1.2f)\trate=(%+1.3f %+1.3f %+1.3f)\t\n", _measurament.joint_angles.x,_measurament.joint_angles.y,_measurament.joint_angles.z);
     //::printf("delta_ang=(%+1.3f %+1.3f %+1.3f)\t",_measurament.delta_angles.x,_measurament.delta_angles.y,_measurament.delta_angles.z);     
     //::printf("delta_vel=(%+1.3f %+1.3f %+1.3f)\t",_measurament.delta_velocity.x,_measurament.delta_velocity.y,_measurament.delta_velocity.z);     
-    ::printf("rate=(%+1.3f %+1.3f %+1.3f)\t",gimbalRateDemVec.x,gimbalRateDemVec.y,gimbalRateDemVec.z);
+    //::printf("rate=(%+1.3f %+1.3f %+1.3f)\t",gimbalRateDemVec.x,gimbalRateDemVec.y,gimbalRateDemVec.z);
     //::printf("target=(%+1.3f %+1.3f %+1.3f)\t",_angle_ef_target_rad.x,_angle_ef_target_rad.y,_angle_ef_target_rad.z);
-    ::printf("\n");
+    //::printf("\n");
 }
     
 
