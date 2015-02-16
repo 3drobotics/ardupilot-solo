@@ -44,7 +44,6 @@ public:
     static const struct AP_Param::GroupInfo        var_info[];
 
 private:  
-    float const delta_time = 1.0/100.0;
 
     // maximum vehicle yaw rate in rad/sec
     float const vehYawRateLim = 1.0f;
@@ -72,7 +71,7 @@ private:
     float const _max_tilt_rate = 0.5f;          // max tilt rate in rad/s
 
     struct Measurament {
-        uint8_t id;
+        float delta_time;
         Vector3f delta_angles;
         Vector3f delta_velocity;
         Vector3f joint_angles;
