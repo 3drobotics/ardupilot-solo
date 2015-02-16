@@ -25,6 +25,15 @@ void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
     if (_ekf.getStatus()){
         send_control();
     }
+
+    Quaternion quatEst;_ekf.getQuat(quatEst);Vector3f eulerEst;quatEst.to_euler(eulerEst.x, eulerEst.y, eulerEst.z);
+    //::printf("est=%1.1f %1.1f %1.1f %d\t", eulerEst.x,eulerEst.y,eulerEst.z,_ekf.getStatus());    
+    //::printf("joint_angles=(%+1.2f %+1.2f %+1.2f)\trate=(%+1.3f %+1.3f %+1.3f)\t\n", _measurament.joint_angles.x,_measurament.joint_angles.y,_measurament.joint_angles.z);
+    //::printf("delta_ang=(%+1.3f %+1.3f %+1.3f)\t",_measurament.delta_angles.x,_measurament.delta_angles.y,_measurament.delta_angles.z);     
+    //::printf("delta_vel=(%+1.3f %+1.3f %+1.3f)\t",_measurament.delta_velocity.x,_measurament.delta_velocity.y,_measurament.delta_velocity.z);     
+    ::printf("rate=(%+1.3f %+1.3f %+1.3f)\t",gimbalRateDemVec.x,gimbalRateDemVec.y,gimbalRateDemVec.z);
+    //::printf("target=(%+1.3f %+1.3f %+1.3f)\t",_angle_ef_target_rad.x,_angle_ef_target_rad.y,_angle_ef_target_rad.z);
+    ::printf("\n");
 }
     
 
@@ -33,12 +42,6 @@ void AP_Gimbal::decode_feedback(mavlink_message_t *msg)
     mavlink_gimbal_report_t report_msg;
     mavlink_msg_gimbal_report_decode(msg, &report_msg);
 
-    /*
-    if(expected_id !=_measurament.id){
-        feedback_error_count++;
-        ::printf("error count: %d\n", feedback_error_count);
-    }
-    */
     _measurament.delta_time = report_msg.delta_time;
     _measurament.delta_angles.x = report_msg.delta_angle_x;
     _measurament.delta_angles.y = report_msg.delta_angle_y,
