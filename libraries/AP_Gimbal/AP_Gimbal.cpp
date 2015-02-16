@@ -204,28 +204,20 @@ void AP_Gimbal::send_control()
     GCS_MAVLINK::routing.forward(&msg);
 }
 
-// returns the angle (degrees*100) that the RC_Channel input is receiving
-int32_t angle_input(RC_Channel* rc, int16_t angle_min, int16_t angle_max)
-{
-    return (rc->get_reverse() ? -1 : 1) * (rc->radio_in - rc->radio_min) * (int32_t)(angle_max - angle_min) / (rc->radio_max - rc->radio_min) + (rc->get_reverse() ? angle_max : angle_min);
-}
-
 // returns the angle (radians) that the RC_Channel input is receiving
-float angle_input_rad(RC_Channel* rc, int16_t angle_min, int16_t angle_max)
+float angle_input_rad(RC_Channel* rc, float angle_min, float angle_max)
 {
-    return radians(angle_input(rc, angle_min, angle_max)*0.01f);
+    float input =rc->norm_input();
+    float angle = input*(angle_max - angle_min) + angle_min;
+    
+    return radians(angle);
 }
 
 // update_targets_from_rc - updates angle targets using input from receiver
 void AP_Gimbal::update_targets_from_rc()
 {
-    float tilt = angle_input_rad(RC_Channel::rc_channel(tilt_rc_in-1), _tilt_angle_min, _tilt_angle_max);
-    float rate = (tilt - _angle_ef_target_rad.y) / _measurament.delta_time;
-    if(rate > _max_tilt_rate){
-        _angle_ef_target_rad.y += _measurament.delta_time*_max_tilt_rate;
-    }else if(rate < -_max_tilt_rate){
-        _angle_ef_target_rad.y -= _measurament.delta_time*_max_tilt_rate;
-    }else{
-        _angle_ef_target_rad.y = tilt;
-    }
+    float new_tilt = angle_input_rad(RC_Channel::rc_channel(tilt_rc_in-1), _tilt_angle_min, _tilt_angle_max);
+    float max_change_rads =_max_tilt_rate * _measurament.delta_time;
+    float tilt_change = constrain_float(new_tilt - _angle_ef_target_rad.y,-max_change_rads,+max_change_rads);
+    _angle_ef_target_rad.y += tilt_change;
 }
