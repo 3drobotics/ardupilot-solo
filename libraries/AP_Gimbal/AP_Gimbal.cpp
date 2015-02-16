@@ -107,7 +107,9 @@ void AP_Gimbal::update_state()
     _ekf.getQuat(quatEst);
  
     // Add the control rate vectors
-    gimbalRateDemVec = getGimbalRateDemVecYaw(quatEst) + getGimbalRateDemVecTilt(quatEst) + getGimbalRateDemVecForward(quatEst);
+    gimbalRateDemVec = getGimbalRateDemVecYaw(quatEst);
+    gimbalRateDemVec += getGimbalRateDemVecTilt(quatEst);
+    //gimbalRateDemVec += getGimbalRateDemVecForward(quatEst);
 
     //Compensate for gyro bias
     //TODO send the gyro bias to the gimbal        
