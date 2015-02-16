@@ -55,7 +55,7 @@ enum ap_message {
     MSG_CAMERA_FEEDBACK,
     MSG_MOUNT_STATUS,
     MSG_OPTICAL_FLOW,
-    MSG_GIMBAL_FEEDBACK,
+    MSG_GIMBAL_REPORT,
     MSG_RETRY_DEFERRED // this must be last
 };
 
