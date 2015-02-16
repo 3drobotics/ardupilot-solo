@@ -39,7 +39,7 @@ void AP_Gimbal::decode_feedback(mavlink_message_t *msg)
         ::printf("error count: %d\n", feedback_error_count);
     }
     */
-
+    _measurament.delta_time = report_msg.delta_time;
     _measurament.delta_angles.x = report_msg.delta_angle_x;
     _measurament.delta_angles.y = report_msg.delta_angle_y,
     _measurament.delta_angles.z = report_msg.delta_angle_z;

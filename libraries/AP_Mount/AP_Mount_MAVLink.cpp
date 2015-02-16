@@ -97,14 +97,14 @@ void AP_Mount_MAVLink::status_msg(mavlink_channel_t chan)
 void AP_Mount_MAVLink::handle_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg)
 {
     // just save it for future processing and reporting to GCS for now
-    mavlink_msg_gimbal_feedback_decode(msg, &_gimbal_report);
+    mavlink_msg_gimbal_report_decode(msg, &_gimbal_report);
 
-    Vector3f delta_angles(_gimbal_report.gyrox,
-                          _gimbal_report.gyroy,
-                          _gimbal_report.gyroz);
-    Vector3f delta_velocity(_gimbal_report.accx,
-                            _gimbal_report.accy,
-                            _gimbal_report.accz);
+    Vector3f delta_angles(_gimbal_report.delta_angle_x,
+                          _gimbal_report.delta_angle_y,
+                          _gimbal_report.delta_angle_z);
+    Vector3f delta_velocity(_gimbal_report.delta_velocity_x,
+                            _gimbal_report.delta_velocity_y,
+                            _gimbal_report.delta_velocity_z);
     Vector3f joint_angles(_gimbal_report.joint_roll,
                           _gimbal_report.joint_el,
                           _gimbal_report.joint_az);
