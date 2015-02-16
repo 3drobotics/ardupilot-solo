@@ -558,7 +558,6 @@
       <description>Control message for rate gimbal</description>
       <field type="uint8_t" name="target_system">System ID</field>
       <field type="uint8_t" name="target_component">Component ID</field>
-      <field type="uint8_t" name="id">Message identifier</field>
       <field type="float" name="demanded_rate_x">Demanded angular rate X (rad/s)</field>
       <field type="float" name="demanded_rate_y">Demanded angular rate Y (rad/s)</field>
       <field type="float" name="demanded_rate_z">Demanded angular rate Z (rad/s)</field>
