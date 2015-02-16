@@ -30,25 +30,25 @@ void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
 
 void AP_Gimbal::decode_feedback(mavlink_message_t *msg)
 {
-    mavlink_gimbal_feedback_t feedback_msg;
-    uint8_t expected_id = _measurament.id +1;
-    mavlink_msg_gimbal_feedback_decode(msg, &feedback_msg);
-    _measurament.id = feedback_msg.id;
+    mavlink_gimbal_report_t report_msg;
+    mavlink_msg_gimbal_report_decode(msg, &report_msg);
 
+    /*
     if(expected_id !=_measurament.id){
         feedback_error_count++;
         ::printf("error count: %d\n", feedback_error_count);
     }
+    */
 
-    _measurament.delta_angles.x = feedback_msg.gyrox;
-    _measurament.delta_angles.y = feedback_msg.gyroy,
-    _measurament.delta_angles.z = feedback_msg.gyroz;
-    _measurament.delta_velocity.x = feedback_msg.accx,
-    _measurament.delta_velocity.y = feedback_msg.accy,
-    _measurament.delta_velocity.z = feedback_msg.accz;   
-    _measurament.joint_angles.x = feedback_msg.joint_roll;
-    _measurament.joint_angles.y = feedback_msg.joint_el,
-    _measurament.joint_angles.z = feedback_msg.joint_az;
+    _measurament.delta_angles.x = report_msg.delta_angle_x;
+    _measurament.delta_angles.y = report_msg.delta_angle_y,
+    _measurament.delta_angles.z = report_msg.delta_angle_z;
+    _measurament.delta_velocity.x = report_msg.delta_velocity_x,
+    _measurament.delta_velocity.y = report_msg.delta_velocity_y,
+    _measurament.delta_velocity.z = report_msg.delta_velocity_z;   
+    _measurament.joint_angles.x = report_msg.joint_roll;
+    _measurament.joint_angles.y = report_msg.joint_el,
+    _measurament.joint_angles.z = report_msg.joint_az;
 
     //apply joint angle compensation
     _measurament.joint_angles -= _joint_offsets;
@@ -100,7 +100,7 @@ Matrix3f AP_Gimbal::vetor312_to_rotation_matrix(Vector3f vector)
 void AP_Gimbal::update_state()
 {
     // Run the gimbal attitude and gyro bias estimator
-    _ekf.RunEKF(delta_time, _measurament.delta_angles, _measurament.delta_velocity, _measurament.joint_angles);
+    _ekf.RunEKF(_measurament.delta_time, _measurament.delta_angles, _measurament.delta_velocity, _measurament.joint_angles);
 
     // get the gimbal quaternion estimate
     Quaternion quatEst;
@@ -128,7 +128,7 @@ Vector3f AP_Gimbal::getGimbalRateDemVecYaw(Quaternion quatEst)
         gimbalRateDemVecYaw.z = - K_gimbalRate * _measurament.joint_angles.z;
 
         // Get filtered vehicle turn rate in earth frame
-        vehicleYawRateFilt = (1.0f - yawRateFiltPole * delta_time) * vehicleYawRateFilt + yawRateFiltPole * delta_time * _ahrs.get_yaw_rate_earth();
+        vehicleYawRateFilt = (1.0f - yawRateFiltPole * _measurament.delta_time) * vehicleYawRateFilt + yawRateFiltPole * _measurament.delta_time * _ahrs.get_yaw_rate_earth();
         Vector3f vehicle_rate_ef(0,0,vehicleYawRateFilt);
 
          // calculate the maximum steady state rate error corresponding to the maximum permitted yaw angle error
@@ -179,7 +179,7 @@ Vector3f AP_Gimbal::getGimbalRateDemVecForward(Quaternion quatEst)
         lastQuatDem = quatDemForward;
 
         // convert to a rotation vector and divide by delta time to obtain a forward path rate demand
-        Vector3f gimbalRateDemVecForward = quaternion_to_vector(deltaQuat) * (1.0f / delta_time);
+        Vector3f gimbalRateDemVecForward = quaternion_to_vector(deltaQuat) * (1.0f / _measurament.delta_time);
         return gimbalRateDemVecForward;
 }
 
@@ -190,11 +190,10 @@ void AP_Gimbal::send_control()
     mavlink_gimbal_control_t control;
     control.target_system = _sysid;
     control.target_component = _compid;
-    control.id = _measurament.id;
 
-    control.ratex = gimbalRateDemVec.x;
-    control.ratey = gimbalRateDemVec.y;
-    control.ratez = gimbalRateDemVec.z;
+    control.demanded_rate_x = gimbalRateDemVec.x;
+    control.demanded_rate_y = gimbalRateDemVec.y;
+    control.demanded_rate_z = gimbalRateDemVec.z;
 
     mavlink_msg_gimbal_control_encode(1, 1, &msg, &control);
     GCS_MAVLINK::routing.forward(&msg);
@@ -216,11 +215,11 @@ float angle_input_rad(RC_Channel* rc, int16_t angle_min, int16_t angle_max)
 void AP_Gimbal::update_targets_from_rc()
 {
     float tilt = angle_input_rad(RC_Channel::rc_channel(tilt_rc_in-1), _tilt_angle_min, _tilt_angle_max);
-    float rate = (tilt - _angle_ef_target_rad.y) / delta_time;
+    float rate = (tilt - _angle_ef_target_rad.y) / _measurament.delta_time;
     if(rate > _max_tilt_rate){
-        _angle_ef_target_rad.y += delta_time*_max_tilt_rate;
+        _angle_ef_target_rad.y += _measurament.delta_time*_max_tilt_rate;
     }else if(rate < -_max_tilt_rate){
-        _angle_ef_target_rad.y -= delta_time*_max_tilt_rate;
+        _angle_ef_target_rad.y -= _measurament.delta_time*_max_tilt_rate;
     }else{
         _angle_ef_target_rad.y = tilt;
     }
