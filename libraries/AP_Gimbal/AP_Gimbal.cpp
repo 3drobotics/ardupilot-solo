@@ -70,7 +70,7 @@ void AP_Gimbal::update_state()
     gimbalRateDemVec.zero();
     gimbalRateDemVec += getGimbalRateDemVecYaw(quatEst);
     gimbalRateDemVec += getGimbalRateDemVecTilt(quatEst);
-    //gimbalRateDemVec += getGimbalRateDemVecForward(quatEst);
+    gimbalRateDemVec += getGimbalRateDemVecForward(quatEst);
     gimbalRateDemVec += getGimbalRateDemVecGyroBias();
 }
 
@@ -155,30 +155,14 @@ Vector3f AP_Gimbal::getGimbalRateDemVecTilt(Quaternion quatEst)
 Vector3f AP_Gimbal::getGimbalRateDemVecForward(Quaternion quatEst)
 {
         // quaternion demanded at the previous time step
-        static Quaternion lastQuatDem;
+        static float lastDem;
 
         // calculate the delta rotation from the last to the current demand where the demand does not incorporate the copters yaw rotation
-        Quaternion quatDemForward;
-        quatDemForward.from_euler(0, _angle_ef_target_rad.y, 0);
-        Quaternion deltaQuat = quatDemForward / lastQuatDem;
-        lastQuatDem = quatDemForward;
+        float delta = _angle_ef_target_rad.y - lastDem;
+        lastDem = _angle_ef_target_rad.y;
 
-        // convert to a rotation vector and divide by delta time to obtain a forward path rate demand
-        Vector3f deltaVector;
-        float scaler = 1.0f-deltaQuat[0]*deltaQuat[0];
-        if (scaler > 1e-12) {
-            scaler = 1.0f/sqrtf(scaler);
-            if (deltaQuat[0] < 0.0f) {
-                scaler *= -1.0f;
-            }
-            deltaVector.x = deltaQuat[1] * scaler;
-            deltaVector.y = deltaQuat[2] * scaler;
-            deltaVector.z = deltaQuat[3] * scaler;
-        } else {
-            deltaVector.zero();
-        }     
-
-        Vector3f gimbalRateDemVecForward = deltaVector * (1.0f / _measurament.delta_time);
+        Vector3f gimbalRateDemVecForward;
+        gimbalRateDemVecForward.y = delta / _measurament.delta_time;
         return gimbalRateDemVecForward;
 }
 
