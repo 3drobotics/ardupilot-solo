@@ -1,9 +1,5 @@
 // MESSAGE SERIAL_CONTROL PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_SERIAL_CONTROL 126
 
 typedef struct __mavlink_serial_control_t
@@ -63,15 +59,6 @@ static inline uint16_t mavlink_msg_serial_control_pack(uint8_t system_id, uint8_
 	_mav_put_uint8_t(buf, 8, count);
 	_mav_put_uint8_t_array(buf, 9, data, 70);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SERIAL_CONTROL_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, baudrate);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 4, timeout);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 6, device);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 7, flags);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 8, count);
-	
-		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), data, 9, 70);
-	
 #else
 	mavlink_serial_control_t packet;
 	packet.baudrate = baudrate;
@@ -260,11 +247,7 @@ static inline void mavlink_msg_serial_control_send_buf(mavlink_message_t *msgbuf
  */
 static inline uint8_t mavlink_msg_serial_control_get_device(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  6);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  6);
-#endif
 }
 
 /**
@@ -274,11 +257,7 @@ static inline uint8_t mavlink_msg_serial_control_get_device(const mavlink_messag
  */
 static inline uint8_t mavlink_msg_serial_control_get_flags(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  7);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  7);
-#endif
 }
 
 /**
@@ -288,11 +267,7 @@ static inline uint8_t mavlink_msg_serial_control_get_flags(const mavlink_message
  */
 static inline uint16_t mavlink_msg_serial_control_get_timeout(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  4);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  4);
-#endif
 }
 
 /**
@@ -302,11 +277,7 @@ static inline uint16_t mavlink_msg_serial_control_get_timeout(const mavlink_mess
  */
 static inline uint32_t mavlink_msg_serial_control_get_baudrate(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
-#else
-	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -316,11 +287,7 @@ static inline uint32_t mavlink_msg_serial_control_get_baudrate(const mavlink_mes
  */
 static inline uint8_t mavlink_msg_serial_control_get_count(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  8);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -330,11 +297,7 @@ static inline uint8_t mavlink_msg_serial_control_get_count(const mavlink_message
  */
 static inline uint16_t mavlink_msg_serial_control_get_data(const mavlink_message_t* msg, uint8_t *data)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, data, 70,  9);
-#else
-	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), data, 70,  9);
-#endif
 }
 
 /**
@@ -345,7 +308,7 @@ static inline uint16_t mavlink_msg_serial_control_get_data(const mavlink_message
  */
 static inline void mavlink_msg_serial_control_decode(const mavlink_message_t* msg, mavlink_serial_control_t* serial_control)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	serial_control->baudrate = mavlink_msg_serial_control_get_baudrate(msg);
 	serial_control->timeout = mavlink_msg_serial_control_get_timeout(msg);
 	serial_control->device = mavlink_msg_serial_control_get_device(msg);

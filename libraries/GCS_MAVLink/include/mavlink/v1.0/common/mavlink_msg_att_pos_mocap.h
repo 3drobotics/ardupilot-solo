@@ -1,9 +1,5 @@
 // MESSAGE ATT_POS_MOCAP PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_ATT_POS_MOCAP 138
 
 typedef struct __mavlink_att_pos_mocap_t
@@ -59,14 +55,6 @@ static inline uint16_t mavlink_msg_att_pos_mocap_pack(uint8_t system_id, uint8_t
 	_mav_put_float(buf, 32, z);
 	_mav_put_float_array(buf, 8, q, 4);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_ATT_POS_MOCAP_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
-		mav_put_float_c2000(&(msg->payload64[0]), 24, x);
-		mav_put_float_c2000(&(msg->payload64[0]), 28, y);
-		mav_put_float_c2000(&(msg->payload64[0]), 32, z);
-	
-		mav_put_float_array_c2000(&(msg->payload64[0]), q, 8, 4);
-	
 #else
 	mavlink_att_pos_mocap_t packet;
 	packet.time_usec = time_usec;
@@ -246,11 +234,7 @@ static inline void mavlink_msg_att_pos_mocap_send_buf(mavlink_message_t *msgbuf,
  */
 static inline uint64_t mavlink_msg_att_pos_mocap_get_time_usec(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
-#else
-	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -260,11 +244,7 @@ static inline uint64_t mavlink_msg_att_pos_mocap_get_time_usec(const mavlink_mes
  */
 static inline uint16_t mavlink_msg_att_pos_mocap_get_q(const mavlink_message_t* msg, float *q)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float_array(msg, q, 4,  8);
-#else
-	return mav_get_float_array_c2000(&(msg->payload64[0]), q, 4,  8);
-#endif
 }
 
 /**
@@ -274,11 +254,7 @@ static inline uint16_t mavlink_msg_att_pos_mocap_get_q(const mavlink_message_t* 
  */
 static inline float mavlink_msg_att_pos_mocap_get_x(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  24);
-#endif
 }
 
 /**
@@ -288,11 +264,7 @@ static inline float mavlink_msg_att_pos_mocap_get_x(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_att_pos_mocap_get_y(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  28);
-#endif
 }
 
 /**
@@ -302,11 +274,7 @@ static inline float mavlink_msg_att_pos_mocap_get_y(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_att_pos_mocap_get_z(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  32);
-#endif
 }
 
 /**
@@ -317,7 +285,7 @@ static inline float mavlink_msg_att_pos_mocap_get_z(const mavlink_message_t* msg
  */
 static inline void mavlink_msg_att_pos_mocap_decode(const mavlink_message_t* msg, mavlink_att_pos_mocap_t* att_pos_mocap)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	att_pos_mocap->time_usec = mavlink_msg_att_pos_mocap_get_time_usec(msg);
 	mavlink_msg_att_pos_mocap_get_q(msg, att_pos_mocap->q);
 	att_pos_mocap->x = mavlink_msg_att_pos_mocap_get_x(msg);

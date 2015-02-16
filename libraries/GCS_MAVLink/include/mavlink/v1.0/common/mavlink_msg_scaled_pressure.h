@@ -1,9 +1,5 @@
 // MESSAGE SCALED_PRESSURE PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_SCALED_PRESSURE 29
 
 typedef struct __mavlink_scaled_pressure_t
@@ -56,13 +52,6 @@ static inline uint16_t mavlink_msg_scaled_pressure_pack(uint8_t system_id, uint8
 	_mav_put_int16_t(buf, 12, temperature);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SCALED_PRESSURE_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
-		mav_put_float_c2000(&(msg->payload64[0]), 4, press_abs);
-		mav_put_float_c2000(&(msg->payload64[0]), 8, press_diff);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 12, temperature);
-	
-	
 #else
 	mavlink_scaled_pressure_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -240,11 +229,7 @@ static inline void mavlink_msg_scaled_pressure_send_buf(mavlink_message_t *msgbu
  */
 static inline uint32_t mavlink_msg_scaled_pressure_get_time_boot_ms(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
-#else
-	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -254,11 +239,7 @@ static inline uint32_t mavlink_msg_scaled_pressure_get_time_boot_ms(const mavlin
  */
 static inline float mavlink_msg_scaled_pressure_get_press_abs(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  4);
-#endif
 }
 
 /**
@@ -268,11 +249,7 @@ static inline float mavlink_msg_scaled_pressure_get_press_abs(const mavlink_mess
  */
 static inline float mavlink_msg_scaled_pressure_get_press_diff(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -282,11 +259,7 @@ static inline float mavlink_msg_scaled_pressure_get_press_diff(const mavlink_mes
  */
 static inline int16_t mavlink_msg_scaled_pressure_get_temperature(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  12);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  12);
-#endif
 }
 
 /**
@@ -297,7 +270,7 @@ static inline int16_t mavlink_msg_scaled_pressure_get_temperature(const mavlink_
  */
 static inline void mavlink_msg_scaled_pressure_decode(const mavlink_message_t* msg, mavlink_scaled_pressure_t* scaled_pressure)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	scaled_pressure->time_boot_ms = mavlink_msg_scaled_pressure_get_time_boot_ms(msg);
 	scaled_pressure->press_abs = mavlink_msg_scaled_pressure_get_press_abs(msg);
 	scaled_pressure->press_diff = mavlink_msg_scaled_pressure_get_press_diff(msg);

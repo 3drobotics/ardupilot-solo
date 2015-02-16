@@ -1,18 +1,16 @@
 #ifndef MAVLINK_TYPES_H_
 #define MAVLINK_TYPES_H_
 
-// Visual Studio versions before 2013 don't conform to C99.
-#if (defined _MSC_VER) && (_MSC_VER < 1800)
-#include <stdint.h>
-#else
-#include <inttypes.h>
+// Visual Studio versions before 2010 don't have stdint.h, so we just error out.
+#if (defined _MSC_VER) && (_MSC_VER < 1600)
+#error "The C-MAVLink implementation requires Visual Studio 2010 or greater"
 #endif
+
+#include <stdint.h>
 
 // Macro to define packed structures
 #ifdef __GNUC__
   #define MAVPACKED( __Declaration__ ) __Declaration__ __attribute__((packed))
-#elif MAVLINK_C2000
-  #define MAVPACKED( __Declaration__ ) __Declaration__
 #else
   #define MAVPACKED( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
 #endif

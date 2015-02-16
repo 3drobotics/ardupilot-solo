@@ -1,9 +1,5 @@
 // MESSAGE AUTH_KEY PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_AUTH_KEY 7
 
 typedef struct __mavlink_auth_key_t
@@ -44,10 +40,6 @@ static inline uint16_t mavlink_msg_auth_key_pack(uint8_t system_id, uint8_t comp
 
 	_mav_put_char_array(buf, 0, key, 32);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_AUTH_KEY_LEN);
-#elif MAVLINK_C2000
-	
-		mav_put_char_array_c2000(&(msg->payload64[0]), key, 0, 32);
-	
 #else
 	mavlink_auth_key_t packet;
 
@@ -198,11 +190,7 @@ static inline void mavlink_msg_auth_key_send_buf(mavlink_message_t *msgbuf, mavl
  */
 static inline uint16_t mavlink_msg_auth_key_get_key(const mavlink_message_t* msg, char *key)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_char_array(msg, key, 32,  0);
-#else
-	return mav_get_char_array_c2000(&(msg->payload64[0]), key, 32,  0);
-#endif
 }
 
 /**
@@ -213,7 +201,7 @@ static inline uint16_t mavlink_msg_auth_key_get_key(const mavlink_message_t* msg
  */
 static inline void mavlink_msg_auth_key_decode(const mavlink_message_t* msg, mavlink_auth_key_t* auth_key)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	mavlink_msg_auth_key_get_key(msg, auth_key->key);
 #else
 	memcpy(auth_key, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_AUTH_KEY_LEN);

@@ -1,9 +1,5 @@
 // MESSAGE MANUAL_CONTROL PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_MANUAL_CONTROL 69
 
 typedef struct __mavlink_manual_control_t
@@ -64,15 +60,6 @@ static inline uint16_t mavlink_msg_manual_control_pack(uint8_t system_id, uint8_
 	_mav_put_uint8_t(buf, 10, target);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MANUAL_CONTROL_LEN);
-#elif MAVLINK_C2000
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 0, x);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 2, y);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 4, z);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 6, r);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 8, buttons);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 10, target);
-	
-	
 #else
 	mavlink_manual_control_t packet;
 	packet.x = x;
@@ -268,11 +255,7 @@ static inline void mavlink_msg_manual_control_send_buf(mavlink_message_t *msgbuf
  */
 static inline uint8_t mavlink_msg_manual_control_get_target(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  10);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  10);
-#endif
 }
 
 /**
@@ -282,11 +265,7 @@ static inline uint8_t mavlink_msg_manual_control_get_target(const mavlink_messag
  */
 static inline int16_t mavlink_msg_manual_control_get_x(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  0);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -296,11 +275,7 @@ static inline int16_t mavlink_msg_manual_control_get_x(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_manual_control_get_y(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  2);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  2);
-#endif
 }
 
 /**
@@ -310,11 +285,7 @@ static inline int16_t mavlink_msg_manual_control_get_y(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_manual_control_get_z(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  4);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  4);
-#endif
 }
 
 /**
@@ -324,11 +295,7 @@ static inline int16_t mavlink_msg_manual_control_get_z(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_manual_control_get_r(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  6);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  6);
-#endif
 }
 
 /**
@@ -338,11 +305,7 @@ static inline int16_t mavlink_msg_manual_control_get_r(const mavlink_message_t* 
  */
 static inline uint16_t mavlink_msg_manual_control_get_buttons(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  8);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -353,7 +316,7 @@ static inline uint16_t mavlink_msg_manual_control_get_buttons(const mavlink_mess
  */
 static inline void mavlink_msg_manual_control_decode(const mavlink_message_t* msg, mavlink_manual_control_t* manual_control)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	manual_control->x = mavlink_msg_manual_control_get_x(msg);
 	manual_control->y = mavlink_msg_manual_control_get_y(msg);
 	manual_control->z = mavlink_msg_manual_control_get_z(msg);

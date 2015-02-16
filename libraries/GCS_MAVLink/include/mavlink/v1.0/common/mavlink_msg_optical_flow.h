@@ -1,9 +1,5 @@
 // MESSAGE OPTICAL_FLOW PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_OPTICAL_FLOW 100
 
 typedef struct __mavlink_optical_flow_t
@@ -72,17 +68,6 @@ static inline uint16_t mavlink_msg_optical_flow_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint8_t(buf, 25, quality);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
-		mav_put_float_c2000(&(msg->payload64[0]), 8, flow_comp_m_x);
-		mav_put_float_c2000(&(msg->payload64[0]), 12, flow_comp_m_y);
-		mav_put_float_c2000(&(msg->payload64[0]), 16, ground_distance);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 20, flow_x);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 22, flow_y);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 24, sensor_id);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 25, quality);
-	
-	
 #else
 	mavlink_optical_flow_t packet;
 	packet.time_usec = time_usec;
@@ -296,11 +281,7 @@ static inline void mavlink_msg_optical_flow_send_buf(mavlink_message_t *msgbuf, 
  */
 static inline uint64_t mavlink_msg_optical_flow_get_time_usec(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
-#else
-	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -310,11 +291,7 @@ static inline uint64_t mavlink_msg_optical_flow_get_time_usec(const mavlink_mess
  */
 static inline uint8_t mavlink_msg_optical_flow_get_sensor_id(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  24);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  24);
-#endif
 }
 
 /**
@@ -324,11 +301,7 @@ static inline uint8_t mavlink_msg_optical_flow_get_sensor_id(const mavlink_messa
  */
 static inline int16_t mavlink_msg_optical_flow_get_flow_x(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  20);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  20);
-#endif
 }
 
 /**
@@ -338,11 +311,7 @@ static inline int16_t mavlink_msg_optical_flow_get_flow_x(const mavlink_message_
  */
 static inline int16_t mavlink_msg_optical_flow_get_flow_y(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  22);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  22);
-#endif
 }
 
 /**
@@ -352,11 +321,7 @@ static inline int16_t mavlink_msg_optical_flow_get_flow_y(const mavlink_message_
  */
 static inline float mavlink_msg_optical_flow_get_flow_comp_m_x(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -366,11 +331,7 @@ static inline float mavlink_msg_optical_flow_get_flow_comp_m_x(const mavlink_mes
  */
 static inline float mavlink_msg_optical_flow_get_flow_comp_m_y(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  12);
-#endif
 }
 
 /**
@@ -380,11 +341,7 @@ static inline float mavlink_msg_optical_flow_get_flow_comp_m_y(const mavlink_mes
  */
 static inline uint8_t mavlink_msg_optical_flow_get_quality(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  25);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  25);
-#endif
 }
 
 /**
@@ -394,11 +351,7 @@ static inline uint8_t mavlink_msg_optical_flow_get_quality(const mavlink_message
  */
 static inline float mavlink_msg_optical_flow_get_ground_distance(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  16);
-#endif
 }
 
 /**
@@ -409,7 +362,7 @@ static inline float mavlink_msg_optical_flow_get_ground_distance(const mavlink_m
  */
 static inline void mavlink_msg_optical_flow_decode(const mavlink_message_t* msg, mavlink_optical_flow_t* optical_flow)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	optical_flow->time_usec = mavlink_msg_optical_flow_get_time_usec(msg);
 	optical_flow->flow_comp_m_x = mavlink_msg_optical_flow_get_flow_comp_m_x(msg);
 	optical_flow->flow_comp_m_y = mavlink_msg_optical_flow_get_flow_comp_m_y(msg);

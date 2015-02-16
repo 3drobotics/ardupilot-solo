@@ -1,9 +1,5 @@
 // MESSAGE STATUSTEXT PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_STATUSTEXT 253
 
 typedef struct __mavlink_statustext_t
@@ -47,11 +43,6 @@ static inline uint16_t mavlink_msg_statustext_pack(uint8_t system_id, uint8_t co
 	_mav_put_uint8_t(buf, 0, severity);
 	_mav_put_char_array(buf, 1, text, 50);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_STATUSTEXT_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 0, severity);
-	
-		mav_put_char_array_c2000(&(msg->payload64[0]), text, 1, 50);
-	
 #else
 	mavlink_statustext_t packet;
 	packet.severity = severity;
@@ -204,11 +195,7 @@ static inline void mavlink_msg_statustext_send_buf(mavlink_message_t *msgbuf, ma
  */
 static inline uint8_t mavlink_msg_statustext_get_severity(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  0);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -218,11 +205,7 @@ static inline uint8_t mavlink_msg_statustext_get_severity(const mavlink_message_
  */
 static inline uint16_t mavlink_msg_statustext_get_text(const mavlink_message_t* msg, char *text)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_char_array(msg, text, 50,  1);
-#else
-	return mav_get_char_array_c2000(&(msg->payload64[0]), text, 50,  1);
-#endif
 }
 
 /**
@@ -233,7 +216,7 @@ static inline uint16_t mavlink_msg_statustext_get_text(const mavlink_message_t* 
  */
 static inline void mavlink_msg_statustext_decode(const mavlink_message_t* msg, mavlink_statustext_t* statustext)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	statustext->severity = mavlink_msg_statustext_get_severity(msg);
 	mavlink_msg_statustext_get_text(msg, statustext->text);
 #else

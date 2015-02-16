@@ -1,9 +1,5 @@
 // MESSAGE CAMERA_FEEDBACK PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_CAMERA_FEEDBACK 180
 
 typedef struct __mavlink_camera_feedback_t
@@ -92,22 +88,6 @@ static inline uint16_t mavlink_msg_camera_feedback_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 44, flags);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_CAMERA_FEEDBACK_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
-		mav_put_int32_t_c2000(&(msg->payload64[0]), 8, lat);
-		mav_put_int32_t_c2000(&(msg->payload64[0]), 12, lng);
-		mav_put_float_c2000(&(msg->payload64[0]), 16, alt_msl);
-		mav_put_float_c2000(&(msg->payload64[0]), 20, alt_rel);
-		mav_put_float_c2000(&(msg->payload64[0]), 24, roll);
-		mav_put_float_c2000(&(msg->payload64[0]), 28, pitch);
-		mav_put_float_c2000(&(msg->payload64[0]), 32, yaw);
-		mav_put_float_c2000(&(msg->payload64[0]), 36, foc_len);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 40, img_idx);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 42, target_system);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 43, cam_idx);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 44, flags);
-	
-	
 #else
 	mavlink_camera_feedback_t packet;
 	packet.time_usec = time_usec;
@@ -366,11 +346,7 @@ static inline void mavlink_msg_camera_feedback_send_buf(mavlink_message_t *msgbu
  */
 static inline uint64_t mavlink_msg_camera_feedback_get_time_usec(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
-#else
-	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -380,11 +356,7 @@ static inline uint64_t mavlink_msg_camera_feedback_get_time_usec(const mavlink_m
  */
 static inline uint8_t mavlink_msg_camera_feedback_get_target_system(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  42);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  42);
-#endif
 }
 
 /**
@@ -394,11 +366,7 @@ static inline uint8_t mavlink_msg_camera_feedback_get_target_system(const mavlin
  */
 static inline uint8_t mavlink_msg_camera_feedback_get_cam_idx(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  43);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  43);
-#endif
 }
 
 /**
@@ -408,11 +376,7 @@ static inline uint8_t mavlink_msg_camera_feedback_get_cam_idx(const mavlink_mess
  */
 static inline uint16_t mavlink_msg_camera_feedback_get_img_idx(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  40);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  40);
-#endif
 }
 
 /**
@@ -422,11 +386,7 @@ static inline uint16_t mavlink_msg_camera_feedback_get_img_idx(const mavlink_mes
  */
 static inline int32_t mavlink_msg_camera_feedback_get_lat(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  8);
-#else
-	return mav_get_int32_t_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -436,11 +396,7 @@ static inline int32_t mavlink_msg_camera_feedback_get_lat(const mavlink_message_
  */
 static inline int32_t mavlink_msg_camera_feedback_get_lng(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  12);
-#else
-	return mav_get_int32_t_c2000(&(msg->payload64[0]),  12);
-#endif
 }
 
 /**
@@ -450,11 +406,7 @@ static inline int32_t mavlink_msg_camera_feedback_get_lng(const mavlink_message_
  */
 static inline float mavlink_msg_camera_feedback_get_alt_msl(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  16);
-#endif
 }
 
 /**
@@ -464,11 +416,7 @@ static inline float mavlink_msg_camera_feedback_get_alt_msl(const mavlink_messag
  */
 static inline float mavlink_msg_camera_feedback_get_alt_rel(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  20);
-#endif
 }
 
 /**
@@ -478,11 +426,7 @@ static inline float mavlink_msg_camera_feedback_get_alt_rel(const mavlink_messag
  */
 static inline float mavlink_msg_camera_feedback_get_roll(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  24);
-#endif
 }
 
 /**
@@ -492,11 +436,7 @@ static inline float mavlink_msg_camera_feedback_get_roll(const mavlink_message_t
  */
 static inline float mavlink_msg_camera_feedback_get_pitch(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  28);
-#endif
 }
 
 /**
@@ -506,11 +446,7 @@ static inline float mavlink_msg_camera_feedback_get_pitch(const mavlink_message_
  */
 static inline float mavlink_msg_camera_feedback_get_yaw(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  32);
-#endif
 }
 
 /**
@@ -520,11 +456,7 @@ static inline float mavlink_msg_camera_feedback_get_yaw(const mavlink_message_t*
  */
 static inline float mavlink_msg_camera_feedback_get_foc_len(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  36);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  36);
-#endif
 }
 
 /**
@@ -534,11 +466,7 @@ static inline float mavlink_msg_camera_feedback_get_foc_len(const mavlink_messag
  */
 static inline uint8_t mavlink_msg_camera_feedback_get_flags(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  44);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  44);
-#endif
 }
 
 /**
@@ -549,7 +477,7 @@ static inline uint8_t mavlink_msg_camera_feedback_get_flags(const mavlink_messag
  */
 static inline void mavlink_msg_camera_feedback_decode(const mavlink_message_t* msg, mavlink_camera_feedback_t* camera_feedback)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	camera_feedback->time_usec = mavlink_msg_camera_feedback_get_time_usec(msg);
 	camera_feedback->lat = mavlink_msg_camera_feedback_get_lat(msg);
 	camera_feedback->lng = mavlink_msg_camera_feedback_get_lng(msg);

@@ -1,9 +1,5 @@
 // MESSAGE COMMAND_ACK PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_COMMAND_ACK 77
 
 typedef struct __mavlink_command_ack_t
@@ -48,11 +44,6 @@ static inline uint16_t mavlink_msg_command_ack_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint8_t(buf, 2, result);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_COMMAND_ACK_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, command);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, result);
-	
-	
 #else
 	mavlink_command_ack_t packet;
 	packet.command = command;
@@ -212,11 +203,7 @@ static inline void mavlink_msg_command_ack_send_buf(mavlink_message_t *msgbuf, m
  */
 static inline uint16_t mavlink_msg_command_ack_get_command(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -226,11 +213,7 @@ static inline uint16_t mavlink_msg_command_ack_get_command(const mavlink_message
  */
 static inline uint8_t mavlink_msg_command_ack_get_result(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
-#endif
 }
 
 /**
@@ -241,7 +224,7 @@ static inline uint8_t mavlink_msg_command_ack_get_result(const mavlink_message_t
  */
 static inline void mavlink_msg_command_ack_decode(const mavlink_message_t* msg, mavlink_command_ack_t* command_ack)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	command_ack->command = mavlink_msg_command_ack_get_command(msg);
 	command_ack->result = mavlink_msg_command_ack_get_result(msg);
 #else

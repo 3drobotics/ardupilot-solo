@@ -1,9 +1,5 @@
 // MESSAGE AP_ADC PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_AP_ADC 153
 
 typedef struct __mavlink_ap_adc_t
@@ -64,15 +60,6 @@ static inline uint16_t mavlink_msg_ap_adc_pack(uint8_t system_id, uint8_t compon
 	_mav_put_uint16_t(buf, 10, adc6);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_AP_ADC_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, adc1);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 2, adc2);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 4, adc3);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 6, adc4);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 8, adc5);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 10, adc6);
-	
-	
 #else
 	mavlink_ap_adc_t packet;
 	packet.adc1 = adc1;
@@ -268,11 +255,7 @@ static inline void mavlink_msg_ap_adc_send_buf(mavlink_message_t *msgbuf, mavlin
  */
 static inline uint16_t mavlink_msg_ap_adc_get_adc1(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -282,11 +265,7 @@ static inline uint16_t mavlink_msg_ap_adc_get_adc1(const mavlink_message_t* msg)
  */
 static inline uint16_t mavlink_msg_ap_adc_get_adc2(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  2);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  2);
-#endif
 }
 
 /**
@@ -296,11 +275,7 @@ static inline uint16_t mavlink_msg_ap_adc_get_adc2(const mavlink_message_t* msg)
  */
 static inline uint16_t mavlink_msg_ap_adc_get_adc3(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  4);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  4);
-#endif
 }
 
 /**
@@ -310,11 +285,7 @@ static inline uint16_t mavlink_msg_ap_adc_get_adc3(const mavlink_message_t* msg)
  */
 static inline uint16_t mavlink_msg_ap_adc_get_adc4(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  6);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  6);
-#endif
 }
 
 /**
@@ -324,11 +295,7 @@ static inline uint16_t mavlink_msg_ap_adc_get_adc4(const mavlink_message_t* msg)
  */
 static inline uint16_t mavlink_msg_ap_adc_get_adc5(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  8);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -338,11 +305,7 @@ static inline uint16_t mavlink_msg_ap_adc_get_adc5(const mavlink_message_t* msg)
  */
 static inline uint16_t mavlink_msg_ap_adc_get_adc6(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  10);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  10);
-#endif
 }
 
 /**
@@ -353,7 +316,7 @@ static inline uint16_t mavlink_msg_ap_adc_get_adc6(const mavlink_message_t* msg)
  */
 static inline void mavlink_msg_ap_adc_decode(const mavlink_message_t* msg, mavlink_ap_adc_t* ap_adc)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	ap_adc->adc1 = mavlink_msg_ap_adc_get_adc1(msg);
 	ap_adc->adc2 = mavlink_msg_ap_adc_get_adc2(msg);
 	ap_adc->adc3 = mavlink_msg_ap_adc_get_adc3(msg);
