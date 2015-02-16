@@ -54,49 +54,6 @@ void AP_Gimbal::decode_feedback(mavlink_message_t *msg)
     _measurament.joint_angles -= _joint_offsets;
 }
 
-
-// convert the quaternion to rotation vector
-Vector3f AP_Gimbal::quaternion_to_vector(Quaternion quat)
-{
-        Vector3f vector;
-        float scaler = 1.0f-quat[0]*quat[0];
-        if (scaler > 1e-12) {
-            scaler = 1.0f/sqrtf(scaler);
-            if (quat[0] < 0.0f) {
-                scaler *= -1.0f;
-            }
-            vector.x = quat[1] * scaler;
-            vector.y = quat[2] * scaler;
-            vector.z = quat[3] * scaler;
-        } else {
-            vector.zero();
-        }
-    return vector;
-}
-
-
-// Define rotation matrix using a 312 rotation sequence vector
-Matrix3f AP_Gimbal::vetor312_to_rotation_matrix(Vector3f vector)
-{
-        Matrix3f matrix;
-        float cosPhi = cosf(vector.x);
-        float cosTheta = cosf(vector.y);
-        float sinPhi = sinf(vector.x);
-        float sinTheta = sinf(vector.y);
-        float sinPsi = sinf(vector.z);
-        float cosPsi = cosf(vector.z);
-        matrix[0][0] = cosTheta*cosPsi-sinPsi*sinPhi*sinTheta;
-        matrix[1][0] = -sinPsi*cosPhi;
-        matrix[2][0] = cosPsi*sinTheta+cosTheta*sinPsi*sinPhi;
-        matrix[0][1] = cosTheta*sinPsi+cosPsi*sinPhi*sinTheta;
-        matrix[1][1] = cosPsi*cosPhi;
-        matrix[2][1] = sinPsi*sinTheta-cosTheta*cosPsi*sinPhi;
-        matrix[0][2] = -sinTheta*cosPhi;
-        matrix[1][2] = sinPhi;
-        matrix[2][2] = cosTheta*cosPhi;
-        return matrix;
-}
-
 void AP_Gimbal::update_state()
 {
     // Run the gimbal attitude and gyro bias estimator
@@ -121,7 +78,22 @@ void AP_Gimbal::update_state()
 Vector3f AP_Gimbal::getGimbalRateDemVecYaw(Quaternion quatEst)
 {
         // Define rotation from vehicle to gimbal using a 312 rotation sequence
-        Matrix3f Tvg = vetor312_to_rotation_matrix(_measurament.joint_angles);
+        Matrix3f Tvg;
+        float cosPhi = cosf(_measurament.joint_angles.x);
+        float cosTheta = cosf(_measurament.joint_angles.y);
+        float sinPhi = sinf(_measurament.joint_angles.x);
+        float sinTheta = sinf(_measurament.joint_angles.y);
+        float sinPsi = sinf(_measurament.joint_angles.z);
+        float cosPsi = cosf(_measurament.joint_angles.z);
+        Tvg[0][0] = cosTheta*cosPsi-sinPsi*sinPhi*sinTheta;
+        Tvg[1][0] = -sinPsi*cosPhi;
+        Tvg[2][0] = cosPsi*sinTheta+cosTheta*sinPsi*sinPhi;
+        Tvg[0][1] = cosTheta*sinPsi+cosPsi*sinPhi*sinTheta;
+        Tvg[1][1] = cosPsi*cosPhi;
+        Tvg[2][1] = sinPsi*sinTheta-cosTheta*cosPsi*sinPhi;
+        Tvg[0][2] = -sinTheta*cosPhi;
+        Tvg[1][2] = sinPhi;
+        Tvg[2][2] = cosTheta*cosPhi;
 
         // multiply the yaw joint angle by a gain to calculate a demanded vehicle frame relative rate vector required to keep the yaw joint centred
         Vector3f gimbalRateDemVecYaw;
@@ -163,7 +135,21 @@ Vector3f AP_Gimbal::getGimbalRateDemVecTilt(Quaternion quatEst)
         Quaternion quatErr = quatDem / quatEst;
 
         // multiply the angle error vector by a gain to calculate a demanded gimbal rate required to control tilt
-        Vector3f gimbalRateDemVecTilt = quaternion_to_vector(quatErr) * K_gimbalRate;
+        Vector3f vectorError;
+        float scaler = 1.0f-quatErr[0]*quatErr[0];
+        if (scaler > 1e-12) {
+            scaler = 1.0f/sqrtf(scaler);
+            if (quatErr[0] < 0.0f) {
+                scaler *= -1.0f;
+            }
+            vectorError.x = quatErr[1] * scaler;
+            vectorError.y = quatErr[2] * scaler;
+            vectorError.z = quatErr[3] * scaler;
+        } else {
+            vectorError.zero();
+        }
+
+        Vector3f gimbalRateDemVecTilt = vectorError * K_gimbalRate;
         return gimbalRateDemVecTilt;
 }
 
@@ -179,7 +165,21 @@ Vector3f AP_Gimbal::getGimbalRateDemVecForward(Quaternion quatEst)
         lastQuatDem = quatDemForward;
 
         // convert to a rotation vector and divide by delta time to obtain a forward path rate demand
-        Vector3f gimbalRateDemVecForward = quaternion_to_vector(deltaQuat) * (1.0f / _measurament.delta_time);
+        Vector3f deltaVector;
+        float scaler = 1.0f-deltaQuat[0]*deltaQuat[0];
+        if (scaler > 1e-12) {
+            scaler = 1.0f/sqrtf(scaler);
+            if (deltaQuat[0] < 0.0f) {
+                scaler *= -1.0f;
+            }
+            deltaVector.x = deltaQuat[1] * scaler;
+            deltaVector.y = deltaQuat[2] * scaler;
+            deltaVector.z = deltaQuat[3] * scaler;
+        } else {
+            deltaVector.zero();
+        }     
+
+        Vector3f gimbalRateDemVecForward = deltaVector * (1.0f / _measurament.delta_time);
         return gimbalRateDemVecForward;
 }
 
