@@ -1,9 +1,5 @@
 // MESSAGE DEBUG PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_DEBUG 254
 
 typedef struct __mavlink_debug_t
@@ -52,12 +48,6 @@ static inline uint16_t mavlink_msg_debug_pack(uint8_t system_id, uint8_t compone
 	_mav_put_uint8_t(buf, 8, ind);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_DEBUG_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
-		mav_put_float_c2000(&(msg->payload64[0]), 4, value);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 8, ind);
-	
-	
 #else
 	mavlink_debug_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -226,11 +216,7 @@ static inline void mavlink_msg_debug_send_buf(mavlink_message_t *msgbuf, mavlink
  */
 static inline uint32_t mavlink_msg_debug_get_time_boot_ms(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
-#else
-	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -240,11 +226,7 @@ static inline uint32_t mavlink_msg_debug_get_time_boot_ms(const mavlink_message_
  */
 static inline uint8_t mavlink_msg_debug_get_ind(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  8);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -254,11 +236,7 @@ static inline uint8_t mavlink_msg_debug_get_ind(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_debug_get_value(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  4);
-#endif
 }
 
 /**
@@ -269,7 +247,7 @@ static inline float mavlink_msg_debug_get_value(const mavlink_message_t* msg)
  */
 static inline void mavlink_msg_debug_decode(const mavlink_message_t* msg, mavlink_debug_t* debug)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	debug->time_boot_ms = mavlink_msg_debug_get_time_boot_ms(msg);
 	debug->value = mavlink_msg_debug_get_value(msg);
 	debug->ind = mavlink_msg_debug_get_ind(msg);

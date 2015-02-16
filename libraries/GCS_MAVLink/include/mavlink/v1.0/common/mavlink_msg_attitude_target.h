@@ -1,9 +1,5 @@
 // MESSAGE ATTITUDE_TARGET PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_ATTITUDE_TARGET 83
 
 typedef struct __mavlink_attitude_target_t
@@ -67,16 +63,6 @@ static inline uint16_t mavlink_msg_attitude_target_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 36, type_mask);
 	_mav_put_float_array(buf, 4, q, 4);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_ATTITUDE_TARGET_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
-		mav_put_float_c2000(&(msg->payload64[0]), 20, body_roll_rate);
-		mav_put_float_c2000(&(msg->payload64[0]), 24, body_pitch_rate);
-		mav_put_float_c2000(&(msg->payload64[0]), 28, body_yaw_rate);
-		mav_put_float_c2000(&(msg->payload64[0]), 32, thrust);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 36, type_mask);
-	
-		mav_put_float_array_c2000(&(msg->payload64[0]), q, 4, 4);
-	
 #else
 	mavlink_attitude_target_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -274,11 +260,7 @@ static inline void mavlink_msg_attitude_target_send_buf(mavlink_message_t *msgbu
  */
 static inline uint32_t mavlink_msg_attitude_target_get_time_boot_ms(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
-#else
-	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -288,11 +270,7 @@ static inline uint32_t mavlink_msg_attitude_target_get_time_boot_ms(const mavlin
  */
 static inline uint8_t mavlink_msg_attitude_target_get_type_mask(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  36);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  36);
-#endif
 }
 
 /**
@@ -302,11 +280,7 @@ static inline uint8_t mavlink_msg_attitude_target_get_type_mask(const mavlink_me
  */
 static inline uint16_t mavlink_msg_attitude_target_get_q(const mavlink_message_t* msg, float *q)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float_array(msg, q, 4,  4);
-#else
-	return mav_get_float_array_c2000(&(msg->payload64[0]), q, 4,  4);
-#endif
 }
 
 /**
@@ -316,11 +290,7 @@ static inline uint16_t mavlink_msg_attitude_target_get_q(const mavlink_message_t
  */
 static inline float mavlink_msg_attitude_target_get_body_roll_rate(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  20);
-#endif
 }
 
 /**
@@ -330,11 +300,7 @@ static inline float mavlink_msg_attitude_target_get_body_roll_rate(const mavlink
  */
 static inline float mavlink_msg_attitude_target_get_body_pitch_rate(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  24);
-#endif
 }
 
 /**
@@ -344,11 +310,7 @@ static inline float mavlink_msg_attitude_target_get_body_pitch_rate(const mavlin
  */
 static inline float mavlink_msg_attitude_target_get_body_yaw_rate(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  28);
-#endif
 }
 
 /**
@@ -358,11 +320,7 @@ static inline float mavlink_msg_attitude_target_get_body_yaw_rate(const mavlink_
  */
 static inline float mavlink_msg_attitude_target_get_thrust(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  32);
-#endif
 }
 
 /**
@@ -373,7 +331,7 @@ static inline float mavlink_msg_attitude_target_get_thrust(const mavlink_message
  */
 static inline void mavlink_msg_attitude_target_decode(const mavlink_message_t* msg, mavlink_attitude_target_t* attitude_target)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	attitude_target->time_boot_ms = mavlink_msg_attitude_target_get_time_boot_ms(msg);
 	mavlink_msg_attitude_target_get_q(msg, attitude_target->q);
 	attitude_target->body_roll_rate = mavlink_msg_attitude_target_get_body_roll_rate(msg);

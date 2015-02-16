@@ -1,9 +1,5 @@
 // MESSAGE VISION_SPEED_ESTIMATE PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE 103
 
 typedef struct __mavlink_vision_speed_estimate_t
@@ -56,13 +52,6 @@ static inline uint16_t mavlink_msg_vision_speed_estimate_pack(uint8_t system_id,
 	_mav_put_float(buf, 16, z);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, usec);
-		mav_put_float_c2000(&(msg->payload64[0]), 8, x);
-		mav_put_float_c2000(&(msg->payload64[0]), 12, y);
-		mav_put_float_c2000(&(msg->payload64[0]), 16, z);
-	
-	
 #else
 	mavlink_vision_speed_estimate_t packet;
 	packet.usec = usec;
@@ -240,11 +229,7 @@ static inline void mavlink_msg_vision_speed_estimate_send_buf(mavlink_message_t 
  */
 static inline uint64_t mavlink_msg_vision_speed_estimate_get_usec(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
-#else
-	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -254,11 +239,7 @@ static inline uint64_t mavlink_msg_vision_speed_estimate_get_usec(const mavlink_
  */
 static inline float mavlink_msg_vision_speed_estimate_get_x(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -268,11 +249,7 @@ static inline float mavlink_msg_vision_speed_estimate_get_x(const mavlink_messag
  */
 static inline float mavlink_msg_vision_speed_estimate_get_y(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  12);
-#endif
 }
 
 /**
@@ -282,11 +259,7 @@ static inline float mavlink_msg_vision_speed_estimate_get_y(const mavlink_messag
  */
 static inline float mavlink_msg_vision_speed_estimate_get_z(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  16);
-#endif
 }
 
 /**
@@ -297,7 +270,7 @@ static inline float mavlink_msg_vision_speed_estimate_get_z(const mavlink_messag
  */
 static inline void mavlink_msg_vision_speed_estimate_decode(const mavlink_message_t* msg, mavlink_vision_speed_estimate_t* vision_speed_estimate)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	vision_speed_estimate->usec = mavlink_msg_vision_speed_estimate_get_usec(msg);
 	vision_speed_estimate->x = mavlink_msg_vision_speed_estimate_get_x(msg);
 	vision_speed_estimate->y = mavlink_msg_vision_speed_estimate_get_y(msg);

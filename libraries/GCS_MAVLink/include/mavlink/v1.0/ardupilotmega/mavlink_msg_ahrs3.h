@@ -1,9 +1,5 @@
 // MESSAGE AHRS3 PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_AHRS3 182
 
 typedef struct __mavlink_ahrs3_t
@@ -80,19 +76,6 @@ static inline uint16_t mavlink_msg_ahrs3_pack(uint8_t system_id, uint8_t compone
 	_mav_put_float(buf, 36, v4);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_AHRS3_LEN);
-#elif MAVLINK_C2000
-		mav_put_float_c2000(&(msg->payload64[0]), 0, roll);
-		mav_put_float_c2000(&(msg->payload64[0]), 4, pitch);
-		mav_put_float_c2000(&(msg->payload64[0]), 8, yaw);
-		mav_put_float_c2000(&(msg->payload64[0]), 12, altitude);
-		mav_put_int32_t_c2000(&(msg->payload64[0]), 16, lat);
-		mav_put_int32_t_c2000(&(msg->payload64[0]), 20, lng);
-		mav_put_float_c2000(&(msg->payload64[0]), 24, v1);
-		mav_put_float_c2000(&(msg->payload64[0]), 28, v2);
-		mav_put_float_c2000(&(msg->payload64[0]), 32, v3);
-		mav_put_float_c2000(&(msg->payload64[0]), 36, v4);
-	
-	
 #else
 	mavlink_ahrs3_t packet;
 	packet.roll = roll;
@@ -324,11 +307,7 @@ static inline void mavlink_msg_ahrs3_send_buf(mavlink_message_t *msgbuf, mavlink
  */
 static inline float mavlink_msg_ahrs3_get_roll(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -338,11 +317,7 @@ static inline float mavlink_msg_ahrs3_get_roll(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs3_get_pitch(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  4);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  4);
-#endif
 }
 
 /**
@@ -352,11 +327,7 @@ static inline float mavlink_msg_ahrs3_get_pitch(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs3_get_yaw(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -366,11 +337,7 @@ static inline float mavlink_msg_ahrs3_get_yaw(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs3_get_altitude(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  12);
-#endif
 }
 
 /**
@@ -380,11 +347,7 @@ static inline float mavlink_msg_ahrs3_get_altitude(const mavlink_message_t* msg)
  */
 static inline int32_t mavlink_msg_ahrs3_get_lat(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  16);
-#else
-	return mav_get_int32_t_c2000(&(msg->payload64[0]),  16);
-#endif
 }
 
 /**
@@ -394,11 +357,7 @@ static inline int32_t mavlink_msg_ahrs3_get_lat(const mavlink_message_t* msg)
  */
 static inline int32_t mavlink_msg_ahrs3_get_lng(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int32_t(msg,  20);
-#else
-	return mav_get_int32_t_c2000(&(msg->payload64[0]),  20);
-#endif
 }
 
 /**
@@ -408,11 +367,7 @@ static inline int32_t mavlink_msg_ahrs3_get_lng(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs3_get_v1(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  24);
-#endif
 }
 
 /**
@@ -422,11 +377,7 @@ static inline float mavlink_msg_ahrs3_get_v1(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs3_get_v2(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  28);
-#endif
 }
 
 /**
@@ -436,11 +387,7 @@ static inline float mavlink_msg_ahrs3_get_v2(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs3_get_v3(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  32);
-#endif
 }
 
 /**
@@ -450,11 +397,7 @@ static inline float mavlink_msg_ahrs3_get_v3(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_ahrs3_get_v4(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  36);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  36);
-#endif
 }
 
 /**
@@ -465,7 +408,7 @@ static inline float mavlink_msg_ahrs3_get_v4(const mavlink_message_t* msg)
  */
 static inline void mavlink_msg_ahrs3_decode(const mavlink_message_t* msg, mavlink_ahrs3_t* ahrs3)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	ahrs3->roll = mavlink_msg_ahrs3_get_roll(msg);
 	ahrs3->pitch = mavlink_msg_ahrs3_get_pitch(msg);
 	ahrs3->yaw = mavlink_msg_ahrs3_get_yaw(msg);

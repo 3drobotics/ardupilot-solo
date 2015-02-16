@@ -1,9 +1,5 @@
 // MESSAGE DIGICAM_CONFIGURE PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_DIGICAM_CONFIGURE 154
 
 typedef struct __mavlink_digicam_configure_t
@@ -84,20 +80,6 @@ static inline uint16_t mavlink_msg_digicam_configure_pack(uint8_t system_id, uin
 	_mav_put_uint8_t(buf, 14, extra_param);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_DIGICAM_CONFIGURE_LEN);
-#elif MAVLINK_C2000
-		mav_put_float_c2000(&(msg->payload64[0]), 0, extra_value);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 4, shutter_speed);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 6, target_system);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 7, target_component);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 8, mode);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 9, aperture);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 10, iso);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 11, exposure_type);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 12, command_id);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 13, engine_cut_off);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 14, extra_param);
-	
-	
 #else
 	mavlink_digicam_configure_t packet;
 	packet.extra_value = extra_value;
@@ -338,11 +320,7 @@ static inline void mavlink_msg_digicam_configure_send_buf(mavlink_message_t *msg
  */
 static inline uint8_t mavlink_msg_digicam_configure_get_target_system(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  6);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  6);
-#endif
 }
 
 /**
@@ -352,11 +330,7 @@ static inline uint8_t mavlink_msg_digicam_configure_get_target_system(const mavl
  */
 static inline uint8_t mavlink_msg_digicam_configure_get_target_component(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  7);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  7);
-#endif
 }
 
 /**
@@ -366,11 +340,7 @@ static inline uint8_t mavlink_msg_digicam_configure_get_target_component(const m
  */
 static inline uint8_t mavlink_msg_digicam_configure_get_mode(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  8);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -380,11 +350,7 @@ static inline uint8_t mavlink_msg_digicam_configure_get_mode(const mavlink_messa
  */
 static inline uint16_t mavlink_msg_digicam_configure_get_shutter_speed(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  4);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  4);
-#endif
 }
 
 /**
@@ -394,11 +360,7 @@ static inline uint16_t mavlink_msg_digicam_configure_get_shutter_speed(const mav
  */
 static inline uint8_t mavlink_msg_digicam_configure_get_aperture(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  9);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  9);
-#endif
 }
 
 /**
@@ -408,11 +370,7 @@ static inline uint8_t mavlink_msg_digicam_configure_get_aperture(const mavlink_m
  */
 static inline uint8_t mavlink_msg_digicam_configure_get_iso(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  10);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  10);
-#endif
 }
 
 /**
@@ -422,11 +380,7 @@ static inline uint8_t mavlink_msg_digicam_configure_get_iso(const mavlink_messag
  */
 static inline uint8_t mavlink_msg_digicam_configure_get_exposure_type(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  11);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  11);
-#endif
 }
 
 /**
@@ -436,11 +390,7 @@ static inline uint8_t mavlink_msg_digicam_configure_get_exposure_type(const mavl
  */
 static inline uint8_t mavlink_msg_digicam_configure_get_command_id(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  12);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  12);
-#endif
 }
 
 /**
@@ -450,11 +400,7 @@ static inline uint8_t mavlink_msg_digicam_configure_get_command_id(const mavlink
  */
 static inline uint8_t mavlink_msg_digicam_configure_get_engine_cut_off(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  13);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  13);
-#endif
 }
 
 /**
@@ -464,11 +410,7 @@ static inline uint8_t mavlink_msg_digicam_configure_get_engine_cut_off(const mav
  */
 static inline uint8_t mavlink_msg_digicam_configure_get_extra_param(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  14);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  14);
-#endif
 }
 
 /**
@@ -478,11 +420,7 @@ static inline uint8_t mavlink_msg_digicam_configure_get_extra_param(const mavlin
  */
 static inline float mavlink_msg_digicam_configure_get_extra_value(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  0);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -493,7 +431,7 @@ static inline float mavlink_msg_digicam_configure_get_extra_value(const mavlink_
  */
 static inline void mavlink_msg_digicam_configure_decode(const mavlink_message_t* msg, mavlink_digicam_configure_t* digicam_configure)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	digicam_configure->extra_value = mavlink_msg_digicam_configure_get_extra_value(msg);
 	digicam_configure->shutter_speed = mavlink_msg_digicam_configure_get_shutter_speed(msg);
 	digicam_configure->target_system = mavlink_msg_digicam_configure_get_target_system(msg);

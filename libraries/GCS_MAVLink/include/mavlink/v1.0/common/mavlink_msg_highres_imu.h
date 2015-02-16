@@ -1,9 +1,5 @@
 // MESSAGE HIGHRES_IMU PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_HIGHRES_IMU 105
 
 typedef struct __mavlink_highres_imu_t
@@ -100,24 +96,6 @@ static inline uint16_t mavlink_msg_highres_imu_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint16_t(buf, 60, fields_updated);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint64_t_c2000(&(msg->payload64[0]), 0, time_usec);
-		mav_put_float_c2000(&(msg->payload64[0]), 8, xacc);
-		mav_put_float_c2000(&(msg->payload64[0]), 12, yacc);
-		mav_put_float_c2000(&(msg->payload64[0]), 16, zacc);
-		mav_put_float_c2000(&(msg->payload64[0]), 20, xgyro);
-		mav_put_float_c2000(&(msg->payload64[0]), 24, ygyro);
-		mav_put_float_c2000(&(msg->payload64[0]), 28, zgyro);
-		mav_put_float_c2000(&(msg->payload64[0]), 32, xmag);
-		mav_put_float_c2000(&(msg->payload64[0]), 36, ymag);
-		mav_put_float_c2000(&(msg->payload64[0]), 40, zmag);
-		mav_put_float_c2000(&(msg->payload64[0]), 44, abs_pressure);
-		mav_put_float_c2000(&(msg->payload64[0]), 48, diff_pressure);
-		mav_put_float_c2000(&(msg->payload64[0]), 52, pressure_alt);
-		mav_put_float_c2000(&(msg->payload64[0]), 56, temperature);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 60, fields_updated);
-	
-	
 #else
 	mavlink_highres_imu_t packet;
 	packet.time_usec = time_usec;
@@ -394,11 +372,7 @@ static inline void mavlink_msg_highres_imu_send_buf(mavlink_message_t *msgbuf, m
  */
 static inline uint64_t mavlink_msg_highres_imu_get_time_usec(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint64_t(msg,  0);
-#else
-	return mav_get_uint64_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -408,11 +382,7 @@ static inline uint64_t mavlink_msg_highres_imu_get_time_usec(const mavlink_messa
  */
 static inline float mavlink_msg_highres_imu_get_xacc(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  8);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -422,11 +392,7 @@ static inline float mavlink_msg_highres_imu_get_xacc(const mavlink_message_t* ms
  */
 static inline float mavlink_msg_highres_imu_get_yacc(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  12);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  12);
-#endif
 }
 
 /**
@@ -436,11 +402,7 @@ static inline float mavlink_msg_highres_imu_get_yacc(const mavlink_message_t* ms
  */
 static inline float mavlink_msg_highres_imu_get_zacc(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  16);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  16);
-#endif
 }
 
 /**
@@ -450,11 +412,7 @@ static inline float mavlink_msg_highres_imu_get_zacc(const mavlink_message_t* ms
  */
 static inline float mavlink_msg_highres_imu_get_xgyro(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  20);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  20);
-#endif
 }
 
 /**
@@ -464,11 +422,7 @@ static inline float mavlink_msg_highres_imu_get_xgyro(const mavlink_message_t* m
  */
 static inline float mavlink_msg_highres_imu_get_ygyro(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  24);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  24);
-#endif
 }
 
 /**
@@ -478,11 +432,7 @@ static inline float mavlink_msg_highres_imu_get_ygyro(const mavlink_message_t* m
  */
 static inline float mavlink_msg_highres_imu_get_zgyro(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  28);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  28);
-#endif
 }
 
 /**
@@ -492,11 +442,7 @@ static inline float mavlink_msg_highres_imu_get_zgyro(const mavlink_message_t* m
  */
 static inline float mavlink_msg_highres_imu_get_xmag(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  32);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  32);
-#endif
 }
 
 /**
@@ -506,11 +452,7 @@ static inline float mavlink_msg_highres_imu_get_xmag(const mavlink_message_t* ms
  */
 static inline float mavlink_msg_highres_imu_get_ymag(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  36);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  36);
-#endif
 }
 
 /**
@@ -520,11 +462,7 @@ static inline float mavlink_msg_highres_imu_get_ymag(const mavlink_message_t* ms
  */
 static inline float mavlink_msg_highres_imu_get_zmag(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  40);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  40);
-#endif
 }
 
 /**
@@ -534,11 +472,7 @@ static inline float mavlink_msg_highres_imu_get_zmag(const mavlink_message_t* ms
  */
 static inline float mavlink_msg_highres_imu_get_abs_pressure(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  44);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  44);
-#endif
 }
 
 /**
@@ -548,11 +482,7 @@ static inline float mavlink_msg_highres_imu_get_abs_pressure(const mavlink_messa
  */
 static inline float mavlink_msg_highres_imu_get_diff_pressure(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  48);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  48);
-#endif
 }
 
 /**
@@ -562,11 +492,7 @@ static inline float mavlink_msg_highres_imu_get_diff_pressure(const mavlink_mess
  */
 static inline float mavlink_msg_highres_imu_get_pressure_alt(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  52);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  52);
-#endif
 }
 
 /**
@@ -576,11 +502,7 @@ static inline float mavlink_msg_highres_imu_get_pressure_alt(const mavlink_messa
  */
 static inline float mavlink_msg_highres_imu_get_temperature(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_float(msg,  56);
-#else
-	return mav_get_float_c2000(&(msg->payload64[0]),  56);
-#endif
 }
 
 /**
@@ -590,11 +512,7 @@ static inline float mavlink_msg_highres_imu_get_temperature(const mavlink_messag
  */
 static inline uint16_t mavlink_msg_highres_imu_get_fields_updated(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  60);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  60);
-#endif
 }
 
 /**
@@ -605,7 +523,7 @@ static inline uint16_t mavlink_msg_highres_imu_get_fields_updated(const mavlink_
  */
 static inline void mavlink_msg_highres_imu_decode(const mavlink_message_t* msg, mavlink_highres_imu_t* highres_imu)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	highres_imu->time_usec = mavlink_msg_highres_imu_get_time_usec(msg);
 	highres_imu->xacc = mavlink_msg_highres_imu_get_xacc(msg);
 	highres_imu->yacc = mavlink_msg_highres_imu_get_yacc(msg);

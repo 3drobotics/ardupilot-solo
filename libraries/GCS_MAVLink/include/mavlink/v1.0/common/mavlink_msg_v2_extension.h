@@ -1,9 +1,5 @@
 // MESSAGE V2_EXTENSION PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_V2_EXTENSION 248
 
 typedef struct __mavlink_v2_extension_t
@@ -59,14 +55,6 @@ static inline uint16_t mavlink_msg_v2_extension_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint8_t(buf, 4, target_component);
 	_mav_put_uint8_t_array(buf, 5, payload, 249);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_V2_EXTENSION_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, message_type);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, target_network);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 3, target_system);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 4, target_component);
-	
-		mav_put_uint8_t_array_c2000(&(msg->payload64[0]), payload, 5, 249);
-	
 #else
 	mavlink_v2_extension_t packet;
 	packet.message_type = message_type;
@@ -246,11 +234,7 @@ static inline void mavlink_msg_v2_extension_send_buf(mavlink_message_t *msgbuf, 
  */
 static inline uint8_t mavlink_msg_v2_extension_get_target_network(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  2);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
-#endif
 }
 
 /**
@@ -260,11 +244,7 @@ static inline uint8_t mavlink_msg_v2_extension_get_target_network(const mavlink_
  */
 static inline uint8_t mavlink_msg_v2_extension_get_target_system(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  3);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  3);
-#endif
 }
 
 /**
@@ -274,11 +254,7 @@ static inline uint8_t mavlink_msg_v2_extension_get_target_system(const mavlink_m
  */
 static inline uint8_t mavlink_msg_v2_extension_get_target_component(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t(msg,  4);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  4);
-#endif
 }
 
 /**
@@ -288,11 +264,7 @@ static inline uint8_t mavlink_msg_v2_extension_get_target_component(const mavlin
  */
 static inline uint16_t mavlink_msg_v2_extension_get_message_type(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint16_t(msg,  0);
-#else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -302,11 +274,7 @@ static inline uint16_t mavlink_msg_v2_extension_get_message_type(const mavlink_m
  */
 static inline uint16_t mavlink_msg_v2_extension_get_payload(const mavlink_message_t* msg, uint8_t *payload)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint8_t_array(msg, payload, 249,  5);
-#else
-	return mav_get_uint8_t_array_c2000(&(msg->payload64[0]), payload, 249,  5);
-#endif
 }
 
 /**
@@ -317,7 +285,7 @@ static inline uint16_t mavlink_msg_v2_extension_get_payload(const mavlink_messag
  */
 static inline void mavlink_msg_v2_extension_decode(const mavlink_message_t* msg, mavlink_v2_extension_t* v2_extension)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	v2_extension->message_type = mavlink_msg_v2_extension_get_message_type(msg);
 	v2_extension->target_network = mavlink_msg_v2_extension_get_target_network(msg);
 	v2_extension->target_system = mavlink_msg_v2_extension_get_target_system(msg);

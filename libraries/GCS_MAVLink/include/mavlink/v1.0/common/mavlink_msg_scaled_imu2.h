@@ -1,9 +1,5 @@
 // MESSAGE SCALED_IMU2 PACKING
 
-#if MAVLINK_C2000
-#include "protocol_c2000.h"
-#endif
-
 #define MAVLINK_MSG_ID_SCALED_IMU2 116
 
 typedef struct __mavlink_scaled_imu2_t
@@ -80,19 +76,6 @@ static inline uint16_t mavlink_msg_scaled_imu2_pack(uint8_t system_id, uint8_t c
 	_mav_put_int16_t(buf, 20, zmag);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SCALED_IMU2_LEN);
-#elif MAVLINK_C2000
-		mav_put_uint32_t_c2000(&(msg->payload64[0]), 0, time_boot_ms);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 4, xacc);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 6, yacc);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 8, zacc);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 10, xgyro);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 12, ygyro);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 14, zgyro);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 16, xmag);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 18, ymag);
-		mav_put_int16_t_c2000(&(msg->payload64[0]), 20, zmag);
-	
-	
 #else
 	mavlink_scaled_imu2_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -324,11 +307,7 @@ static inline void mavlink_msg_scaled_imu2_send_buf(mavlink_message_t *msgbuf, m
  */
 static inline uint32_t mavlink_msg_scaled_imu2_get_time_boot_ms(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_uint32_t(msg,  0);
-#else
-	return mav_get_uint32_t_c2000(&(msg->payload64[0]),  0);
-#endif
 }
 
 /**
@@ -338,11 +317,7 @@ static inline uint32_t mavlink_msg_scaled_imu2_get_time_boot_ms(const mavlink_me
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_xacc(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  4);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  4);
-#endif
 }
 
 /**
@@ -352,11 +327,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_xacc(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_yacc(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  6);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  6);
-#endif
 }
 
 /**
@@ -366,11 +337,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_yacc(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_zacc(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  8);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  8);
-#endif
 }
 
 /**
@@ -380,11 +347,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_zacc(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_xgyro(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  10);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  10);
-#endif
 }
 
 /**
@@ -394,11 +357,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_xgyro(const mavlink_message_t*
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_ygyro(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  12);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  12);
-#endif
 }
 
 /**
@@ -408,11 +367,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_ygyro(const mavlink_message_t*
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_zgyro(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  14);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  14);
-#endif
 }
 
 /**
@@ -422,11 +377,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_zgyro(const mavlink_message_t*
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_xmag(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  16);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  16);
-#endif
 }
 
 /**
@@ -436,11 +387,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_xmag(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_ymag(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  18);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  18);
-#endif
 }
 
 /**
@@ -450,11 +397,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_ymag(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_scaled_imu2_get_zmag(const mavlink_message_t* msg)
 {
-#if !MAVLINK_C2000
 	return _MAV_RETURN_int16_t(msg,  20);
-#else
-	return mav_get_int16_t_c2000(&(msg->payload64[0]),  20);
-#endif
 }
 
 /**
@@ -465,7 +408,7 @@ static inline int16_t mavlink_msg_scaled_imu2_get_zmag(const mavlink_message_t* 
  */
 static inline void mavlink_msg_scaled_imu2_decode(const mavlink_message_t* msg, mavlink_scaled_imu2_t* scaled_imu2)
 {
-#if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
+#if MAVLINK_NEED_BYTE_SWAP
 	scaled_imu2->time_boot_ms = mavlink_msg_scaled_imu2_get_time_boot_ms(msg);
 	scaled_imu2->xacc = mavlink_msg_scaled_imu2_get_xacc(msg);
 	scaled_imu2->yacc = mavlink_msg_scaled_imu2_get_yacc(msg);
