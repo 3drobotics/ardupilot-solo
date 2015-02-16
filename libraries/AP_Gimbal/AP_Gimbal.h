@@ -94,6 +94,7 @@ private:
     Vector3f getGimbalRateDemVecYaw(Quaternion quatEst);
     Vector3f getGimbalRateDemVecTilt(Quaternion quatEst);
     Vector3f getGimbalRateDemVecForward(Quaternion quatEst);
+    Vector3f getGimbalRateDemVecGyroBias();
 
 };
 
