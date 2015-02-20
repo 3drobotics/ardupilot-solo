@@ -970,6 +970,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
     {
         //handle_gimbal_report(camera_mount, msg);
         gimbal.receive_feedback(msg);
+        Log_Write_Gimbal();
         break;
     }
 
