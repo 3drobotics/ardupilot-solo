@@ -43,6 +43,17 @@ public:
     // hook for eeprom variables
     static const struct AP_Param::GroupInfo        var_info[];
 
+    struct Measurament {
+        float delta_time;
+        Vector3f delta_angles;
+        Vector3f delta_velocity;
+        Vector3f joint_angles;
+    } _measurament;
+
+    SmallEKF    _ekf;                   // state of small EKF for gimbal
+    Vector3f    gimbalRateDemVec;       // degrees/s   
+    Vector3f    _angle_ef_target_rad;   // desired earth-frame roll, tilt and pan angles in radians
+
 private:  
 
     // maximum vehicle yaw rate in rad/sec
@@ -69,18 +80,8 @@ private:
     float const _tilt_angle_min = -45.0f;   // min tilt in 0.01 degree units
     float const _tilt_angle_max = 0.0f;     // max tilt in 0.01 degree units
     float const _max_tilt_rate = 0.5f;          // max tilt rate in rad/s
-
-    struct Measurament {
-        float delta_time;
-        Vector3f delta_angles;
-        Vector3f delta_velocity;
-        Vector3f joint_angles;
-    } _measurament;
     
     const AP_AHRS_NavEKF    &_ahrs;     //  Main EKF    
-    SmallEKF    _ekf;                   // state of small EKF for gimbal
-    Vector3f    gimbalRateDemVec;       // degrees/s   
-    Vector3f    _angle_ef_target_rad;   // desired earth-frame roll, tilt and pan angles in radians
     uint8_t _sysid;                     
     uint8_t _compid;
 
