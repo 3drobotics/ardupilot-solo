@@ -192,7 +192,7 @@ void AP_Gimbal::send_control()
 float angle_input_rad(RC_Channel* rc, float angle_min, float angle_max)
 {
     float input =rc->norm_input();
-    float angle = input*(angle_max - angle_min) + angle_min;
+    float angle = -input*(angle_max - angle_min) + angle_min;
     
     return radians(angle);
 }
