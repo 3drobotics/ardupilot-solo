@@ -843,6 +843,30 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
 #endif
 }
 
+// Write a gimbal data packet
+void DataFlash_Class::Log_Write_Gimbal(const AP_Gimbal &gimbal)
+{
+    uint32_t tstamp = hal.scheduler->millis();
+
+    struct log_Gimbal pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_GIMBAL_MSG),
+        time_ms : tstamp,
+        delta_time      : gimbal._measurament.delta_time,
+        delta_angles_x  : gimbal._measurament.delta_angles.x,
+        delta_angles_y  : gimbal._measurament.delta_angles.y,
+        delta_angles_z  : gimbal._measurament.delta_angles.z,
+        delta_velocity_x : gimbal._measurament.delta_velocity.x,
+        delta_velocity_y : gimbal._measurament.delta_velocity.y,
+        delta_velocity_z : gimbal._measurament.delta_velocity.z,
+        joint_angles_x  : gimbal._measurament.joint_angles.x,
+        joint_angles_y  : gimbal._measurament.joint_angles.y,
+        joint_angles_z  : gimbal._measurament.joint_angles.z
+    };
+    WriteBlock(&pkt, sizeof(pkt));
+}
+
+
+
 // Write a text message to the log
 void DataFlash_Class::Log_Write_Message(const char *message)
 {
