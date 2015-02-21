@@ -209,7 +209,7 @@ struct PACKED log_IMU {
     uint32_t gyro_error, accel_error;
 };
 
-struct PACKED log_Gimbal {
+struct PACKED log_Gimbal1 {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
     float delta_time;
@@ -222,6 +222,17 @@ struct PACKED log_Gimbal {
     float joint_angles_x;
     float joint_angles_y;
     float joint_angles_z;
+};
+
+struct PACKED log_Gimbal2 {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    float est_x;
+    float est_y;  
+    float est_z;  
+    float rate_x;  
+    float rate_y; 
+    float rate_z; 
 };
 
 struct PACKED log_RCIN {
@@ -628,8 +639,10 @@ Format characters in the format string for binary log messages
       "MAG2","Ihhhhhhhhh",    "TimeMS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ" }, \
     { LOG_COMPASS3_MSG, sizeof(log_Compass), \
       "MAG3","Ihhhhhhhhh",    "TimeMS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ" }, \
-    { LOG_GIMBAL_MSG, sizeof(log_Gimbal), \
-      "GIMB", "Iffffffffff", "TimeMS,dt,dax,day,daz,dvx,dvy,dvz,jx,jy,jz" }
+    { LOG_GIMBAL1_MSG, sizeof(log_Gimbal1), \
+      "GMB1", "Iffffffffff", "TimeMS,dt,da,day,daz,dvx,dvy,dvz,jx,jy,jz" }, \
+    { LOG_GIMBAL2_MSG, sizeof(log_Gimbal2), \
+      "GMB2", "Iffffff", "TimeMS,ex,ey,ez,rx,ry,rz" }
 
 #if HAL_CPU_CLASS >= HAL_CPU_CLASS_75
 #define LOG_COMMON_STRUCTURES LOG_BASE_STRUCTURES, LOG_EXTRA_STRUCTURES
@@ -683,7 +696,8 @@ Format characters in the format string for binary log messages
 #define LOG_COMPASS2_MSG  168
 #define LOG_COMPASS3_MSG  169
 #define LOG_MODE_MSG      170
-#define LOG_GIMBAL_MSG    171
+#define LOG_GIMBAL1_MSG   171
+#define LOG_GIMBAL2_MSG   172
 
 // message types 200 to 210 reversed for GPS driver use
 // message types 211 to 220 reversed for autotune use
