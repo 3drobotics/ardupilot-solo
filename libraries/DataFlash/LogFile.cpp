@@ -843,13 +843,17 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
 #endif
 }
 
-// Write a gimbal data packet
+// Write a gimbal measurament and estimation data packet
 void DataFlash_Class::Log_Write_Gimbal(const AP_Gimbal &gimbal)
 {
     uint32_t tstamp = hal.scheduler->millis();
-
-    struct log_Gimbal pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_GIMBAL_MSG),
+    Quaternion quatEst;
+    gimbal._ekf.getQuat(quatEst);
+    Vector3f eulerEst;
+    quatEst.to_euler(eulerEst.x, eulerEst.y, eulerEst.z);
+    
+    struct log_Gimbal1 pkt1 = {
+        LOG_PACKET_HEADER_INIT(LOG_GIMBAL1_MSG),
         time_ms : tstamp,
         delta_time      : gimbal._measurament.delta_time,
         delta_angles_x  : gimbal._measurament.delta_angles.x,
@@ -862,7 +866,19 @@ void DataFlash_Class::Log_Write_Gimbal(const AP_Gimbal &gimbal)
         joint_angles_y  : gimbal._measurament.joint_angles.y,
         joint_angles_z  : gimbal._measurament.joint_angles.z
     };
-    WriteBlock(&pkt, sizeof(pkt));
+    WriteBlock(&pkt1, sizeof(pkt1));
+
+    struct log_Gimbal2 pkt2 = {
+        LOG_PACKET_HEADER_INIT(LOG_GIMBAL2_MSG),
+        time_ms : tstamp,
+        est_x   : eulerEst.x,
+        est_y   : eulerEst.y,
+        est_z   : eulerEst.z,
+        rate_x  : gimbal.gimbalRateDemVec.x,
+        rate_y  : gimbal.gimbalRateDemVec.y,
+        rate_z  : gimbal.gimbalRateDemVec.z
+       };
+    WriteBlock(&pkt2, sizeof(pkt2));
 }
 
 
