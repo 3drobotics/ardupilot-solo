@@ -928,7 +928,8 @@ void SmallEKF::getQuat(Quaternion &quat) const
 // get filter status - true is aligned
 bool SmallEKF::getStatus() const
 {
-    return YawAligned;
+    float run_time = hal.scheduler->millis() - StartTime_ms;
+    return  YawAligned && (run_time > 10000);
 }
 
 #endif // HAL_CPU_CLASS
