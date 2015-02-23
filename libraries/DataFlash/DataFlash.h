@@ -227,6 +227,7 @@ struct PACKED log_Gimbal1 {
 struct PACKED log_Gimbal2 {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
+    uint8_t  est_sta;
     float est_x;
     float est_y;  
     float est_z;  
@@ -642,7 +643,7 @@ Format characters in the format string for binary log messages
     { LOG_GIMBAL1_MSG, sizeof(log_Gimbal1), \
       "GMB1", "Iffffffffff", "TimeMS,dt,da,day,daz,dvx,dvy,dvz,jx,jy,jz" }, \
     { LOG_GIMBAL2_MSG, sizeof(log_Gimbal2), \
-      "GMB2", "Iffffff", "TimeMS,ex,ey,ez,rx,ry,rz" }
+      "GMB2", "IBffffff", "TimeMS,es,ex,ey,ez,rx,ry,rz" }
 
 #if HAL_CPU_CLASS >= HAL_CPU_CLASS_75
 #define LOG_COMMON_STRUCTURES LOG_BASE_STRUCTURES, LOG_EXTRA_STRUCTURES

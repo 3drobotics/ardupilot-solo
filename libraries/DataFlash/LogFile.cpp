@@ -871,6 +871,7 @@ void DataFlash_Class::Log_Write_Gimbal(const AP_Gimbal &gimbal)
     struct log_Gimbal2 pkt2 = {
         LOG_PACKET_HEADER_INIT(LOG_GIMBAL2_MSG),
         time_ms : tstamp,
+        est_sta : (uint8_t) gimbal._ekf.getStatus(),
         est_x   : eulerEst.x,
         est_y   : eulerEst.y,
         est_z   : eulerEst.z,
