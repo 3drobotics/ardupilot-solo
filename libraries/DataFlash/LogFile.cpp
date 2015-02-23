@@ -1219,6 +1219,19 @@ void DataFlash_Class::Log_Write_Mode(uint8_t mode)
     WriteBlock(&pkt, sizeof(pkt));
 }
 
+// Write an INS measurement
+void DataFlash_Class::Log_Write_Ins(uint8_t msgid, uint32_t time_us, const Vector3f &measurement)
+{
+    struct log_Ins pkt = {
+        LOG_PACKET_HEADER_INIT(msgid),
+        time_us : time_us,
+        x       : measurement.x,
+        y       : measurement.y,
+        z       : measurement.z
+    };
+    WriteBlock(&pkt, sizeof(pkt));
+}
+
 // Write ESC status messages
 void DataFlash_Class::Log_Write_ESC(void)
 {
