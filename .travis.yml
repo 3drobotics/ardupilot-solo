@@ -9,13 +9,19 @@ before_install:
 script:
   - Tools/scripts/build_px4_v2_quad_travis.sh ${GITHUB_API_KEY}
 
+before_deploy:
+  - pushd Tools/Frame_params/Solo && ./tools/build_solo_params.sh && popd
+
 deploy:
   provider: releases
   api-key: ${GITHUB_API_KEY}
   file:
   - "ArduCopter/ArduCopter-v2.px4"
-  - "Tools/Frame_params/Solo.param"
-  - "Tools/Frame_params/Solo-minus.param"
+  - "Tools/Frame_params/Solo/Solo-TMprops.param"
+  - "Tools/Frame_params/Solo/Solo-APCprops.param"
+  - "Tools/Frame_params/Solo/Solo-minus.param"
+  - "Tools/Frame_params/Solo/Solo-TMprops-HCESCs.param"
+  - "Tools/Frame_params/Solo/PARAM_README.txt"
   skip_cleanup: true
   on:
     tags: true
