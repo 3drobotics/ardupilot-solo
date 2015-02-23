@@ -47,7 +47,14 @@ float pv_alt_above_origin(float alt_above_home_cm)
 float pv_alt_above_home(float alt_above_origin_cm)
 {
     const struct Location &origin = inertial_nav.get_origin();
-    return alt_above_origin_cm + (origin.alt - ahrs.get_home().alt);
+    struct Location home = ahrs.get_home();
+
+    if(ap.home_set_by_ap && origin.alt != home.alt) {
+        home.alt = origin.alt;
+        ahrs.set_home(home);
+    }
+
+    return alt_above_origin_cm + (origin.alt - home.alt);
 }
 
 // pv_get_bearing_cd - return bearing in centi-degrees between two positions

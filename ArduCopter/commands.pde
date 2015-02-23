@@ -33,7 +33,7 @@ static void update_home_from_GPS()
     }
 
     // move home to current gps location (this will set home_state to HOME_SET)
-    set_home(gps.location());
+    set_home_to_current_location();
 }
 
 // set_home_to_current_location - set home to current GPS location
@@ -44,7 +44,7 @@ static bool set_home_to_current_location() {
     }
 
     // set home to latest gps location
-    return set_home(gps.location());
+    return set_home(gps.location(), true);
 }
 
 // set_home_to_current_location_and_lock - set home to current location and lock so it cannot be moved
@@ -61,8 +61,9 @@ static bool set_home_to_current_location_and_lock()
 //  unless this function is called again
 static bool set_home_and_lock(const Location& loc)
 {
-    if (set_home(loc)) {
+    if (set_home(loc, false)) {
         set_home_state(HOME_SET_AND_LOCKED);
+        ap.home_set_by_ap = false;
         return true;
     }
     return false;
@@ -71,12 +72,14 @@ static bool set_home_and_lock(const Location& loc)
 // set_home - sets ahrs home (used for RTL) to specified location
 //  initialises inertial nav and compass on first call
 //  returns true if home location set successfully
-static bool set_home(const Location& loc)
+static bool set_home(const Location& loc, bool set_by_ap)
 {
     // check location is valid
     if (loc.lat == 0 && loc.lng == 0) {
         return false;
     }
+
+    ap.home_set_by_ap = set_by_ap;
 
     // set ahrs home (used for RTL)
     ahrs.set_home(loc);
