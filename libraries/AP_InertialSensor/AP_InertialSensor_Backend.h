@@ -76,6 +76,10 @@ protected:
     // set accelerometer error_count
     void _set_accel_error_count(uint8_t instance, uint32_t error_count);
 
+    DataFlash_Class* _get_dataflash() {
+        return _imu._DataFlash;
+    }
+
     // set gyro error_count
     void _set_gyro_error_count(uint8_t instance, uint32_t error_count);
 

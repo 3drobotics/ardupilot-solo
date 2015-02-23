@@ -16,6 +16,8 @@ const extern AP_HAL::HAL& hal;
 #include <drivers/drv_gyro.h>
 #include <drivers/drv_hrt.h>
 
+#include <DataFlash.h>
+
 #include <stdio.h>
 
 AP_InertialSensor_PX4::AP_InertialSensor_PX4(AP_InertialSensor &imu) :
@@ -220,6 +222,8 @@ bool AP_InertialSensor_PX4::update(void)
 
 void AP_InertialSensor_PX4::_new_accel_sample(uint8_t i, accel_report &accel_report)
 {
+    DataFlash_Class* dataflash = _get_dataflash();
+
     Vector3f accel = Vector3f(accel_report.x, accel_report.y, accel_report.z);
     uint8_t frontend_instance = _accel_instance[i];
 
@@ -244,6 +248,10 @@ void AP_InertialSensor_PX4::_new_accel_sample(uint8_t i, accel_report &accel_rep
     // report error count
     _set_accel_error_count(frontend_instance, accel_report.error_count);
 
+    if(dataflash != NULL && dataflash->logging_started()) {
+        dataflash->Log_Write_Ins(LOG_ACC1_MSG+frontend_instance, (uint32_t)accel_report.timestamp, accel);
+    }
+
 #ifdef AP_INERTIALSENSOR_PX4_DEBUG
     _accel_dt_max[i] = max(_accel_dt_max[i],dt);
 
@@ -263,6 +271,7 @@ void AP_InertialSensor_PX4::_new_accel_sample(uint8_t i, accel_report &accel_rep
 
 void AP_InertialSensor_PX4::_new_gyro_sample(uint8_t i, gyro_report &gyro_report)
 {
+    DataFlash_Class* dataflash = _get_dataflash();
     Vector3f gyro = Vector3f(gyro_report.x, gyro_report.y, gyro_report.z);
     uint8_t frontend_instance = _gyro_instance[i];
 
@@ -301,6 +310,11 @@ void AP_InertialSensor_PX4::_new_gyro_sample(uint8_t i, gyro_report &gyro_report
 
     // report error count
     _set_gyro_error_count(_gyro_instance[i], gyro_report.error_count);
+
+    if(dataflash != NULL && dataflash->logging_started()) {
+        dataflash->Log_Write_Ins(LOG_GYR1_MSG+frontend_instance, (uint32_t)gyro_report.timestamp, gyro);
+    }
+
 #ifdef AP_INERTIALSENSOR_PX4_DEBUG
     _gyro_dt_max[i] = max(_gyro_dt_max[i],dt);
 
