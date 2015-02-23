@@ -382,7 +382,8 @@ static union {
         uint8_t system_time_set     : 1; // 20  // true if the system time has been set from the GPS
         uint8_t gps_base_pos_set    : 1; // 21  // true when the gps base position has been set (used for RTK gps only)
         enum HomeState home_state   : 2; // 22,23 - home status (unset, set, locked)
-        uint8_t in_ground_effect    : 1; // 24
+        uint8_t home_set_by_ap      : 1; // 24
+        uint8_t in_ground_effect    : 1; // 25
     };
     uint32_t value;
 } ap;
