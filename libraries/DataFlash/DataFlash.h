@@ -234,6 +234,9 @@ struct PACKED log_Gimbal2 {
     float rate_x;  
     float rate_y; 
     float rate_z; 
+    float target_x;
+    float target_y;
+    float target_z;
 };
 
 struct PACKED log_RCIN {
@@ -641,9 +644,9 @@ Format characters in the format string for binary log messages
     { LOG_COMPASS3_MSG, sizeof(log_Compass), \
       "MAG3","Ihhhhhhhhh",    "TimeMS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ" }, \
     { LOG_GIMBAL1_MSG, sizeof(log_Gimbal1), \
-      "GMB1", "Iffffffffff", "TimeMS,dt,da,day,daz,dvx,dvy,dvz,jx,jy,jz" }, \
+      "GMB1", "Iffffffffff", "TimeMS,dt,dax,day,daz,dvx,dvy,dvz,jx,jy,jz" }, \
     { LOG_GIMBAL2_MSG, sizeof(log_Gimbal2), \
-      "GMB2", "IBffffff", "TimeMS,es,ex,ey,ez,rx,ry,rz" }
+      "GMB2", "IBffffff", "TimeMS,es,ex,ey,ez,rx,ry,rz,tx,ty,tz" }
 
 #if HAL_CPU_CLASS >= HAL_CPU_CLASS_75
 #define LOG_COMMON_STRUCTURES LOG_BASE_STRUCTURES, LOG_EXTRA_STRUCTURES

@@ -851,7 +851,7 @@ void DataFlash_Class::Log_Write_Gimbal(const AP_Gimbal &gimbal)
     gimbal._ekf.getQuat(quatEst);
     Vector3f eulerEst;
     quatEst.to_euler(eulerEst.x, eulerEst.y, eulerEst.z);
-    
+
     struct log_Gimbal1 pkt1 = {
         LOG_PACKET_HEADER_INIT(LOG_GIMBAL1_MSG),
         time_ms : tstamp,
@@ -877,7 +877,10 @@ void DataFlash_Class::Log_Write_Gimbal(const AP_Gimbal &gimbal)
         est_z   : eulerEst.z,
         rate_x  : gimbal.gimbalRateDemVec.x,
         rate_y  : gimbal.gimbalRateDemVec.y,
-        rate_z  : gimbal.gimbalRateDemVec.z
+        rate_z  : gimbal.gimbalRateDemVec.z,
+        target_x: gimbal._angle_ef_target_rad.x,
+        target_y: gimbal._angle_ef_target_rad.y,
+        target_z: gimbal._angle_ef_target_rad.z
        };
     WriteBlock(&pkt2, sizeof(pkt2));
 }
