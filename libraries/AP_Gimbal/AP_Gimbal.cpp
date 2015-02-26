@@ -14,7 +14,7 @@ const AP_Param::GroupInfo AP_Gimbal::var_info[] PROGMEM = {
 };
 
 uint16_t feedback_error_count;
-static float K_gimbalRate = 0.1f;
+static float K_gimbalRate = 5.0f;
 static float angRateLimit = 0.5f;
 
 void AP_Gimbal::receive_feedback(mavlink_message_t *msg)
@@ -125,30 +125,13 @@ Vector3f AP_Gimbal::getGimbalRateDemVecTilt(Quaternion quatEst)
         Vector3f eulerEst;
         quatEst.to_euler(eulerEst.x, eulerEst.y, eulerEst.z);
 
-        // Calculate a demanded quaternion using the demanded roll and pitch and estimated yaw (yaw is slaved to the vehicle)
-        Quaternion quatDem;
         //TODO receive target from AP_Mount
-        quatDem.from_euler(0, _angle_ef_target_rad.y, eulerEst.z);
-
-       //divide the demanded quaternion by the estimated to get the error
-        Quaternion quatErr = quatDem / quatEst;
-
-        // multiply the angle error vector by a gain to calculate a demanded gimbal rate required to control tilt
         Vector3f vectorError;
-        float scaler = 1.0f-quatErr[0]*quatErr[0];
-        if (scaler > 1e-12) {
-            scaler = 1.0f/sqrtf(scaler);
-            if (quatErr[0] < 0.0f) {
-                scaler *= -1.0f;
-            }
-            vectorError.x = quatErr[1] * scaler;
-            vectorError.y = quatErr[2] * scaler;
-            vectorError.z = quatErr[3] * scaler;
-        } else {
-            vectorError.zero();
-        }
+        vectorError.x = eulerEst.x;
+        vectorError.y = eulerEst.y - _angle_ef_target_rad.y;
+        vectorError.z = 0;
 
-        Vector3f gimbalRateDemVecTilt = vectorError * K_gimbalRate;
+        Vector3f gimbalRateDemVecTilt = - vectorError * K_gimbalRate;
         return gimbalRateDemVecTilt;
 }
 
