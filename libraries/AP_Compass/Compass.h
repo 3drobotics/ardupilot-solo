@@ -123,6 +123,13 @@ public:
     const Vector3f &get_field(uint8_t i) const { return _field[i]; }
     const Vector3f &get_field(void) const { return get_field(get_primary()); }
 
+    virtual bool supports_raw_field() const { return false; }
+    virtual void get_raw_field(uint8_t i, Vector3f &field) const { }
+    void get_raw_field(Vector3f &field) const { get_raw_field(get_primary(),field); }
+
+    virtual uint32_t last_raw_update_us(uint8_t i) const { return 0; }
+    uint32_t last_raw_update_us() const { return last_raw_update_us(get_primary()); }
+
     /// Return the health of a compass
     bool healthy(uint8_t i) const { return _healthy[i]; }
     bool healthy(void) const { return healthy(get_primary()); }
