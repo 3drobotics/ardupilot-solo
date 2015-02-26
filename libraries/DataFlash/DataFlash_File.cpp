@@ -43,7 +43,7 @@ DataFlash_File::DataFlash_File(const char *log_directory) :
     _open_error(false),
     _log_directory(log_directory),
     _writebuf(NULL),
-    _writebuf_size(16*1024),
+    _writebuf_size(48*1024),
 #if defined(CONFIG_ARCH_BOARD_PX4FMU_V1)
     // V1 gets IO errors with larger than 512 byte writes
     _writebuf_chunk(512),
