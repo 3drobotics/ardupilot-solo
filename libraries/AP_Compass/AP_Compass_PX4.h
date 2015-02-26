@@ -22,12 +22,18 @@ public:
     // return the primary compass
     uint8_t get_primary(void) const;
 
+    bool supports_raw_field() const { return true; }
+    void get_raw_field(uint8_t i, Vector3f &field) const { field = _raw_field[i]; }
+    uint32_t last_raw_update_us(uint8_t i) const { return _last_timestamp[i]; }
+
 private:
     uint8_t _num_instances;
     int _mag_fd[COMPASS_MAX_INSTANCES];
     Vector3f _sum[COMPASS_MAX_INSTANCES];
     uint32_t _count[COMPASS_MAX_INSTANCES];
     uint64_t _last_timestamp[COMPASS_MAX_INSTANCES];
+
+    Vector3f _raw_field[COMPASS_MAX_INSTANCES];
 };
 
 #endif // AP_Compass_PX4_H
