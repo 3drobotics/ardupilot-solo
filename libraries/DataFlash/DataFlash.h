@@ -646,7 +646,7 @@ Format characters in the format string for binary log messages
     { LOG_GIMBAL1_MSG, sizeof(log_Gimbal1), \
       "GMB1", "Iffffffffff", "TimeMS,dt,dax,day,daz,dvx,dvy,dvz,jx,jy,jz" }, \
     { LOG_GIMBAL2_MSG, sizeof(log_Gimbal2), \
-      "GMB2", "IBffffff", "TimeMS,es,ex,ey,ez,rx,ry,rz,tx,ty,tz" }
+      "GMB2", "IBfffffffff", "TimeMS,es,ex,ey,ez,rx,ry,rz,tx,ty,tz" }
 
 #if HAL_CPU_CLASS >= HAL_CPU_CLASS_75
 #define LOG_COMMON_STRUCTURES LOG_BASE_STRUCTURES, LOG_EXTRA_STRUCTURES
