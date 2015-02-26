@@ -99,26 +99,16 @@ bool AP_Compass_PX4::read(void)
 
     for (uint8_t i=0; i<_num_instances; i++) {
         // avoid division by zero if we haven't received any mag reports
-        if (_count[i] == 0) continue;
-
-        _sum[i] /= _count[i];
-        _sum[i] *= 1000;
-
-        // apply default board orientation for this compass type. This is
-        // a noop on most boards
-        _sum[i].rotate(MAG_BOARD_ORIENTATION);
-
-        if (_external[i]) {
-            // add user selectable orientation
-            _sum[i].rotate((enum Rotation)_orientation[i].get());
-        } else {
-            // add in board orientation from AHRS
-            _sum[i].rotate(_board_orientation);
+        if (_count[i] == 0) {
+            continue;
         }
-        
+
+        // take average of field measurements since last read()
+        _sum[i] /= _count[i];
+
+        // publish to _field
         _field[i] = _sum[i];
-        apply_corrections(_field[i],i);
-    
+
         _sum[i].zero();
         _count[i] = 0;
     }
@@ -132,12 +122,35 @@ void AP_Compass_PX4::accumulate(void)
 {
     struct mag_report mag_report;
     for (uint8_t i=0; i<_num_instances; i++) {
+        bool received_sample = false;
+        // get latest report
         while (::read(_mag_fd[i], &mag_report, sizeof(mag_report)) == sizeof(mag_report) &&
                mag_report.timestamp != _last_timestamp[i]) {
-            _sum[i] += Vector3f(mag_report.x, mag_report.y, mag_report.z);
-            _count[i]++;
             _last_timestamp[i] = mag_report.timestamp;
+            received_sample = true;
         }
+
+        if(!received_sample) continue;
+
+        _raw_field[i] = Vector3f(mag_report.x, mag_report.y, mag_report.z);
+        _raw_field[i] *= 1000;
+
+        // apply default board orientation for this compass type. This is
+        // a noop on most boards
+        _raw_field[i].rotate(MAG_BOARD_ORIENTATION);
+
+        if (_external[i]) {
+            // add user selectable orientation
+            _raw_field[i].rotate((enum Rotation)_orientation[i].get());
+        } else {
+            // add in board orientation from AHRS
+            _raw_field[i].rotate(_board_orientation);
+        }
+
+        apply_corrections(_raw_field[i],i);
+
+        _sum[i] += _raw_field[i];
+        _count[i]++;
     }
 }
 
