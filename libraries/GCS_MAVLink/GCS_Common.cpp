@@ -46,9 +46,13 @@ GCS_MAVLINK::init(AP_HAL::UARTDriver *port, mavlink_channel_t mav_chan)
             mavlink_comm_1_port = _port;
             initialised = true;
             break;
-        case MAVLINK_COMM_2:
 #if MAVLINK_COMM_NUM_BUFFERS > 2
+        case MAVLINK_COMM_2:
             mavlink_comm_2_port = _port;
+            initialised = true;
+            break;
+        case MAVLINK_COMM_3:
+            mavlink_comm_3_port = _port;
             initialised = true;
             break;
 #endif
@@ -106,6 +110,41 @@ GCS_MAVLINK::setup_uart(const AP_SerialManager& serial_manager, AP_SerialManager
 
     // and init the gcs instance
     init(uart, mav_chan);
+}
+
+/*
+  setup a UART, handling begin() and init()
+ */
+void
+GCS_MAVLINK::setup_uart(AP_HAL::UARTDriver *port, uint32_t baudrate, uint16_t rxS, uint16_t txS)
+{
+    if (port == NULL) {
+        return;
+    }
+
+    /*
+      Now try to cope with SiK radios that may be stuck in bootloader
+      mode because CTS was held while powering on. This tells the
+      bootloader to wait for a firmware. It affects any SiK radio with
+      CTS connected that is externally powered. To cope we send 0x30
+      0x20 at 115200 on startup, which tells the bootloader to reset
+      and boot normally
+     */
+    port->begin(115200, rxS, txS);
+    AP_HAL::UARTDriver::flow_control old_flow_control = port->get_flow_control();
+    port->set_flow_control(AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE);
+    for (uint8_t i=0; i<3; i++) {
+        hal.scheduler->delay(1);
+        port->write(0x30);
+        port->write(0x20);
+    }
+    port->set_flow_control(old_flow_control);
+
+    // now change to desired baudrate
+    port->begin(baudrate);
+
+    // and init the gcs instance
+    init(port,MAVLINK_COMM_3);
 }
 
 uint16_t
@@ -440,6 +479,9 @@ bool GCS_MAVLINK::have_flow_control(void)
         }
         break;
 #endif
+
+    case MAVLINK_COMM_3:
+        return hal.uartE != NULL && hal.uartE->get_flow_control() != AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE;
 
     default:
         break;

@@ -71,6 +71,7 @@ public:
     void        update(void (*run_cli)(AP_HAL::UARTDriver *));
     void        init(AP_HAL::UARTDriver *port, mavlink_channel_t mav_chan);
     void        setup_uart(const AP_SerialManager& serial_manager, AP_SerialManager::SerialProtocol protocol);
+    void        setup_uart(AP_HAL::UARTDriver *port, uint32_t baudrate, uint16_t rxS, uint16_t txS);
     void        send_message(enum ap_message id);
     void        send_text(gcs_severity severity, const char *str);
     void        send_text_P(gcs_severity severity, const prog_char_t *str);
@@ -145,6 +146,10 @@ public:
       any library
     */
     static void send_statustext_all(const prog_char_t *msg);
+
+
+    // mavlink routing object
+    static MAVLink_routing routing;
 
 private:
     void        handleMessage(mavlink_message_t * msg);
@@ -247,9 +252,6 @@ private:
 
     // bitmask of what mavlink channels are active
     static uint8_t mavlink_active;
-
-    // mavlink routing object
-    static MAVLink_routing routing;
 
     // a vehicle can optionally snoop on messages for other systems
     static void (*msg_snoop)(const mavlink_message_t* msg);

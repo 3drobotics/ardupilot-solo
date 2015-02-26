@@ -27,7 +27,7 @@
 #define MAVLINK_COMM_NUM_BUFFERS 2
 #else
 // allow three telemetry ports on other boards
-#define MAVLINK_COMM_NUM_BUFFERS 3
+#define MAVLINK_COMM_NUM_BUFFERS 4
 #endif
 
 /*
@@ -59,6 +59,7 @@ extern AP_HAL::UARTDriver	*mavlink_comm_1_port;
 #if MAVLINK_COMM_NUM_BUFFERS > 2
 /// MAVLink stream used for uartD
 extern AP_HAL::UARTDriver	*mavlink_comm_2_port;
+extern AP_HAL::BetterStream	*mavlink_comm_3_port;
 #endif
 
 /// MAVLink system definition
@@ -81,6 +82,10 @@ static inline void comm_send_ch(mavlink_channel_t chan, uint8_t ch)
 #if MAVLINK_COMM_NUM_BUFFERS > 2
 	case MAVLINK_COMM_2:
 		mavlink_comm_2_port->write(ch);
+		break;
+
+	case MAVLINK_COMM_3:
+		mavlink_comm_3_port->write(ch);
 		break;
 #endif
 	default:
