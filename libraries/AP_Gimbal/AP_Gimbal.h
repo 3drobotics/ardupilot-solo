@@ -30,7 +30,7 @@ public:
     AP_Gimbal(const AP_AHRS_NavEKF &ahrs, uint8_t sysid, uint8_t compid) :
         _ahrs(ahrs),
         _ekf(ahrs),
-        _joint_offsets(0.01f,0.19f,0.03f)
+        _joint_offsets(0.0f,0.0f,0.0f)
     {
         AP_Param::setup_object_defaults(this, var_info);
         _sysid = sysid;
