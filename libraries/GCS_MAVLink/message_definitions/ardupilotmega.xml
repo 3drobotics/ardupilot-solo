@@ -114,6 +114,65 @@
         <entry name="CLOSEDLOOP"  value="3"> <description>Closed loop feedback from camera, we know for sure it has successfully taken a picture</description></entry>
         <entry name="OPENLOOP"    value="4"> <description>Open loop camera, an image trigger has been requested but we can't know for sure it has successfully taken a picture</description></entry>
     </enum>
+    
+    <!-- Gimbal payload enumerations -->
+	<enum name="MAV_MODE_GIMBAL">
+		<entry name="MAV_MODE_GIMBAL_UNINITIALIZED" value="0">
+			<description>Gimbal is powered on but has not received an initialize command from the host vehicle</description>
+		</entry>
+		<entry name="MAV_MODE_GIMBAL_HOMING" value="1">
+			<description>Gimbal is currently executing its homing routine</description>
+		</entry>
+		<entry name="MAV_MODE_GIMBAL_STABILIZED_RATE" value="2">
+			<description>Gimbal is actively stabilizing, taking rate commands</description>
+		</entry>
+		<entry name="MAV_MODE_GIMBAL_STABILIZED_ANGLE" value="3">
+			<description>Gimbal is actively stabilizing, taking angle target commands</description>
+		</entry>
+		<entry name="MAV_MODE_GIMBAL_FAULT" value="4">
+			<description>Gimbal has experienced a fault, and is currently in limp mode</description>
+		</entry>
+	</enum>
+	
+	<!-- GoPro command result enumeration -->
+	<enum name="GOPRO_CMD_RESULT">
+		<entry name="GOPRO_CMD_RESULT_UNKNOWN" value="0">
+			<description>The result of the command is unknown</description>
+		</entry>
+		<entry name="GOPRO_CMD_RESULT_SUCCESSFUL" value="1">
+			<description>The command was successfully sent, and a response was successfully received</description>
+		</entry>
+		<entry name="GOPRO_CMD_RESULT_SEND_CMD_START_TIMEOUT" value="2">
+			<description>Timed out waiting for the GoPro to acknowledge our request to send a command</description>
+		</entry>
+		<entry name="GOPRO_CMD_RESULT_SEND_CMD_COMPLETE_TIMEOUT" value="3">
+			<description>Timed out waiting for the GoPro to read the command</description>
+		</entry>
+		<entry name="GOPRO_CMD_RESULT_GET_RESPONSE_START_TIMEOUT" value="4">
+			<description>Timed out waiting for the GoPro to begin transmitting a response to the command</description>
+		</entry>
+		<entry name="GOPRO_CMD_RESULT_GET_RESPONSE_COMPLETE_TIMEOUT" value="5">
+			<description>Timed out waiting for the GoPro to finish transmitting a response to the command</description>
+		</entry>
+		<entry name="GOPRO_CMD_RESULT_GET_CMD_COMPLETE_TIMEOUT" value="6">
+			<description>Timed out waiting for the GoPro to finish transmitting its own command</description>
+		</entry>
+		<entry name="GOPRO_CMD_RESULT_SEND_RESPONSE_START_TIMEOUT" value="7">
+			<description>Timed out waiting for the GoPro to start reading a response to its own command</description>
+		</entry>
+		<entry name="GOPRO_CMD_RESULT_SEND_RESPONSE_COMPLETE_TIMEOUT" value="8">
+			<description>Timed out waiting for the GoPro to finish reading a response to its own command</description>
+		</entry>
+		<entry name="GOPRO_CMD_RESULT_PREEMPTED" value="9">
+			<description>Command to the GoPro was preempted by the GoPro sending its own command</description>
+		</entry>
+		<entry name="GOPRO_CMD_RECEIVED_DATA_OVERFLOW" value="10">
+			<description>More data than expected received in response to the command</description>
+		</entry>
+		<entry name="GOPRO_CMD_RECEIVED_DATA_UNDERFLOW" value="11">
+			<description>Less data than expected received in response to the command</description>
+		</entry>
+	</enum>
 
     <!-- led control pattern enums (enumeration of specific patterns) -->
     <enum name="LED_CONTROL_PATTERN">
@@ -486,41 +545,71 @@
       <field type="float" name="v4">test variable4</field>
     </message>
 
-    <message name="AUTOPILOT_VERSION_REQUEST" id="183">
+    <message name="GIMBAL_REPORT" id="183">
+      <description>3 axis gimbal mesuraments</description>
+      <field type="uint8_t" name="target_system">System ID</field>
+      <field type="uint8_t" name="target_component">Component ID</field>
+      <field type="float" name="delta_time">Time since last update (seconds)</field>
+      <field type="float" name="delta_angle_x">Delta angle X (radians)</field>
+      <field type="float" name="delta_angle_y">Delta angle Y (radians)</field>
+      <field type="float" name="delta_angle_z">Delta angle X (radians)</field>
+      <field type="float" name="delta_velocity_x">Delta velocity X (m/s)</field>
+      <field type="float" name="delta_velocity_y">Delta velocity Y (m/s)</field>
+      <field type="float" name="delta_velocity_z">Delta velocity Z (m/s)</field> 
+      <field type="float" name="joint_roll"> Joint ROLL (radians)</field>
+      <field type="float" name="joint_el"> Joint EL (radians)</field>
+      <field type="float" name="joint_az"> Joint AZ (radians)</field>
+    </message>
+
+    <message name="GIMBAL_CONTROL" id="184">
+      <description>Control message for rate gimbal</description>
+      <field type="uint8_t" name="target_system">System ID</field>
+      <field type="uint8_t" name="target_component">Component ID</field>
+      <field type="float" name="demanded_rate_x">Demanded angular rate X (rad/s)</field>
+      <field type="float" name="demanded_rate_y">Demanded angular rate Y (rad/s)</field>
+      <field type="float" name="demanded_rate_z">Demanded angular rate Z (rad/s)</field>
+    </message>
+
+	<message name="GOPRO_POWER_ON" id="185">
+		<description>Instruct a HeroBus attached GoPro to power on</description>
+		<field name="target_system" type="uint8_t">System ID</field>
+		<field name="target_component" type="uint8_t">Component ID</field>
+	</message>
+	
+	<message name="GOPRO_POWER_OFF" id="186">
+		<description>Instruct a HeroBus attached GoPro to power off</description>
+		<field name="target_system" type="uint8_t">System ID</field>
+		<field name="target_component" type="uint8_t">Component ID</field>
+	</message>
+	
+	<message name="GOPRO_COMMAND" id="187">
+		<description>Send a command to a HeroBus attached GoPro.  Will generate a GOPRO_RESPONSE message with results of the command</description>
+		<field name="target_system" type="uint8_t">System ID</field>
+		<field name="target_component" type="uint8_t">Component ID</field>
+		<field name="gp_cmd_name_1" type="uint8_t">First character of the 2 character GoPro command</field>
+		<field name="gp_cmd_name_2" type="uint8_t">Second character of the 2 character GoPro command</field>
+		<field name="gp_cmd_parm" type="uint8_t">Parameter for the command</field>
+	</message>
+	
+	<message name="GOPRO_RESPONSE" id="188">
+		<description>
+			Response to a command sent to a HeroBus attached GoPro with a GOPRO_COMMAND message.  Contains response from the camera as well as information about any errors encountered while attempting to communicate with the camera
+		</description>
+		<field name="gp_cmd_name_1" type="uint8_t">First character of the 2 character GoPro command that generated this response</field>
+		<field name="gp_cmd_name_2" type="uint8_t">Second character of the 2 character GoPro command that generated this response</field>
+		<field name="gp_cmd_response_status" type="uint8_t">Response byte from the GoPro's response to the command.  0 = Success, 1 = Failure</field>
+		<field name="gp_cmd_response_argument" type="uint8_t">Response argument from the GoPro's response to the command</field>
+		<field name="gp_cmd_result" type="uint16_t" enum="GOPRO_CMD_RESULT">Result of the command attempt to the GoPro, as defined by GOPRO_CMD_RESULT enum.</field>
+	</message>
+
+    <message name="AUTOPILOT_VERSION_REQUEST" id="189">
         <description>Request the autopilot version from the system/component.</description>
         <field type="uint8_t" name="target_system">System ID</field>
         <field type="uint8_t" name="target_component">Component ID</field>
     </message>
 
-    <message name="GIMBAL_REPORT" id="184">
-      <description>Report from MAVLink enabled gimbal to vehicle. The deltas are in gimbal sensor frame. Joint measurements assume a 312 ordering (azimuth, roll, pitch).</description>
-      <field type="uint8_t" name="target_system">System ID</field>
-      <field type="uint8_t" name="target_component">Component ID</field>
-      <field type="float" name="delta_time">Time since last update (seconds)</field>
-      <field type="float" name="delta_angle_x">Delta angle X, radians</field>
-      <field type="float" name="delta_angle_y">Delta angle Y, radians</field>
-      <field type="float" name="delta_angle_z">Delta angle Z, radians</field>
-      <field type="float" name="delta_velocity_x">Delta velocity X, m/s</field>
-      <field type="float" name="delta_velocity_y">Delta velocity Y, m/s</field>
-      <field type="float" name="delta_velocity_z">Delta velocity Z, m/s</field>
-      <field type="float" name="joint_roll">Joint roll, radians</field>
-      <field type="float" name="joint_pitch">Joint pitch, radians</field>
-      <field type="float" name="joint_yaw">Joint yaw, radians</field>
-    </message>
 
-    <message name="GIMBAL_CONTROL" id="185">
-      <description>Control packet from vehicle to MAVLink enabled gimbal. All values in gimbal sensor frame</description>
-      <field type="uint8_t" name="target_system">System ID</field>
-      <field type="uint8_t" name="target_component">Component ID</field>
-      <field type="float" name="demanded_rate_x">Demanded angular rate X, radians/s</field>
-      <field type="float" name="demanded_rate_y">Demanded angular rate Y, radians/s</field>
-      <field type="float" name="demanded_rate_z">Demanded angular rate Z, radians/s</field>
-      <field type="float" name="gyro_bias_x">Gyro bias X, radians/s</field>
-      <field type="float" name="gyro_bias_y">Gyro bias Y, radians/s</field>
-      <field type="float" name="gyro_bias_z">Gyro bias Z, radians/s</field>
-    </message>
-
-    <message name="LED_CONTROL" id="186">
+    <message name="LED_CONTROL" id="190">
         <description>Control vehicle LEDs</description>
         <field type="uint8_t" name="target_system">System ID</field>
         <field type="uint8_t" name="target_component">Component ID</field>
