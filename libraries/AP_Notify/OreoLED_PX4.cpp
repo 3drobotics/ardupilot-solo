@@ -31,6 +31,13 @@
 #include <drivers/drv_oreoled.h>
 #include <stdio.h>
 #include <errno.h>
+#include "defines.h"
+
+//  This kludge is necessary to work around the absence of header files in ArduPilot.
+//  control_mode is defined in:  ardupilot/ArduCopter/ArduCopter.pde
+//  There is no way to include the ".pde" file, thus we are forced to re-declare
+//  the variable here and have the linker realize they are the same variable.
+static int8_t control_mode;
 
 extern const AP_HAL::HAL& hal;
 
@@ -78,6 +85,9 @@ void OreoLED_PX4::update()
     static uint8_t counter = 0;     // counter to reduce rate from 50hz to 10hz
     static uint8_t step = 0;        // step to control pattern
     static uint8_t last_stage = 0;  // unique id of the last messages sent to the LED, used to reduce resends which disrupt some patterns
+    static uint8_t initialization_done = 0;   // Keep track if initialization has begun.  There is a period when the driver
+                                              // is running but initialization has not yet begun -- this prevents post-initialization
+                                              // LED patterns from displaying before initialization has completed.
     uint8_t brightness = OREOLED_BRIGHT;
 
     // return immediately if not healthy
@@ -110,26 +120,17 @@ void OreoLED_PX4::update()
         step = 0;
     }
 
+    // Pre-initialization pattern is all solid green
+    if (!initialization_done) {
+        set_rgb(OREOLED_ALL_INSTANCES, 0, brightness, 0);
+    }
+
     // initialising pattern
     if (AP_Notify::flags.initialising) {
-        if (step & 1) {
-            // left side on
-            set_rgb(OREOLED_FRONTLEFT, brightness, brightness, brightness); // white
-            set_rgb(OREOLED_BACKLEFT, brightness, 0, 0);    // red
-            // right side off
-            set_rgb(OREOLED_FRONTRIGHT, 0, 0, 0);
-            set_rgb(OREOLED_BACKRIGHT, 0, 0, 0);
-        } else {
-            // left side off
-            set_rgb(OREOLED_FRONTLEFT, 0, 0, 0);
-            set_rgb(OREOLED_BACKLEFT, 0, 0, 0);
-            // right side on
-            set_rgb(OREOLED_FRONTRIGHT, brightness, brightness, brightness); // white
-            set_rgb(OREOLED_BACKRIGHT, brightness, 0, 0);    // red
-        }
+        // set_rgb(OREOLED_ALL_INSTANCES, 0, brightness, 0);
 
-        // record stage
-        last_stage = 1;
+        initialization_done = 1;  // Record initialization has begun
+        last_stage = 1;   // record stage
 
         // exit so no other status modify this pattern
         return;
@@ -170,41 +171,30 @@ void OreoLED_PX4::update()
         return;
     }
 
-    // radio and battery failsafe patter: flash yellow
-    // gps failsafe pattern : flashing yellow and blue
-    // baro glitching pattern : flashing yellow and purple
-    // ekf_bad pattern : flashing yellow and red
-    if (AP_Notify::flags.failsafe_radio || AP_Notify::flags.failsafe_battery ||
-            AP_Notify::flags.failsafe_gps || AP_Notify::flags.gps_glitching ||
-            AP_Notify::flags.baro_glitching ||
-            AP_Notify::flags.ekf_bad) {
+    // radio failsafe pattern: Alternate between front red/rear black and front black/rear red
+    if (AP_Notify::flags.failsafe_radio) {
         switch(step) {
             case 0:
             case 1:
             case 2:
             case 3:
             case 4:
-                // yellow on
-                set_rgb(OREOLED_INSTANCE_ALL, brightness, brightness, 0);
+                // Front red/rear black
+                set_rgb(OREOLED_FRONTLEFT, brightness, 0, 0);
+                set_rgb(OREOLED_FRONTRIGHT, brightness, 0, 0);
+                set_rgb(OREOLED_BACKLEFT, 0, 0, 0);
+                set_rgb(OREOLED_BACKRIGHT, 0, 0, 0);
                 break;
             case 5:
             case 6:
             case 7:
             case 8:
             case 9:
-                if (AP_Notify::flags.failsafe_gps || AP_Notify::flags.gps_glitching) {
-                    // blue on for gps failsafe
-                    set_rgb(OREOLED_INSTANCE_ALL, 0, 0, brightness);
-                } else if (AP_Notify::flags.baro_glitching) {
-                    // purple on if baro glitching
-                    set_rgb(OREOLED_INSTANCE_ALL, brightness, 0, brightness);
-                } else if (AP_Notify::flags.ekf_bad) {
-                    // red on if ekf bad
-                    set_rgb(OREOLED_INSTANCE_ALL, brightness, 0, 0);
-                }else{
-                    // all off for radio or battery failsafe
-                    set_rgb(OREOLED_INSTANCE_ALL, 0, 0, 0);
-                }
+                // Front black/rear red
+                set_rgb(OREOLED_FRONTLEFT, 0, 0, 0);
+                set_rgb(OREOLED_FRONTRIGHT, 0, 0, 0);
+                set_rgb(OREOLED_BACKLEFT, brightness, 0, 0);
+                set_rgb(OREOLED_BACKRIGHT, brightness, 0, 0);
                 break;
         }
         // record stage
@@ -215,19 +205,48 @@ void OreoLED_PX4::update()
 
     // send colours (later we will set macro if required)
     if (last_stage < 10) {
-        set_macro(OREOLED_FRONTLEFT, OREOLED_PARAM_MACRO_WHITE); // white
-        set_macro(OREOLED_FRONTRIGHT, OREOLED_PARAM_MACRO_WHITE); // white
-        set_macro(OREOLED_BACKLEFT, OREOLED_PARAM_MACRO_RED);    // red
-        set_macro(OREOLED_BACKRIGHT, OREOLED_PARAM_MACRO_RED);   // red
+        if (initialization_done) {
+            set_macro(OREOLED_FRONTLEFT, OREOLED_PARAM_MACRO_WHITE); // white
+            set_macro(OREOLED_FRONTRIGHT, OREOLED_PARAM_MACRO_WHITE); // white
+            set_macro(OREOLED_BACKLEFT, OREOLED_PARAM_MACRO_RED);    // red
+            set_macro(OREOLED_BACKRIGHT, OREOLED_PARAM_MACRO_RED);   // red
+        }
         last_stage = 10;
     } else if (last_stage >= 10) {
         // check arming status
         if (AP_Notify::flags.armed) {
-            // set macro to fade-in
-            set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_FADEIN);
+            // reset macro will return LEDs to solid
+            set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_RESET);
         } else {
-            // start breathing macro
-            set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_BREATH);
+            static uint8_t  previous_control_mode = -1;
+            switch (control_mode) {
+                //  List of manual control modes using a solid white/red pattern
+                case LOITER:
+                case ALT_HOLD:
+                case DRIFT:
+                case STABILIZE:
+                case ACRO:
+                case SPORT:
+                case FLIP:
+                case AUTOTUNE:
+                case POSHOLD: {
+                    if(control_mode != previous_control_mode) {
+                        previous_control_mode = control_mode;
+                        // Stop breathing -- solid color
+                        set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_RESET);
+                        uint8_t oreoled_pattern_solid = 2;  //  PATTERN_SOLID == 2
+                        send_bytes(0, (uint8_t) 1, &oreoled_pattern_solid);
+                        send_bytes(1, (uint8_t) 1, &oreoled_pattern_solid);
+                        send_bytes(2, (uint8_t) 1, &oreoled_pattern_solid);
+                        send_bytes(3, (uint8_t) 1, &oreoled_pattern_solid);
+                    }
+                };
+                    break;
+
+                // All other control modes start breathing macro
+                default:
+                    set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_BREATH);
+            }
         }
         last_stage = 11;
     }
