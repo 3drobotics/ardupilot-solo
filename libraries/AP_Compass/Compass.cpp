@@ -1,6 +1,7 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #include <AP_Progmem.h>
 #include "Compass.h"
+#include <stdio.h>
 
 const AP_Param::GroupInfo Compass::var_info[] PROGMEM = {
     // index 0 was used for the old orientation matrix
@@ -289,6 +290,205 @@ Compass::init()
     return true;
 }
 
+bool
+Compass::start_calibration(uint8_t i, bool retry, bool autosave, float delay)
+{
+    if(healthy(i)) {
+        _calibrator[i].start(retry, autosave, delay);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool
+Compass::start_calibration_mask(uint8_t mask, bool retry, bool autosave, float delay)
+{
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if((1<<i) & mask) {
+            if(!start_calibration(i,retry,autosave,delay)) {
+                cancel_calibration_mask(mask);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool
+Compass::start_calibration_all(bool retry, bool autosave, float delay)
+{
+    return start_calibration_mask(get_healthy_mask(),retry,autosave,delay);
+}
+
+void
+Compass::cancel_calibration(uint8_t i)
+{
+    _calibrator[i].clear();
+}
+
+void
+Compass::cancel_calibration_mask(uint8_t mask)
+{
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if((1<<i) & mask) {
+            cancel_calibration(i);
+        }
+    }
+}
+
+void
+Compass::cancel_calibration_all()
+{
+    cancel_calibration_mask(0xFF);
+}
+
+bool
+Compass::accept_calibration(uint8_t i)
+{
+    CompassCalibrator& cal = _calibrator[i];
+    uint8_t cal_status = cal.get_status();
+
+    if(cal_status == COMPASS_CAL_SUCCESS) {
+        Vector3f ofs, diag, offdiag;
+        cal.get_calibration(ofs, diag, offdiag);
+        cal.clear();
+
+        set_and_save_offsets(i, ofs);
+
+
+
+        //TODO soft-iron calibrations
+
+#if COMPASS_MAX_INSTANCES > 1
+        _dev_id[i].save();
+#endif
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool
+Compass::accept_calibration_mask(uint8_t mask)
+{
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if((1<<i) & mask) {
+            CompassCalibrator& cal = _calibrator[i];
+            uint8_t cal_status = cal.get_status();
+            if(cal_status != COMPASS_CAL_SUCCESS && cal_status != COMPASS_CAL_NOT_STARTED) {
+                // a compass failed or is still in progress
+                return false;
+            }
+        }
+    }
+
+    bool success = true;
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if((1<<i) & mask) {
+            if(!accept_calibration(i)) {
+                success = false;
+            }
+        }
+    }
+    return success;
+}
+
+bool
+Compass::accept_calibration_all()
+{
+    return accept_calibration_mask(0xFF);
+}
+
+void
+Compass::send_mag_cal_progress(mavlink_channel_t chan)
+{
+    uint8_t cal_mask = get_cal_mask();
+
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        CompassCalibrator& cal = _calibrator[i];
+
+        uint8_t& compass_id = i;
+        uint8_t cal_status = cal.get_status();
+
+        if(cal_status == COMPASS_CAL_WAITING_TO_START  ||
+           cal_status == COMPASS_CAL_SAMPLING_STEP_ONE ||
+           cal_status == COMPASS_CAL_SAMPLING_STEP_TWO) {
+            uint8_t completion_pct = cal.get_completion_percent();
+            uint8_t completion_mask[10];
+            Vector3f direction(0.0f,0.0f,0.0f);
+            uint8_t attempt = cal.get_attempt();
+
+            memset(completion_mask, 0, sizeof(completion_mask));
+
+            mavlink_msg_mag_cal_progress_send(
+                chan,
+                compass_id, cal_mask,
+                cal_status, attempt, completion_pct, completion_mask,
+                direction.x, direction.y, direction.z
+            );
+        }
+    }
+}
+
+void Compass::send_mag_cal_report(mavlink_channel_t chan)
+{
+    uint8_t cal_mask = get_cal_mask();
+
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        CompassCalibrator& cal = _calibrator[i];
+
+        uint8_t& compass_id = i;
+        uint8_t cal_status = cal.get_status();
+
+        if(cal_status == COMPASS_CAL_SUCCESS ||
+           cal_status == COMPASS_CAL_FAILED) {
+            float fitness = cal.get_fitness();
+            Vector3f ofs, diag, offdiag;
+            cal.get_calibration(ofs, diag, offdiag);
+            uint8_t autosaved = cal.get_autosave();
+
+            mavlink_msg_mag_cal_report_send(
+                chan,
+                compass_id, cal_mask,
+                cal_status, autosaved,
+                fitness,
+                ofs.x, ofs.y, ofs.z,
+                diag.x, diag.y, diag.z,
+                offdiag.x, offdiag.y, offdiag.z
+            );
+        }
+
+        if(cal_status == COMPASS_CAL_SUCCESS && cal.get_autosave()) {
+            accept_calibration(i);
+        }
+    }
+}
+
+uint8_t
+Compass::get_healthy_mask() const
+{
+    uint8_t healthy_mask = 0;
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if(healthy(i)) {
+            healthy_mask |= 1 << i;
+        }
+    }
+    return healthy_mask;
+}
+
+uint8_t
+Compass::get_cal_mask()
+{
+    uint8_t cal_mask = 0;
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if(_calibrator[i].get_status() != COMPASS_CAL_NOT_STARTED) {
+            cal_mask |= 1 << i;
+        }
+    }
+    return cal_mask;
+}
+
 void
 Compass::set_offsets(uint8_t i, const Vector3f &offsets)
 {
@@ -468,6 +668,9 @@ bool Compass::configured(void)
  */
 void Compass::apply_corrections(Vector3f &mag, uint8_t i)
 {
+    _calibrator[i].new_sample(mag);
+    _calibrator[i].run_fit_chunk();
+
     const Vector3f &offsets = _offset[i].get();
     const Vector3f &mot = _motor_compensation[i].get();
 
