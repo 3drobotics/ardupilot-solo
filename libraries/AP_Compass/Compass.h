@@ -7,6 +7,8 @@
 #include <AP_Param.h>
 #include <AP_Math.h>
 #include <AP_Declination.h> // ArduPilot Mega Declination Helper Library
+#include <CompassCalibrator.h>
+#include <GCS_MAVLink.h>
 
 // compass product id
 #define AP_COMPASS_TYPE_UNKNOWN         0x00
@@ -78,11 +80,26 @@ public:
     ///
     virtual bool read(void) = 0;
 
-    
-
     /// use spare CPU cycles to accumulate values from the compass if
     /// possible
     virtual void accumulate(void) = 0;
+
+    bool start_calibration(uint8_t i, bool retry=false, bool autosave=false, float delay_sec=0.0f);
+    bool start_calibration_all(bool retry=false, bool autosave=false, float delay_sec=0.0f);
+    bool start_calibration_mask(uint8_t mask, bool retry=false, bool autosave=false, float delay_sec=0.0f);
+    
+    void cancel_calibration(uint8_t i);
+    void cancel_calibration_all();
+    void cancel_calibration_mask(uint8_t mask);
+
+    bool accept_calibration(uint8_t i);
+    bool accept_calibration_all();
+    bool accept_calibration_mask(uint8_t mask);
+
+    uint8_t get_healthy_mask() const;
+
+    void send_mag_cal_progress(mavlink_channel_t chan);
+    void send_mag_cal_report(mavlink_channel_t chan);
 
     /// Calculate the tilt-compensated heading_ variables.
     ///
@@ -279,6 +296,8 @@ protected:
     AP_Int32 _dev_id[COMPASS_MAX_INSTANCES];    // device id detected at init.  saved to eeprom when offsets are saved allowing ram & eeprom values to be compared as consistency check
 #endif
 
+    CompassCalibrator _calibrator[COMPASS_MAX_INSTANCES];
+
     bool _null_init_done;                           ///< first-time-around flag used by offset nulling
 
     ///< used by offset correction
@@ -296,5 +315,8 @@ protected:
     enum Rotation _board_orientation;
     
     void apply_corrections(Vector3f &mag, uint8_t i);
+
+private:
+    uint8_t get_cal_mask();
 };
 #endif
