@@ -39,9 +39,10 @@ WPNAV_LOIT_SPEED        500.0
 THR_MID                 480.0000
 
 #failsafe configs:
-FS_BATT_VOLTAGE           0.0000
+FS_BATT_VOLTAGE          14.0000
+FS_BATT_ENABLE            2.0000
 FS_GCS_ENABLE             0.0000
 FS_THR_ENABLE             1.0000
 FS_THR_VALUE            910.0000
 RALLY_LIMIT_KM            0.0000
-RTL_ALT_FINAL           800.0000
+RTL_ALT_FINAL           400.0000
