@@ -237,7 +237,8 @@ AP_InertialSensor::AP_InertialSensor() :
     _gyro(),
     _board_orientation(ROTATION_NONE),
     _hil_mode(false),
-    _have_3D_calibration(false)
+    _have_3D_calibration(false),
+    _calibrating(false)
 {
     AP_Param::setup_object_defaults(this, var_info);        
     for (uint8_t i=0; i<INS_MAX_BACKENDS; i++) {
@@ -616,6 +617,9 @@ AP_InertialSensor::_init_accel()
 
     hal.console->print_P(PSTR("Init Accel"));
 
+    // record we are calibrating
+    _calibrating = true;
+
     // flash leds to tell user to keep the IMU still
     AP_Notify::flags.initialising = true;
 
@@ -691,6 +695,9 @@ AP_InertialSensor::_init_accel()
         _accel_offset[k] = accel_offset[k];
     }
 
+    // record calibration complete
+    _calibrating = false;
+
     // stop flashing the leds
     AP_Notify::flags.initialising = false;
 
@@ -708,6 +715,9 @@ AP_InertialSensor::_init_gyro()
 
     // cold start
     hal.console->print_P(PSTR("Init Gyro"));
+
+    // record we are calibrating
+    _calibrating = true;
 
     // flash leds to tell user to keep the IMU still
     AP_Notify::flags.initialising = true;
@@ -792,9 +802,6 @@ AP_InertialSensor::_init_gyro()
         }
     }
 
-    // stop flashing leds
-    AP_Notify::flags.initialising = false;
-
     // we've kept the user waiting long enough - use the best pair we
     // found so far
     hal.console->println();
@@ -809,6 +816,12 @@ AP_InertialSensor::_init_gyro()
             _gyro_cal_ok[k] = true;
         }
     }
+
+    // record calibration complete
+    _calibrating = false;
+
+    // stop flashing leds
+    AP_Notify::flags.initialising = false;
 }
 
 #if !defined( __AVR_ATmega1280__ )
