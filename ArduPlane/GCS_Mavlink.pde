@@ -1664,7 +1664,7 @@ static void gcs_update(void)
     for (uint8_t i=0; i<num_gcs; i++) {
         if (gcs[i].initialised) {
 #if CLI_ENABLED == ENABLED
-            gcs[i].update(run_cli);
+            gcs[i].update(g.cli_enabled==1?run_cli:NULL);
 #else
             gcs[i].update(NULL);
 #endif
