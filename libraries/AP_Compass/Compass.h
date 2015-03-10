@@ -96,6 +96,9 @@ public:
     bool accept_calibration_all();
     bool accept_calibration_mask(uint8_t mask);
 
+    uint8_t get_cal_mask() const;
+    bool is_calibrating() const;
+
     uint8_t get_healthy_mask() const;
 
     void send_mag_cal_progress(mavlink_channel_t chan);
@@ -315,8 +318,5 @@ protected:
     enum Rotation _board_orientation;
     
     void apply_corrections(Vector3f &mag, uint8_t i);
-
-private:
-    uint8_t get_cal_mask();
 };
 #endif

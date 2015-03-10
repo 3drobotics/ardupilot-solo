@@ -477,8 +477,14 @@ Compass::get_healthy_mask() const
     return healthy_mask;
 }
 
+bool
+Compass::is_calibrating() const
+{
+    return get_cal_mask();
+}
+
 uint8_t
-Compass::get_cal_mask()
+Compass::get_cal_mask() const
 {
     uint8_t cal_mask = 0;
     for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
