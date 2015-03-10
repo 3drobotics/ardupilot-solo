@@ -84,10 +84,12 @@ public:
     /// possible
     virtual void accumulate(void) = 0;
 
+    void compass_cal_update();
+
     bool start_calibration(uint8_t i, bool retry=false, bool autosave=false, float delay_sec=0.0f);
     bool start_calibration_all(bool retry=false, bool autosave=false, float delay_sec=0.0f);
     bool start_calibration_mask(uint8_t mask, bool retry=false, bool autosave=false, float delay_sec=0.0f);
-    
+
     void cancel_calibration(uint8_t i);
     void cancel_calibration_all();
     void cancel_calibration_mask(uint8_t mask);

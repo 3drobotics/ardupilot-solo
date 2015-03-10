@@ -1,7 +1,7 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #include <AP_Progmem.h>
 #include "Compass.h"
-#include <stdio.h>
+#include <AP_Notify.h>
 
 const AP_Param::GroupInfo Compass::var_info[] PROGMEM = {
     // index 0 was used for the old orientation matrix
@@ -288,6 +288,24 @@ bool
 Compass::init()
 {
     return true;
+}
+
+void
+Compass::compass_cal_update()
+{
+    AP_Notify::flags.compass_cal_running = 0;
+
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        _calibrator[i].run_fit_chunk();
+
+        if(_calibrator[i].check_for_timeout()) {
+            cancel_calibration_all();
+        }
+
+        if(_calibrator[i].running()) {
+            AP_Notify::flags.compass_cal_running = 1;
+        }
+    }
 }
 
 bool
@@ -680,7 +698,6 @@ bool Compass::configured(void)
 void Compass::apply_corrections(Vector3f &mag, uint8_t i)
 {
     _calibrator[i].new_sample(mag);
-    _calibrator[i].run_fit_chunk();
 
     const Vector3f &offsets = _offset[i].get();
     const Vector3f &mot = _motor_compensation[i].get();
