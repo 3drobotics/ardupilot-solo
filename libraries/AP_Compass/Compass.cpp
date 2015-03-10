@@ -476,8 +476,8 @@ Compass::accept_calibration(uint8_t i)
         cal.clear();
 
         set_and_save_offsets(i, ofs);
-
-        //TODO soft-iron calibrations
+        set_and_save_diagonals(i,diag);
+        set_and_save_offdiagonals(i,offdiag);
 
 #if COMPASS_MAX_INSTANCES > 1
         _dev_id[i].save();
@@ -634,6 +634,24 @@ Compass::set_and_save_offsets(uint8_t i, const Vector3f &offsets)
     if (i < COMPASS_MAX_INSTANCES) {
         _offset[i].set(offsets);
         save_offsets(i);
+    }
+}
+
+void
+Compass::set_and_save_diagonals(uint8_t i, const Vector3f &diagonals)
+{
+    // sanity check compass instance provided
+    if (i < COMPASS_MAX_INSTANCES) {
+        _diagonals[i].set_and_save(diagonals);
+    }
+}
+
+void
+Compass::set_and_save_offdiagonals(uint8_t i, const Vector3f &offdiagonals)
+{
+    // sanity check compass instance provided
+    if (i < COMPASS_MAX_INSTANCES) {
+        _offdiagonals[i].set_and_save(offdiagonals);
     }
 }
 
