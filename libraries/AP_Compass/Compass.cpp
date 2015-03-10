@@ -294,6 +294,9 @@ bool
 Compass::start_calibration(uint8_t i, bool retry, bool autosave, float delay)
 {
     if(healthy(i)) {
+        if(!is_calibrating() && delay > 0.5f) {
+            AP_Notify::events.initiated_compass_cal = 1;
+        }
         _calibrator[i].start(retry, autosave, delay);
         return true;
     } else {
@@ -356,13 +359,14 @@ Compass::accept_calibration(uint8_t i)
 
         set_and_save_offsets(i, ofs);
 
-
-
         //TODO soft-iron calibrations
 
 #if COMPASS_MAX_INSTANCES > 1
         _dev_id[i].save();
 #endif
+        if(!is_calibrating()) {
+            AP_Notify::events.compass_cal_saved = 1;
+        }
         return true;
     } else {
         return false;
@@ -391,6 +395,7 @@ Compass::accept_calibration_mask(uint8_t mask)
             }
         }
     }
+
     return success;
 }
 
