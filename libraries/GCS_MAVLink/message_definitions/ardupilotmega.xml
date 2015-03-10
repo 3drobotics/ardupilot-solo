@@ -587,7 +587,13 @@
       <field type="float" name="v4">test variable4</field>
     </message>
 
-    <message name="GIMBAL_REPORT" id="183">
+    <message name="AUTOPILOT_VERSION_REQUEST" id="183">
+        <description>Request the autopilot version from the system/component.</description>
+        <field type="uint8_t" name="target_system">System ID</field>
+        <field type="uint8_t" name="target_component">Component ID</field>
+    </message>
+
+    <message name="GIMBAL_REPORT" id="184">
       <description>3 axis gimbal mesuraments</description>
       <field type="uint8_t" name="target_system">System ID</field>
       <field type="uint8_t" name="target_component">Component ID</field>
@@ -603,7 +609,7 @@
       <field type="float" name="joint_az"> Joint AZ (radians)</field>
     </message>
 
-    <message name="GIMBAL_CONTROL" id="184">
+    <message name="GIMBAL_CONTROL" id="185">
       <description>Control message for rate gimbal</description>
       <field type="uint8_t" name="target_system">System ID</field>
       <field type="uint8_t" name="target_component">Component ID</field>
@@ -612,19 +618,29 @@
       <field type="float" name="demanded_rate_z">Demanded angular rate Z (rad/s)</field>
     </message>
 
-	<message name="GOPRO_POWER_ON" id="185">
+    <message name="LED_CONTROL" id="186">
+        <description>Control vehicle LEDs</description>
+        <field type="uint8_t" name="target_system">System ID</field>
+        <field type="uint8_t" name="target_component">Component ID</field>
+        <field type="uint8_t" name="instance">Instance (LED instance to control or 255 for all LEDs)</field>
+        <field type="uint8_t" name="pattern">Pattern (see LED_PATTERN_ENUM)</field>
+        <field type="uint8_t" name="custom_len">Custom Byte Length</field>
+        <field type="uint8_t[24]" name="custom_bytes">Custom Bytes</field>
+    </message>
+
+	<message name="GOPRO_POWER_ON" id="187">
 		<description>Instruct a HeroBus attached GoPro to power on</description>
 		<field name="target_system" type="uint8_t">System ID</field>
 		<field name="target_component" type="uint8_t">Component ID</field>
 	</message>
 	
-	<message name="GOPRO_POWER_OFF" id="186">
+	<message name="GOPRO_POWER_OFF" id="188">
 		<description>Instruct a HeroBus attached GoPro to power off</description>
 		<field name="target_system" type="uint8_t">System ID</field>
 		<field name="target_component" type="uint8_t">Component ID</field>
 	</message>
 	
-	<message name="GOPRO_COMMAND" id="187">
+	<message name="GOPRO_COMMAND" id="189">
 		<description>Send a command to a HeroBus attached GoPro.  Will generate a GOPRO_RESPONSE message with results of the command</description>
 		<field name="target_system" type="uint8_t">System ID</field>
 		<field name="target_component" type="uint8_t">Component ID</field>
@@ -633,7 +649,7 @@
 		<field name="gp_cmd_parm" type="uint8_t">Parameter for the command</field>
 	</message>
 	
-	<message name="GOPRO_RESPONSE" id="188">
+	<message name="GOPRO_RESPONSE" id="190">
 		<description>
 			Response to a command sent to a HeroBus attached GoPro with a GOPRO_COMMAND message.  Contains response from the camera as well as information about any errors encountered while attempting to communicate with the camera
 		</description>
@@ -643,23 +659,6 @@
 		<field name="gp_cmd_response_argument" type="uint8_t">Response argument from the GoPro's response to the command</field>
 		<field name="gp_cmd_result" type="uint16_t" enum="GOPRO_CMD_RESULT">Result of the command attempt to the GoPro, as defined by GOPRO_CMD_RESULT enum.</field>
 	</message>
-
-    <message name="AUTOPILOT_VERSION_REQUEST" id="189">
-        <description>Request the autopilot version from the system/component.</description>
-        <field type="uint8_t" name="target_system">System ID</field>
-        <field type="uint8_t" name="target_component">Component ID</field>
-    </message>
-
-
-    <message name="LED_CONTROL" id="190">
-        <description>Control vehicle LEDs</description>
-        <field type="uint8_t" name="target_system">System ID</field>
-        <field type="uint8_t" name="target_component">Component ID</field>
-        <field type="uint8_t" name="instance">Instance (LED instance to control or 255 for all LEDs)</field>
-        <field type="uint8_t" name="pattern">Pattern (see LED_PATTERN_ENUM)</field>
-        <field type="uint8_t" name="custom_len">Custom Byte Length</field>
-        <field type="uint8_t[24]" name="custom_bytes">Custom Bytes</field>
-    </message>
 
     <message name="MAG_CAL_PROGRESS" id="191">
         <description>Reports progress of compass calibration.</description>
