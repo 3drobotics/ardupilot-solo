@@ -385,9 +385,13 @@ private:
     float       _distance_to_target;    // distance to position target - for reporting only
     LowPassFilterFloat _vel_error_filter;   // low-pass-filter on z-axis velocity error
     LowPassFilterFloat _accel_error_filter; // low-pass-filter on z-axis accelerometer error
+
     bool        _gnd_effect_mode;         // true when a height control relying more on forward path velocity is being used to reduce ground effect coupling
     float       _gnd_effect_pos_target_z;
     float       _gnd_effect_pos_error_z;
     float       _gnd_effect_vel_desired_z;
+
+    Vector2f    _accel_target_jerk_limited;
+    Vector2f    _accel_target_filtered;
 };
 #endif	// AC_POSCONTROL_H
