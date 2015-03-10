@@ -412,8 +412,8 @@ Compass::send_mag_cal_progress(mavlink_channel_t chan)
         uint8_t cal_status = cal.get_status();
 
         if(cal_status == COMPASS_CAL_WAITING_TO_START  ||
-           cal_status == COMPASS_CAL_SAMPLING_STEP_ONE ||
-           cal_status == COMPASS_CAL_SAMPLING_STEP_TWO) {
+           cal_status == COMPASS_CAL_RUNNING_STEP_ONE ||
+           cal_status == COMPASS_CAL_RUNNING_STEP_TWO) {
             uint8_t completion_pct = cal.get_completion_percent();
             uint8_t completion_mask[10];
             Vector3f direction(0.0f,0.0f,0.0f);
