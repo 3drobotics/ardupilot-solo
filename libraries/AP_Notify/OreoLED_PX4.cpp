@@ -120,8 +120,13 @@ void OreoLED_PX4::update()
     }
 
     // Pre-initialization pattern is all solid green
-    if (!initialization_done) {
-        set_rgb(OREOLED_ALL_INSTANCES, 0, brightness, 0);
+    if (last_stage == 0  &&  !initialization_done) {
+        uint8_t oreoled_fadein_green[] = {5, 0, 0, 3, 0, 1, 125, 4, 125, 2, 0, 5, 0, 8, 0, 0, 6, 7, 208, 7, 1};
+        send_bytes(0, (uint8_t) sizeof(oreoled_fadein_green), oreoled_fadein_green);
+        send_bytes(1, (uint8_t) sizeof(oreoled_fadein_green), oreoled_fadein_green);
+        send_bytes(2, (uint8_t) sizeof(oreoled_fadein_green), oreoled_fadein_green);
+        send_bytes(3, (uint8_t) sizeof(oreoled_fadein_green), oreoled_fadein_green);
+        last_stage = 1;   // record stage
     }
 
     // initialising pattern
@@ -212,18 +217,22 @@ void OreoLED_PX4::update()
     } else if (last_stage >= 10) {
         static uint8_t previous_autopilot_mode = -1;
         if (previous_autopilot_mode != AP_Notify::flags.autopilot_mode) {
-
             if (AP_Notify::flags.autopilot_mode) {
                 // autopilot flight modes start breathing macro
-                set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_BREATH);
+                uint8_t oreoled_red_sine[]    = {1, 0, 125, 3, 125, 1, 0, 4, 0, 2, 0, 5, 0, 8, 0, 0, 6, 7, 208};
+                uint8_t oreoled_white_sine[]  = {1, 0, 125, 3, 125, 1, 125, 4, 125, 2, 125, 5, 125, 8, 0, 0, 6, 7, 208};
+                send_bytes(0, (uint8_t) 1, oreoled_red_sine);
+                send_bytes(1, (uint8_t) 1, oreoled_red_sine);
+                send_bytes(2, (uint8_t) 1, oreoled_white_sine);
+                send_bytes(3, (uint8_t) 1, oreoled_white_sine);
             } else {
-                // manual flight modes stop breathing -- solid color
-                set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_RESET);
-                uint8_t oreoled_pattern_solid = OREOLED_PATTERN_SOLID;
-                send_bytes(0, (uint8_t) 1, &oreoled_pattern_solid);
-                send_bytes(1, (uint8_t) 1, &oreoled_pattern_solid);
-                send_bytes(2, (uint8_t) 1, &oreoled_pattern_solid);
-                send_bytes(3, (uint8_t) 1, &oreoled_pattern_solid);
+                // Manual flight modes solid color
+                uint8_t oreoled_red_solid[]   = {2, 0, 125, 3, 125, 1, 0, 4, 0, 2, 0, 5, 0};
+                uint8_t oreoled_white_solid[] = {2, 0, 125, 3, 125, 1, 125, 4, 125, 2, 125, 5, 125};
+                send_bytes(0, (uint8_t) 1, oreoled_red_solid);
+                send_bytes(1, (uint8_t) 1, oreoled_red_solid);
+                send_bytes(2, (uint8_t) 1, oreoled_white_solid);
+                send_bytes(3, (uint8_t) 1, oreoled_white_solid);
             }
 
             // record we have processed this change
