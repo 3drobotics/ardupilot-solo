@@ -88,7 +88,7 @@ void AC_AttitudeControl::set_dt(float delta_sec)
 
     // get filter from ahrs
     const AP_InertialSensor &ins = _ahrs.get_ins();
-    float ins_filter = (float)ins.get_filter();
+    float ins_filter = (float)ins.get_gyro_filter_hz();
 
     // sanity check filter
     if (ins_filter <= 0.0f) {
