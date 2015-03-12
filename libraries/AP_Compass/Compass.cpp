@@ -446,6 +446,7 @@ void
 Compass::cancel_calibration(uint8_t i)
 {
     _calibrator[i].clear();
+    AP_Notify::events.compass_cal_canceled = 1;
 }
 
 void
