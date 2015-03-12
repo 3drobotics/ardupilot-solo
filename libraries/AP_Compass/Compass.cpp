@@ -415,6 +415,11 @@ Compass::start_calibration(uint8_t i, bool retry, bool autosave, float delay)
         if(!is_calibrating() && delay > 0.5f) {
             AP_Notify::events.initiated_compass_cal = 1;
         }
+        if(i == get_primary()) {
+            _calibrator[i].set_tolerance(5);
+        } else {
+            _calibrator[i].set_tolerance(10);
+        }
         _calibrator[i].start(retry, autosave, delay);
         return true;
     } else {
