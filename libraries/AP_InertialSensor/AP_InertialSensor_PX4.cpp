@@ -20,7 +20,10 @@ const extern AP_HAL::HAL& hal;
 
 AP_InertialSensor_PX4::AP_InertialSensor_PX4(AP_InertialSensor &imu) :
     AP_InertialSensor_Backend(imu),
-    _last_get_sample_timestamp(0)
+    _last_get_sample_timestamp(0),
+    _last_sample_timestamp(0),
+    _last_gyro_filter_hz(-1),
+    _last_accel_filter_hz(-1)
 {
     for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
         _delta_angle_accumulator[i].zero();
@@ -42,6 +45,19 @@ AP_InertialSensor_Backend *AP_InertialSensor_PX4::detect(AP_InertialSensor &_imu
         return NULL;
     }
     return sensor;
+}
+
+/*
+  calculate the right queue depth for a device with the given sensor
+  sample rate
+ */
+uint8_t AP_InertialSensor_PX4::_queue_depth(uint16_t sensor_sample_rate) const
+{
+    uint16_t requested_sample_rate = get_sample_rate_hz();
+    uint8_t min_depth = (sensor_sample_rate+requested_sample_rate-1)/requested_sample_rate;
+    // add 5ms more worth of queue to account for possible timing jitter
+    uint8_t ret = min_depth + (5 * sensor_sample_rate) / 1000;
+    return ret;
 }
 
 bool AP_InertialSensor_PX4::_init_sensor(void) 
@@ -88,8 +104,8 @@ bool AP_InertialSensor_PX4::_init_sensor(void)
                 ioctl(fd, GYROIOCSHWLOWPASS, 256);
                 // khz sampling
                 ioctl(fd, GYROIOCSSAMPLERATE, 1000);
-                // 10ms queue depth
-                ioctl(fd, SENSORIOCSQUEUEDEPTH, 10);
+                // set queue depth
+                ioctl(fd, SENSORIOCSQUEUEDEPTH, _queue_depth(1000));
                 break;
             case DRV_GYR_DEVTYPE_L3GD20:
                 // hardware LPF as high as possible
@@ -97,7 +113,7 @@ bool AP_InertialSensor_PX4::_init_sensor(void)
                 // ~khz sampling
                 ioctl(fd, GYROIOCSSAMPLERATE, 800);
                 // 10ms queue depth
-                ioctl(fd, SENSORIOCSQUEUEDEPTH, 8);
+                ioctl(fd, SENSORIOCSQUEUEDEPTH, _queue_depth(800));
                 break;
             default:
                 break;
@@ -120,7 +136,7 @@ bool AP_InertialSensor_PX4::_init_sensor(void)
                 // khz sampling
                 ioctl(fd, ACCELIOCSSAMPLERATE, 1000);
                 // 10ms queue depth
-                ioctl(fd, SENSORIOCSQUEUEDEPTH, 10);
+                ioctl(fd, SENSORIOCSQUEUEDEPTH, _queue_depth(1000));
                 break;
             case DRV_ACC_DEVTYPE_LSM303D:
                 // hardware LPF to ~1/10th sample rate for antialiasing
@@ -129,14 +145,15 @@ bool AP_InertialSensor_PX4::_init_sensor(void)
                 ioctl(fd, ACCELIOCSSAMPLERATE, 1600);
                 ioctl(fd,SENSORIOCSPOLLRATE, 1600);
                 // 10ms queue depth
-                ioctl(fd, SENSORIOCSQUEUEDEPTH, 16);
+                ioctl(fd, SENSORIOCSQUEUEDEPTH, _queue_depth(1600));
                 break;
             default:
                 break;
         }
     }
 
-    _set_filter_frequency(_imu.get_filter());
+    _set_accel_filter_frequency(_accel_filter_cutoff());
+    _set_gyro_filter_frequency(_gyro_filter_cutoff());
 
 #if  CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     _product_id = AP_PRODUCT_ID_VRBRAIN;
@@ -151,22 +168,10 @@ bool AP_InertialSensor_PX4::_init_sensor(void)
 }
 
 /*
-  set the filter frequency
+  set the accel filter frequency
  */
-void AP_InertialSensor_PX4::_set_filter_frequency(uint8_t filter_hz)
+void AP_InertialSensor_PX4::_set_accel_filter_frequency(uint8_t filter_hz)
 {
-    if (filter_hz == 0) {
-        filter_hz = _default_filter();
-    }
-    for (uint8_t i=0; i<_num_gyro_instances; i++) {
-        int samplerate = ioctl(_gyro_fd[i],  GYROIOCGSAMPLERATE, 0);
-        if(samplerate < 100 || samplerate > 2000) {
-            // sample rate doesn't seem sane, turn off filter
-            _gyro_filter[i].set_cutoff_frequency(0, 0);
-        } else {
-            _gyro_filter[i].set_cutoff_frequency(samplerate, filter_hz);
-        }
-    }
     for (uint8_t i=0; i<_num_accel_instances; i++) {
         int samplerate = ioctl(_accel_fd[i],  ACCELIOCGSAMPLERATE, 0);
         if(samplerate < 100 || samplerate > 2000) {
@@ -174,6 +179,22 @@ void AP_InertialSensor_PX4::_set_filter_frequency(uint8_t filter_hz)
             _accel_filter[i].set_cutoff_frequency(0, 0);
         } else {
             _accel_filter[i].set_cutoff_frequency(samplerate, filter_hz);
+        }
+    }
+}
+
+/*
+  set the gyro filter frequency
+ */
+void AP_InertialSensor_PX4::_set_gyro_filter_frequency(uint8_t filter_hz)
+{
+    for (uint8_t i=0; i<_num_gyro_instances; i++) {
+        int samplerate = ioctl(_gyro_fd[i],  GYROIOCGSAMPLERATE, 0);
+        if(samplerate < 100 || samplerate > 2000) {
+            // sample rate doesn't seem sane, turn off filter
+            _gyro_filter[i].set_cutoff_frequency(0, 0);
+        } else {
+            _gyro_filter[i].set_cutoff_frequency(samplerate, filter_hz);
         }
     }
 }
@@ -210,9 +231,14 @@ bool AP_InertialSensor_PX4::update(void)
         _delta_velocity_accumulator[i].zero();
     }
 
-    if (_last_filter_hz != _imu.get_filter()) {
-        _set_filter_frequency(_imu.get_filter());
-        _last_filter_hz = _imu.get_filter();
+    if (_last_accel_filter_hz != _accel_filter_cutoff()) {
+        _set_accel_filter_frequency(_accel_filter_cutoff());
+        _last_accel_filter_hz = _accel_filter_cutoff();
+    }
+
+    if (_last_gyro_filter_hz != _gyro_filter_cutoff()) {
+        _set_gyro_filter_frequency(_gyro_filter_cutoff());
+        _last_gyro_filter_hz = _gyro_filter_cutoff();
     }
     
     return true;

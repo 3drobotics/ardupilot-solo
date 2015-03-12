@@ -48,10 +48,10 @@ public:
 
     // the rate that updates will be available to the application
     enum Sample_rate {
-        RATE_50HZ,
-        RATE_100HZ,
-        RATE_200HZ,
-        RATE_400HZ
+        RATE_50HZ  = 50,
+        RATE_100HZ = 100,
+        RATE_200HZ = 200,
+        RATE_400HZ = 400
     };
 
     /// Perform startup initialisation.
@@ -183,16 +183,6 @@ public:
         _board_orientation = orientation;
     }
 
-    // override default filter frequency
-    void set_default_filter(float filter_hz) {
-        if (!_mpu6000_filter.load()) {
-            _mpu6000_filter.set(filter_hz);
-        }
-    }
-
-    // get_filter - return filter in hz
-    uint8_t get_filter() const { return _mpu6000_filter.get(); }
-
     // return the selected sample rate
     Sample_rate get_sample_rate(void) const { return _sample_rate; }
 
@@ -203,6 +193,12 @@ public:
 
     // enable HIL mode
     void set_hil_mode(void) { _hil_mode = true; }
+
+    // get the gyro filter rate in Hz
+    uint8_t get_gyro_filter_hz(void) const { return _gyro_filter_cutoff; }
+
+    // get the accel filter rate in Hz
+    uint8_t get_accel_filter_hz(void) const { return _accel_filter_cutoff; }
 
 private:
 
@@ -266,10 +262,8 @@ private:
     AP_Vector3f _gyro_offset[INS_MAX_INSTANCES];
 
     // filtering frequency (0 means default)
-    AP_Int8     _mpu6000_filter;
-
-    // was the accel cal done in sensor frame?
-    AP_Int8    _cal_sensor_frame;
+    AP_Int8     _accel_filter_cutoff;
+    AP_Int8     _gyro_filter_cutoff;
 
     // board orientation from AHRS
     enum Rotation _board_orientation;
