@@ -1,6 +1,6 @@
 // MESSAGE GOPRO_COMMAND PACKING
 
-#define MAVLINK_MSG_ID_GOPRO_COMMAND 187
+#define MAVLINK_MSG_ID_GOPRO_COMMAND 189
 
 typedef struct __mavlink_gopro_command_t
 {
@@ -12,10 +12,10 @@ typedef struct __mavlink_gopro_command_t
 } mavlink_gopro_command_t;
 
 #define MAVLINK_MSG_ID_GOPRO_COMMAND_LEN 5
-#define MAVLINK_MSG_ID_187_LEN 5
+#define MAVLINK_MSG_ID_189_LEN 5
 
 #define MAVLINK_MSG_ID_GOPRO_COMMAND_CRC 43
-#define MAVLINK_MSG_ID_187_CRC 43
+#define MAVLINK_MSG_ID_189_CRC 43
 
 
 

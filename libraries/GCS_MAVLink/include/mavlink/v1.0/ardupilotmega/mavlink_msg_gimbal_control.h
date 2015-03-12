@@ -1,6 +1,6 @@
 // MESSAGE GIMBAL_CONTROL PACKING
 
-#define MAVLINK_MSG_ID_GIMBAL_CONTROL 184
+#define MAVLINK_MSG_ID_GIMBAL_CONTROL 185
 
 typedef struct __mavlink_gimbal_control_t
 {
@@ -12,10 +12,10 @@ typedef struct __mavlink_gimbal_control_t
 } mavlink_gimbal_control_t;
 
 #define MAVLINK_MSG_ID_GIMBAL_CONTROL_LEN 14
-#define MAVLINK_MSG_ID_184_LEN 14
+#define MAVLINK_MSG_ID_185_LEN 14
 
 #define MAVLINK_MSG_ID_GIMBAL_CONTROL_CRC 205
-#define MAVLINK_MSG_ID_184_CRC 205
+#define MAVLINK_MSG_ID_185_CRC 205
 
 
 

@@ -1,6 +1,6 @@
 // MESSAGE GOPRO_POWER_ON PACKING
 
-#define MAVLINK_MSG_ID_GOPRO_POWER_ON 185
+#define MAVLINK_MSG_ID_GOPRO_POWER_ON 187
 
 typedef struct __mavlink_gopro_power_on_t
 {
@@ -9,10 +9,10 @@ typedef struct __mavlink_gopro_power_on_t
 } mavlink_gopro_power_on_t;
 
 #define MAVLINK_MSG_ID_GOPRO_POWER_ON_LEN 2
-#define MAVLINK_MSG_ID_185_LEN 2
+#define MAVLINK_MSG_ID_187_LEN 2
 
 #define MAVLINK_MSG_ID_GOPRO_POWER_ON_CRC 241
-#define MAVLINK_MSG_ID_185_CRC 241
+#define MAVLINK_MSG_ID_187_CRC 241
 
 
 

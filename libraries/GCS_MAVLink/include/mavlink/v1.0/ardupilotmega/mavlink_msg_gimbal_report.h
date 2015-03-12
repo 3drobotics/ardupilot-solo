@@ -1,6 +1,6 @@
 // MESSAGE GIMBAL_REPORT PACKING
 
-#define MAVLINK_MSG_ID_GIMBAL_REPORT 183
+#define MAVLINK_MSG_ID_GIMBAL_REPORT 184
 
 typedef struct __mavlink_gimbal_report_t
 {
@@ -19,10 +19,10 @@ typedef struct __mavlink_gimbal_report_t
 } mavlink_gimbal_report_t;
 
 #define MAVLINK_MSG_ID_GIMBAL_REPORT_LEN 42
-#define MAVLINK_MSG_ID_183_LEN 42
+#define MAVLINK_MSG_ID_184_LEN 42
 
 #define MAVLINK_MSG_ID_GIMBAL_REPORT_CRC 134
-#define MAVLINK_MSG_ID_183_CRC 134
+#define MAVLINK_MSG_ID_184_CRC 134
 
 
 

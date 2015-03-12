@@ -1,6 +1,6 @@
 // MESSAGE GOPRO_RESPONSE PACKING
 
-#define MAVLINK_MSG_ID_GOPRO_RESPONSE 188
+#define MAVLINK_MSG_ID_GOPRO_RESPONSE 190
 
 typedef struct __mavlink_gopro_response_t
 {
@@ -12,10 +12,10 @@ typedef struct __mavlink_gopro_response_t
 } mavlink_gopro_response_t;
 
 #define MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN 6
-#define MAVLINK_MSG_ID_188_LEN 6
+#define MAVLINK_MSG_ID_190_LEN 6
 
 #define MAVLINK_MSG_ID_GOPRO_RESPONSE_CRC 149
-#define MAVLINK_MSG_ID_188_CRC 149
+#define MAVLINK_MSG_ID_190_CRC 149
 
 
 
