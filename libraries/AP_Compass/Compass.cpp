@@ -439,7 +439,15 @@ Compass::start_calibration_mask(uint8_t mask, bool retry, bool autosave, float d
 bool
 Compass::start_calibration_all(bool retry, bool autosave, float delay)
 {
-    return start_calibration_mask(get_healthy_mask(),retry,autosave,delay);
+    for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if(healthy(i) && use_for_yaw(i)) {
+            if(!start_calibration(i,retry,autosave,delay)) {
+                cancel_calibration_all();
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 void
