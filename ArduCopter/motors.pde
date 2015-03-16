@@ -681,7 +681,10 @@ static void init_disarm_motors()
 
     // save offsets if automatic offset learning is on
     if (compass.learn_offsets_enabled()) {
-        compass.save_offsets();
+        Vector3f magOffsets;
+        if (ahrs.getMagOffsets(magOffsets)) {
+            compass.set_and_save_offsets(0,magOffsets);
+        }
     }
 
 #if AUTOTUNE_ENABLED == ENABLED
