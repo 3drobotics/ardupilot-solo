@@ -47,4 +47,4 @@ FS_GCS_ENABLE             0.0000
 FS_THR_ENABLE             1.0000
 FS_THR_VALUE            910.0000
 RALLY_LIMIT_KM            0.0000
-RTL_ALT_FINAL           400.0000
+RTL_ALT_FINAL           0.0000
