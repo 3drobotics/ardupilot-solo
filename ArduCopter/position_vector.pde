@@ -39,15 +39,17 @@ Vector3f pv_location_to_vector_with_default(const Location& loc, const Vector3f&
 // pv_alt_above_origin - convert altitude above home to altitude above EKF origin
 float pv_alt_above_origin(float alt_above_home_cm)
 {
-    const struct Location &origin = inertial_nav.get_origin();
-    return alt_above_home_cm + (ahrs.get_home().alt - origin.alt);
+    return alt_above_home_cm;
+    /*const struct Location &origin = inertial_nav.get_origin();
+    return alt_above_home_cm + (ahrs.get_home().alt - origin.alt);*/
 }
 
 // pv_alt_above_home - convert altitude above EKF origin to altitude above home
 float pv_alt_above_home(float alt_above_origin_cm)
 {
-    const struct Location &origin = inertial_nav.get_origin();
-    return alt_above_origin_cm + (origin.alt - ahrs.get_home().alt);
+    return alt_above_origin_cm;
+    /*const struct Location &origin = inertial_nav.get_origin();
+    return alt_above_origin_cm + (origin.alt - ahrs.get_home().alt);*/
 }
 
 // pv_get_bearing_cd - return bearing in centi-degrees between two positions
