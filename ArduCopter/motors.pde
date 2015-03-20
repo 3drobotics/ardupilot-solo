@@ -250,7 +250,7 @@ static bool pre_arm_checks(bool display_failure)
             }
             return false;
         }
-        // check Baro & inav alt are within 1m
+        // check Baro & inav alt are within limits
         if(fabs(inertial_nav.get_altitude() - baro_alt) > PREARM_MAX_ALT_DISPARITY_CM) {
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Altitude disparity"));
@@ -496,6 +496,14 @@ static void pre_arm_rc_checks()
 // performs pre_arm gps related checks and returns true if passed
 static bool pre_arm_gps_checks(bool display_failure)
 {
+    // always check if inertial nav has started and is ready
+    if(!ahrs.healthy()) {
+        if (display_failure) {
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Waiting for navigation alignment"));
+        }
+        return false;
+    }
+
     // return true immediately if gps check is disabled
     if (!(g.arming_check == ARMING_CHECK_ALL || g.arming_check & ARMING_CHECK_GPS)) {
         AP_Notify::flags.pre_arm_gps_check = true;
@@ -583,6 +591,14 @@ static bool arm_checks(bool display_failure, bool arming_from_gcs)
     // start dataflash
     start_logging();
 #endif
+
+    // always check if inertial nav has started and is ready
+    if(!ahrs.healthy()) {
+        if (display_failure) {
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Waiting for navigation alignment"));
+        }
+        return false;
+    }
 
     if(compass.is_calibrating()) {
         if (display_failure) {
