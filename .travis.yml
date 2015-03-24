@@ -20,7 +20,7 @@ deploy:
   - "Tools/Frame_params/Solo/Solo-TMprops.param"
   - "Tools/Frame_params/Solo/Solo-APCprops.param"
   - "Tools/Frame_params/Solo/Solo-minus.param"
-  - "Tools/Frame_params/Solo/Solo-TMprops-HCESCs.param"
+  - "Tools/Frame_params/Solo/Solo-TMprops-rccal.param"
   - "Tools/Frame_params/Solo/PARAM_README.txt"
   skip_cleanup: true
   on:
