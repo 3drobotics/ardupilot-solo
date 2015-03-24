@@ -277,6 +277,10 @@ void AC_PosControl::update_gnd_effect_targets(float dt) {
 void AC_PosControl::gnd_effect_pos_to_rate_z() {
     // update gnd effect pos target
     update_gnd_effect_targets(_dt);
+    
+    // clear position limit flags
+    _limit.pos_up = false;
+    _limit.pos_down = false;
 
     // calculate _vel_target.z using from _pos_error.z using sqrt controller
     _vel_target.z = AC_AttitudeControl::sqrt_controller(_gnd_effect_pos_error_z, _p_pos_z.kP()*POSCONTROL_GNDEFFECT_GAIN, _accel_z_cms);
