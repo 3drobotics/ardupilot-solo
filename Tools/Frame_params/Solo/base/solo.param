@@ -49,6 +49,7 @@ THR_MID                 480.0000
 RATE_PIT_IMAX          4500.0000
 RATE_RLL_IMAX          4500.0000
 RATE_YAW_IMAX          4500.0000
+AUTOTUNE_AGGR             0.1000
 
 #failsafe configs:
 FS_BATT_VOLTAGE          14.0000
