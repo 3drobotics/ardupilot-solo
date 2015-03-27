@@ -1,7 +1,5 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: t -*-
 
-#include <stdio.h>
-
 #include "AC_AttitudeControl.h"
 #include <AP_HAL.h>
 
