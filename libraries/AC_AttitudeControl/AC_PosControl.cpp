@@ -380,7 +380,6 @@ void AC_PosControl::rate_to_accel_z()
 
     // consolidate and constrain target acceleration
     desired_accel = _accel_feedforward.z + p;
-    desired_accel = constrain_int32(desired_accel, -32000, 32000);
 
     // set target for accel based throttle controller
     accel_to_throttle(desired_accel);
@@ -404,7 +403,7 @@ void AC_PosControl::accel_to_throttle(float accel_target_z)
         _flags.reset_accel_to_throttle = false;
     } else {
         // calculate accel error and Filter with fc = 2 Hz
-        _accel_error.z = _accel_error_filter.apply(constrain_float(accel_target_z - z_accel_meas, -32000, 32000));
+        _accel_error.z = _accel_error_filter.apply(accel_target_z - z_accel_meas);
     }
 
     // set input to PID
