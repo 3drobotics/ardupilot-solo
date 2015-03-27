@@ -200,7 +200,7 @@ void AP_MotorsMatrix::output_armed()
         limit.throttle_upper = true;
     }
 
-    float throttle_out = constrain_float(_throttle_out,_min_throttle,_max_throttle);
+    _rc_throttle.servo_out = constrain_float(_throttle_out,_min_throttle,_max_throttle);
 
     // capture desired roll, pitch, yaw and throttle from receiver
     _rc_roll.calc_pwm();
