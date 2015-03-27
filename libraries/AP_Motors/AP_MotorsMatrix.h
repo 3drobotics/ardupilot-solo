@@ -21,8 +21,7 @@ public:
     /// Constructor
     AP_MotorsMatrix(RC_Channel& rc_roll, RC_Channel& rc_pitch, RC_Channel& rc_throttle, RC_Channel& rc_yaw, uint16_t loop_rate, uint16_t speed_hz = AP_MOTORS_SPEED_DEFAULT) :
         AP_Motors(rc_roll, rc_pitch, rc_throttle, rc_yaw, loop_rate, speed_hz),
-        _throttle_out(0.0f),
-        _stabilize(false)
+        _throttle_out(0.0f)
     {};
 
     // init
@@ -69,8 +68,6 @@ public:
 
     void set_throttle(float throttle);
 
-    void set_stabilize(bool stabilize) { _stabilize=stabilize; }
-
 protected:
     // output - sends commands to the motors
     virtual void        output_armed();
@@ -86,7 +83,6 @@ protected:
     uint8_t             _test_order[AP_MOTORS_MAX_NUM_MOTORS];  // order of the motors in the test sequence
 
     float _throttle_out;
-    bool _stabilize;
 };
 
 #endif  // AP_MOTORSMATRIX
