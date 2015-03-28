@@ -17,4 +17,4 @@ RATE_RLL_D          0.01056453
 RATE_YAW_P          0.8
 RATE_YAW_I          0.08
 RATE_YAW_D          0
-RATE_YAW_FILT_HZ    1
+RATE_YAW_FILT_HZ    5
