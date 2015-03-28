@@ -2,7 +2,7 @@ MOT_THST_EXPO       0.65
 
 STB_PIT_P          10
 STB_RLL_P          7.5
-STB_YAW_P          20.0
+STB_YAW_P          6.0
 
 RATE_PIT_FILT_HZ   40.0
 RATE_PIT_P          0.225
@@ -17,4 +17,4 @@ RATE_RLL_D          0.01056453
 RATE_YAW_P          0.8
 RATE_YAW_I          0.08
 RATE_YAW_D          0
-RATE_YAW_FILT_HZ    5
+RATE_YAW_FILT_HZ    7
