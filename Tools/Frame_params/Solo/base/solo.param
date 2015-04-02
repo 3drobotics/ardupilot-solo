@@ -6,7 +6,7 @@ BRD_SAFETYENABLE          0.0000
 BRD_SER1_RTSCTS           1.0000
 SERIAL1_BAUD            115.0000
 SERIAL2_PROTOCOL          1.0000
-SERIAL4_PROTOCOL 		  2.0000
+SERIAL4_PROTOCOL 		      2.0000
 SERIAL4_BAUD            230.0000
 COMPASS_ORIENT           38.0000
 COMPASS_EXTERNAL          1.0000
@@ -27,7 +27,7 @@ RC4_DZ                   30.0000
 
 #gimbal config:
 MNT_ANGMAX_TIL            0.0000
-MNT_ANGMIN_TIL        -9000.0000
+MNT_ANGMIN_TIL        -6000.0000
 MNT_RC_IN_TILT            6.0000
 
 #tuning things:
@@ -45,7 +45,7 @@ WPNAV_LOIT_JERK         500.0000
 WPNAV_LOIT_MAXA         500.0000
 WPNAV_LOIT_MINA         100.0000
 WPNAV_LOIT_SPEED        500.0000
-THR_MID                 400.0000
+THR_MID                 400.0000 #set to 400 for gimbal copter and 360 for hardmount+GoPro copter
 RATE_PIT_IMAX          4500.0000
 RATE_RLL_IMAX          4500.0000
 RATE_YAW_IMAX          4500.0000
@@ -57,5 +57,4 @@ FS_BATT_ENABLE            2.0000
 FS_GCS_ENABLE             0.0000
 FS_THR_ENABLE             1.0000
 FS_THR_VALUE            910.0000
-RALLY_LIMIT_KM            0.0000
 RTL_ALT_FINAL             0.0000
