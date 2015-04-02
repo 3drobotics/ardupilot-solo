@@ -12,7 +12,7 @@ RATE_PIT_D          0.01253348
 RATE_RLL_FILT_HZ   40.0
 RATE_RLL_P          0.25
 RATE_RLL_I          0.55
-RATE_RLL_D          0.01056453
+RATE_RLL_D          0.0095
 
 RATE_YAW_P          0.8
 RATE_YAW_I          0.08
