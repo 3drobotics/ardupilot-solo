@@ -17,11 +17,7 @@ deploy:
   api-key: ${GITHUB_API_KEY}
   file:
   - "ArduCopter/ArduCopter-v2.px4"
-  - "Tools/Frame_params/Solo/Solo-TMprops.param"
-  - "Tools/Frame_params/Solo/Solo-APCprops.param"
-  - "Tools/Frame_params/Solo/Solo-minus.param"
-  - "Tools/Frame_params/Solo/Solo-TMprops-rccal.param"
-  - "Tools/Frame_params/Solo/PARAM_README.txt"
+  - "Tools/Frame_params/Solo/Solo.param"
   skip_cleanup: true
   on:
     tags: true
