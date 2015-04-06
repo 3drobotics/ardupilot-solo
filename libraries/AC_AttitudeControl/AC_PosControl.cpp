@@ -45,7 +45,11 @@ AC_PosControl::AC_PosControl(const AP_AHRS& ahrs, const AP_InertialNav& inav,
     _alt_max(0.0f),
     _distance_to_target(0.0f),
     _accel_target_jerk_limited(0.0f,0.0f),
-    _accel_target_filtered(0.0f,0.0f)
+    _accel_target_filtered(0.0f,0.0f),
+    _gnd_effect_mode(false),
+    _gnd_effect_pos_target_z(0.0f),
+    _gnd_effect_pos_error_z(0.0f),
+    _gnd_effect_vel_desired_z(0.0f)
 {
     AP_Param::setup_object_defaults(this, var_info);
 
