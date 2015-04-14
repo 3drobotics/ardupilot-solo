@@ -203,8 +203,13 @@ static int16_t get_throttle_pre_takeoff(int16_t throttle_control)
     int16_t mid_stick = g.rc_3.get_control_mid();
     int16_t deadband_top = mid_stick + g.throttle_deadzone;
 
+    // if the throttle stick is center-sprung, offset the feedback so that it works above mid-stick
+    if (g.sprung_throttle_stick) {
+        throttle_control -= mid_stick-g.throttle_min;
+    }
+
     // sanity check throttle input
-    throttle_control = constrain_int16(throttle_control,0,1000);
+    throttle_control = constrain_int16(throttle_control,g.throttle_min,1000);
 
     // sanity check throttle_mid
     g.throttle_mid = constrain_int16(g.throttle_mid,300,700);
