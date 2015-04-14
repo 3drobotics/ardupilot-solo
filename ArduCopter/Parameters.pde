@@ -71,6 +71,13 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Increment: .5
     GSCALAR(throttle_filt,  "PILOT_THR_FILT",     0),
 
+    // @Param: SPRUNG_THR_STK
+    // @DisplayName: Center sprung throttle stick
+    // @Description: Optimizes user experience for center sprung throttle sticks.
+    // @User: Standard
+    // @Values: 0:Disabled,1:Enabled
+    GSCALAR(sprung_throttle_stick, "SPRUNG_THR_STK", 0),
+
     // @Group: SERIAL
     // @Path: ../libraries/AP_SerialManager/AP_SerialManager.cpp
     GOBJECT(serial_manager, "SERIAL",   AP_SerialManager),

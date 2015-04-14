@@ -127,8 +127,9 @@ public:
         k_param_optflow,
         k_param_dcmcheck_thresh,        // deprecated - remove
         k_param_log_bitmask,
-        k_param_cli_enabled,            // 61
-        k_param_throttle_filt,          // 62
+        k_param_cli_enabled,
+        k_param_throttle_filt,
+        k_param_sprung_throttle_stick,  // 63
 
         // 65: AP_Limits Library
         k_param_limits = 65,            // deprecated - remove
@@ -341,6 +342,7 @@ public:
 #endif
 
     AP_Float        throttle_filt;
+    AP_Int8         sprung_throttle_stick;
 
     AP_Int16        rtl_altitude;
     AP_Float        sonar_gain;
