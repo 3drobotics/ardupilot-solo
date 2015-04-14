@@ -23,7 +23,7 @@ static void althold_run()
 {
     float target_roll, target_pitch;
     float target_yaw_rate;
-    int16_t target_climb_rate;
+    float target_climb_rate;
 
     // if not auto armed set throttle to zero and exit immediately
     if(!ap.auto_armed) {
