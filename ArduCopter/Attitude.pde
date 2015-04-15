@@ -181,7 +181,7 @@ static float get_pilot_desired_climb_rate(float throttle_control)
 }
 
 // get_non_takeoff_throttle - a throttle somewhere between min and mid throttle which should not lead to a takeoff
-static int16_t get_non_takeoff_throttle()
+static float get_non_takeoff_throttle()
 {
     return (g.throttle_mid / 2.0f);
 }
