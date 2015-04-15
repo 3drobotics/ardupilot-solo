@@ -173,24 +173,15 @@ static void poshold_run()
         target_climb_rate = get_pilot_desired_climb_rate(g.rc_3.control_in);
 
         // check for take-off
-        if (ap.land_complete) {
-            bool stick_takeoff;
-            if (!g.sprung_throttle_stick) {
-                stick_takeoff = target_climb_rate > 0;
-            } else {
-                stick_takeoff = g.rc_3.control_in > (g.rc_3.get_control_mid()+1000.0f)*0.5f;
+        if (ap.land_complete && (takeoff_state.running || g.rc_3.control_in > get_takeoff_trigger_throttle())) {
+            if (!takeoff_state.running) {
+                tkoff_timer_start(20, 50);
             }
 
-            if (takeoff_state.running || stick_takeoff) {
-                if (!takeoff_state.running) {
-                    tkoff_timer_start(20, 50);
-                }
-
-                // indicate we are taking off
-                set_land_complete(false);
-                // clear i term when we're taking off
-                set_throttle_takeoff();
-            }
+            // indicate we are taking off
+            set_land_complete(false);
+            // clear i term when we're taking off
+            set_throttle_takeoff();
         }
     }
 

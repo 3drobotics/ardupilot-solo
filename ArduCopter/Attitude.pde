@@ -186,6 +186,15 @@ static int16_t get_non_takeoff_throttle()
     return (g.throttle_mid / 2.0f);
 }
 
+static float get_takeoff_trigger_throttle()
+{
+    if (g.sprung_throttle_stick) {
+        return (g.rc_3.get_control_mid()+1000.0f)/2.0f;
+    } else {
+        return g.rc_3.get_control_mid() + g.throttle_deadzone;
+    }
+}
+
 // get_throttle_pre_takeoff - convert pilot's input throttle to a throttle output before take-off
 // used only for althold, loiter, hybrid flight modes
 // returns throttle output 0 to 1000
