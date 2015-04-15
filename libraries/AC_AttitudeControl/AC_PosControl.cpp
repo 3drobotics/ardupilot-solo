@@ -58,7 +58,8 @@ AC_PosControl::AC_PosControl(const AP_AHRS& ahrs, const AP_InertialNav& inav,
     _gnd_effect_mode(false),
     _gnd_effect_pos_target_z(0.0f),
     _gnd_effect_pos_error_z(0.0f),
-    _gnd_effect_vel_desired_z(0.0f)
+    _gnd_effect_vel_desired_z(0.0f),
+    _gnd_effect_pos_corr_z(0.0f)
 {
     AP_Param::setup_object_defaults(this, var_info);
 
@@ -127,7 +128,7 @@ void AC_PosControl::set_accel_z(float accel_cmss)
 ///     target will also be stopped if the motors hit their limits or leash length is exceeded
 void AC_PosControl::set_alt_target_with_slew(float alt_cm, float dt)
 {
-    float alt_change = alt_cm-_pos_target.z;
+    float alt_change = alt_cm-_pos_target.z+_gnd_effect_pos_corr_z;
     
     _vel_desired.z = 0.0f;
 
@@ -138,7 +139,7 @@ void AC_PosControl::set_alt_target_with_slew(float alt_cm, float dt)
 
     // do not let target get too far from current altitude
     float curr_alt = _inav.get_altitude();
-    _pos_target.z = constrain_float(_pos_target.z,curr_alt-_leash_down_z,curr_alt+_leash_up_z);
+    _pos_target.z = constrain_float(_pos_target.z+_gnd_effect_pos_corr_z,curr_alt-_leash_down_z,curr_alt+_leash_up_z)-_gnd_effect_pos_corr_z;
 }
 
 /// set_alt_target_from_climb_rate - adjusts target up or down using a climb rate in cm/s
@@ -165,8 +166,8 @@ void AC_PosControl::set_alt_target_from_climb_rate(float climb_rate_cms, float d
     }
 
     // do not let target alt get above limit
-    if (_alt_max > 0 && _pos_target.z > _alt_max) {
-        _pos_target.z = _alt_max;
+    if (_alt_max > 0 && _pos_target.z+_gnd_effect_pos_corr_z > _alt_max) {
+        _pos_target.z = _alt_max-_gnd_effect_pos_corr_z;
         _limit.pos_up = true;
         // decelerate feed forward to zero
         _vel_desired.z = constrain_float(0.0f, _vel_desired.z-vel_change_limit, _vel_desired.z+vel_change_limit);
@@ -190,7 +191,7 @@ void AC_PosControl::relax_alt_hold_controllers(float throttle_setting)
 // get_alt_error - returns altitude error in cm
 float AC_PosControl::get_alt_error() const
 {
-    return (_pos_target.z - _inav.get_altitude());
+    return (_pos_target.z+_gnd_effect_pos_corr_z - _inav.get_altitude());
 }
 
 /// set_target_to_stopping_point_z - returns reasonable stopping altitude in cm above home
@@ -238,7 +239,7 @@ void AC_PosControl::init_takeoff()
 {
     const Vector3f& curr_pos = _inav.get_position();
 
-    _pos_target.z = curr_pos.z + POSCONTROL_TAKEOFF_JUMP_CM;
+    _pos_target.z = curr_pos.z + POSCONTROL_TAKEOFF_JUMP_CM + _gnd_effect_pos_corr_z;
 
     // freeze feedforward to avoid jump
     freeze_ff_z();
@@ -332,6 +333,10 @@ void AC_PosControl::gnd_effect_pos_to_rate_z() {
 // vel_up_max, vel_down_max should have already been set before calling this method
 void AC_PosControl::pos_to_rate_z()
 {
+    // decay ground effect altitude target correction with 5 second time constant
+    float alpha = _dt/(_dt+5.0f);
+    _gnd_effect_pos_corr_z -= _gnd_effect_pos_corr_z * alpha;
+
     float curr_alt = _inav.get_altitude();
 
     // clear position limit flags
@@ -339,16 +344,16 @@ void AC_PosControl::pos_to_rate_z()
     _limit.pos_down = false;
 
     // calculate altitude error
-    _pos_error.z = _pos_target.z - curr_alt;
+    _pos_error.z = _pos_target.z+_gnd_effect_pos_corr_z - curr_alt;
 
     // do not let target altitude get too far from current altitude
     if (_pos_error.z > _leash_up_z) {
-        _pos_target.z = curr_alt + _leash_up_z;
+        _pos_target.z = curr_alt + _leash_up_z - _gnd_effect_pos_corr_z;
         _pos_error.z = _leash_up_z;
         _limit.pos_up = true;
     }
     if (_pos_error.z < -_leash_down_z) {
-        _pos_target.z = curr_alt - _leash_down_z;
+        _pos_target.z = curr_alt - _leash_down_z - _gnd_effect_pos_corr_z;
         _pos_error.z = -_leash_down_z;
         _limit.pos_down = true;
     }
@@ -969,6 +974,8 @@ void AC_PosControl::setGndEffectMode(bool gndEffectMode)
             // turning feedforward on, initialize
             float curr_alt = _inav.get_altitude();
             _gnd_effect_pos_target_z = curr_alt;
+            _pos_target.z += _gnd_effect_pos_corr_z;
+            _gnd_effect_pos_corr_z = 0.0f;
             update_gnd_effect_targets(0.0f);
         } else {
             // turning feedforward off - adjust position target such that velocity demand stays constant:
@@ -978,7 +985,8 @@ void AC_PosControl::setGndEffectMode(bool gndEffectMode)
             float curr_alt = _inav.get_altitude();
             float prev_fb_vel_target = AC_AttitudeControl::sqrt_controller(_gnd_effect_pos_error_z, _p_pos_z.kP()*POSCONTROL_GNDEFFECT_GAIN, _accel_z_cms);
             float new_pos_error = AC_AttitudeControl::inverse_sqrt_controller(prev_fb_vel_target+_gnd_effect_vel_desired_z, _p_pos_z.kP(), _accel_z_cms);
-            _pos_target.z = new_pos_error + curr_alt;
+            float old_pos_tar = _pos_target.z;
+            _gnd_effect_pos_corr_z = (new_pos_error + curr_alt)-old_pos_tar;
         }
     }
     _gnd_effect_mode = gndEffectMode;

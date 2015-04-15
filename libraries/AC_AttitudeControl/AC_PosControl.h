@@ -130,7 +130,7 @@ public:
     void set_alt_target_from_climb_rate(float climb_rate_cms, float dt, bool force_descend = false);
 
     /// set_alt_target_to_current_alt - set altitude target to current altitude
-    void set_alt_target_to_current_alt() { _pos_target.z = _inav.get_altitude(); }
+    void set_alt_target_to_current_alt() { _pos_target.z = _inav.get_altitude(); _gnd_effect_pos_corr_z = 0.0f; }
 
     /// relax_alt_hold_controllers - set all desired and targets to measured
     void relax_alt_hold_controllers(float throttle_setting);
@@ -186,7 +186,7 @@ public:
     void calc_leash_length_xy();
 
     /// get_pos_target - get target as position vector (from home in cm)
-    const Vector3f& get_pos_target() const { return _pos_target; }
+    const Vector3f get_pos_target() const { return _pos_target+Vector3f(0,0,_gnd_effect_pos_corr_z); }
 
     /// set_pos_target in cm from home
     void set_pos_target(const Vector3f& position);
@@ -398,5 +398,6 @@ private:
     float       _gnd_effect_pos_target_z;
     float       _gnd_effect_pos_error_z;
     float       _gnd_effect_vel_desired_z;
+    float       _gnd_effect_pos_corr_z;
 };
 #endif	// AC_POSCONTROL_H
