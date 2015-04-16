@@ -186,7 +186,7 @@ public:
     void calc_leash_length_xy();
 
     /// get_pos_target - get target as position vector (from home in cm)
-    const Vector3f get_pos_target() const { return _pos_target+Vector3f(0,0,_gnd_effect_pos_corr_z); }
+    const Vector3f get_pos_target() const { return _pos_target; }
 
     /// set_pos_target in cm from home
     void set_pos_target(const Vector3f& position);
@@ -338,6 +338,9 @@ private:
 
     /// calc_leash_length - calculates the horizontal leash length given a maximum speed, acceleration and position kP gain
     float calc_leash_length(float speed_cms, float accel_cms, float kP) const;
+
+    // sets up ground effect mode targets
+    void init_gnd_effect_mode();
 
     void update_gnd_effect_targets(float dt);
 
