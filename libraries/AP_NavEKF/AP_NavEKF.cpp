@@ -4840,7 +4840,7 @@ void NavEKF::performArmingChecks()
         ResetVelocity();
         ResetPosition();
         baroHgtOffset = 0.0f;
-        ResetHeight();
+        //ResetHeight();
         StoreStatesReset();
 
     } else if (vehicleArmed && !firstMagYawInit && state.position.z < -1.5f && !assume_zero_sideslip()) {
