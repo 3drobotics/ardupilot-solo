@@ -175,7 +175,7 @@ static void poshold_run()
         // check for take-off
         if (ap.land_complete && (takeoff_state.running || g.rc_3.control_in > get_takeoff_trigger_throttle())) {
             if (!takeoff_state.running) {
-                tkoff_timer_start(30, 50);
+                tkoff_timer_start(50, 50);
             }
 
             // indicate we are taking off
