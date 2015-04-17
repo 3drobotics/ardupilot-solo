@@ -4,6 +4,7 @@
 #define COMPASS_CAL_DELAY 5.0f
 
 static void compass_cal_update() {
+    ins.gyro_calib_step();
     compass.compass_cal_update();
 
     static bool cal_has_run = false;
