@@ -48,6 +48,7 @@ void AP_InertialSensor_GyroCalib::collect_samples(Vector3f sample, Vector3f acce
         if(_sample_cnt == MAX_GYRO_CALIB_SAMPLES){
             set_status(CALIBRATE_STEP);
         }
+        _sample_cnt++;
     } else {
         return;
     }
@@ -123,6 +124,7 @@ void AP_InertialSensor_GyroCalib::set_status(enum gyro_calib_status_t status)
             break;
         case COLLECTION:
             _status = COLLECTION;
+            _sample_cnt = 0;
             break;
         case CALIBRATE_STEP:
             _status = CALIBRATE_STEP;
@@ -139,8 +141,8 @@ void AP_InertialSensor_GyroCalib::set_status(enum gyro_calib_status_t status)
 bool AP_InertialSensor_GyroCalib::step(Vector3f accel_value)
 {
     
-    if(_status == CALIBRATE_STEP || _converged == true){
-        if(_num_steps >= MAX_GYRO_CALIB_STEPS){
+    if(_status == CALIBRATE_STEP){
+        if(_num_steps >= MAX_GYRO_CALIB_STEPS || _converged == true){
             set_status(COMPLETE);
             return true;
         }
