@@ -123,14 +123,14 @@ static void update_ground_effect_detector(void)
     }
 
     // takeoff logic
-    bool throttle_up = motors.armed() && g.rc_3.servo_out >= g.throttle_min;
     bool takeoffExpected;
+    bool throttle_up = mode_has_manual_throttle(control_mode) && g.rc_3.control_in > 0;
     if (!throttle_up || ap.land_complete) {
         takeoff_time_ms = tnow_ms;
         takeoff_alt_cm = current_loc.alt;
     }
 
-    if (throttle_up && tnow_ms-takeoff_time_ms < 10000 && current_loc.alt-takeoff_alt_cm < 150.0f) {
+    if ((throttle_up || !ap.land_complete) && tnow_ms-takeoff_time_ms < 10000 && current_loc.alt-takeoff_alt_cm < 150.0f) {
         takeoffExpected = true;
     } else {
         takeoffExpected = false;
