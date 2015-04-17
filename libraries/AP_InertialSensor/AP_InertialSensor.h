@@ -2,7 +2,6 @@
 
 #ifndef __AP_INERTIAL_SENSOR_H__
 #define __AP_INERTIAL_SENSOR_H__
-
 // Gyro and Accelerometer calibration criteria
 #define AP_INERTIAL_SENSOR_ACCEL_TOT_MAX_OFFSET_CHANGE  4.0f
 #define AP_INERTIAL_SENSOR_ACCEL_MAX_OFFSET             250.0f
@@ -24,6 +23,7 @@
 #include <AP_HAL.h>
 #include <AP_Math.h>
 #include "AP_InertialSensor_UserInteract.h"
+#include "AP_InertialSensor_GyroCalib.h"
 
 class AP_InertialSensor_Backend;
 
@@ -213,6 +213,9 @@ public:
 
     // get the accel filter rate in Hz
     uint8_t get_accel_filter_hz(void) const { return _accel_filter_cutoff; }
+    
+    //Calibrate Gyro
+    void gyro_calib_step();
 
     // pass in a pointer to DataFlash for raw data logging
     void set_dataflash(DataFlash_Class *dataflash) { _dataflash = dataflash; }
@@ -259,6 +262,9 @@ private:
     uint8_t _gyro_count;
     uint8_t _accel_count;
     uint8_t _backend_count;
+    
+    //gyro calibration objects
+    AP_InertialSensor_GyroCalib gyro_calib[INS_MAX_INSTANCES];
 
     // the selected sample rate
     Sample_rate _sample_rate;
