@@ -180,7 +180,7 @@ void AC_PosControl::relax_alt_hold_controllers(float throttle_setting)
     _gnd_effect_pos_corr_z = 0.0f;
     _pos_target.z = _inav.get_altitude();
     _vel_desired.z = 0.0f;
-    _vel_target.z= _inav.get_velocity_z();
+    _vel_target.z = _inav.get_velocity_z();
     _vel_last.z = _inav.get_velocity_z();
     _accel_feedforward.z = 0.0f;
     _accel_last_z_cms = 0.0f;
@@ -202,7 +202,8 @@ void AC_PosControl::set_target_to_stopping_point_z()
     calc_leash_length_z();
 
     get_stopping_point_z(_pos_target);
-    gnd_effect_corr_z = 0.0f;
+    _gnd_effect_pos_corr_z = 0.0f;
+    _vel_desired.z = 0.0f;
 }
 
 /// get_stopping_point_z - calculates stopping point based on current position, velocity, vehicle acceleration
@@ -242,7 +243,7 @@ void AC_PosControl::init_takeoff()
     const Vector3f& curr_pos = _inav.get_position();
 
     _pos_target.z = curr_pos.z + POSCONTROL_TAKEOFF_JUMP_CM;
-    gnd_effect_corr_z = 0.0f;
+    _gnd_effect_pos_corr_z = 0.0f;
 
     // freeze feedforward to avoid jump
     freeze_ff_z();
