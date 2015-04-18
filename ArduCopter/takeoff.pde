@@ -16,6 +16,12 @@ bool current_mode_has_user_takeoff(bool with_navigation)
     }
 }
 
+static float tkoff_get_speed()
+{
+    float safe_speed_cms = max(g.pilot_velocity_z_max*2.0f/3.0f, g.pilot_velocity_z_max-50.0f);
+    return min(wp_nav.get_speed_up(), safe_speed_cms);
+}
+
 static bool do_user_takeoff(float takeoff_alt, bool must_navigate)
 {
     if (motors.armed() && ap.land_complete && current_mode_has_user_takeoff(must_navigate)) {
@@ -30,8 +36,7 @@ static bool do_user_takeoff(float takeoff_alt, bool must_navigate)
             case ALT_HOLD:
             case SPORT:
                 set_auto_armed(true);
-                float safe_speed_cms = max(g.pilot_velocity_z_max*2.0f/3.0f, g.pilot_velocity_z_max-50.0f);
-                tkoff_timer_start(pv_alt_above_origin(takeoff_alt)-pos_control.get_pos_target().z, min(wp_nav.get_speed_up(), safe_speed_cms));
+                tkoff_timer_start(pv_alt_above_origin(takeoff_alt)-pos_control.get_pos_target().z);
                 return true;
         }
     }
@@ -40,16 +45,16 @@ static bool do_user_takeoff(float takeoff_alt, bool must_navigate)
 
 
 
-static void tkoff_timer_start(float alt, float speed)
+static void tkoff_timer_start(float alt)
 {
-    if (takeoff_state.running || speed <= 0.0f || alt <= 0.0f) {
+    if (takeoff_state.running || tkoff_get_speed() <= 0.0f || alt <= 0.0f) {
         return;
     }
 
     takeoff_state.running = true;
-    takeoff_state.speed = speed;
+    takeoff_state.speed = tkoff_get_speed();
     takeoff_state.start_ms = millis();
-    takeoff_state.time_ms = (alt/speed) * 1.0e3f;
+    takeoff_state.time_ms = (alt/takeoff_state.speed) * 1.0e3f;
 }
 
 static void tkoff_timer_update()
