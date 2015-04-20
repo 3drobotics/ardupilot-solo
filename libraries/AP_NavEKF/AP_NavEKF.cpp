@@ -1969,7 +1969,7 @@ void NavEKF::FuseVelPosNED()
         R_OBS[5] = sq(constrain_float(_baroAltNoise, 0.1f, 10.0f));
 
         // reduce weighting (increase observation noise) on baro if we are likely to be in ground effect
-        if (getGndEffectMode() && vehicleArmed) {
+        if ((getTakeoffExpected() || getTouchdownExpected()) && vehicleArmed) {
             R_OBS[5] *= gndEffectBaroScaler;
         }
 
@@ -4899,12 +4899,6 @@ bool NavEKF::setOriginLLH(struct Location &loc)
     EKF_origin = loc;
     validOrigin = true;
     return true;
-}
-
-// determine if the baro ground effect compensation is active
-bool NavEKF::getGndEffectMode(void)
-{
-    return getTakeoffExpected() || getTouchdownExpected();
 }
 
 // determine if a takeoff is expected so that we can compensate for expected barometer errors due to ground effect

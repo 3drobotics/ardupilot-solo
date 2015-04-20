@@ -423,10 +423,6 @@ private:
     // Set the NED origin to be used until the next filter reset
     void setOrigin();
 
-    // get status of baro ground effect compensation mode
-    // returns true when baro ground effect compensation is required
-    bool getGndEffectMode(void);
-
     // determine if a takeoff is expected so that we can compensate for expected barometer errors due to ground effect
     bool getTakeoffExpected();
 
