@@ -714,7 +714,7 @@ private:
     uint32_t takeoffExpectedSet_ms;   // system time at which takeoffExpected was set
     bool touchdownExpected;           // external state from ArduCopter - touchdown expected
     uint32_t touchdownExpectedSet_ms; // system time at which touchdownExpected was set
-
+    float meaHgtAtTakeOff;            // height measured at commencement of takeoff
 
     float dtDelVel1;
     float dtDelVel2;
