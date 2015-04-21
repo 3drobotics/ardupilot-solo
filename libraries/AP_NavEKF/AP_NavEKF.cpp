@@ -4739,6 +4739,8 @@ void  NavEKF::getFilterStatus(nav_filter_status &status) const
     status.flags.const_pos_mode = constPosMode && filterHealthy;     // constant position mode
     status.flags.pred_horiz_pos_rel = (optFlowNavPossible || gpsNavPossible) && filterHealthy; // we should be able to estimate a relative position when we enter flight mode
     status.flags.pred_horiz_pos_abs = gpsNavPossible && filterHealthy; // we should be able to estimate an absolute position when we enter flight mode
+    status.flags.takeoff = takeoffExpected;
+    status.flags.touchdown = touchdownExpected;
 }
 
 // send an EKF_STATUS message to GCS
