@@ -94,10 +94,13 @@ static void update_throttle_low_comp()
 
 static void update_ground_effect_detector(void)
 {
+    static bool takeoffExpected = false;
+
     if(!motors.armed()) {
         // disarmed - disable ground effect and return
         ahrs.setTakeoffExpected(false);
         ahrs.setTouchdownExpected(false);
+        takeoffExpected = false;
         return;
     }
 
@@ -122,16 +125,18 @@ static void update_ground_effect_detector(void)
     }
 
     // takeoff logic
-    bool takeoffExpected;
     bool throttle_up = mode_has_manual_throttle(control_mode) && g.rc_3.control_in > 0;
-    if (!throttle_up || ap.land_complete) {
+    if (!throttle_up && ap.land_complete) {
         takeoff_time_ms = tnow_ms;
         takeoff_alt_cm = current_loc.alt;
     }
 
-    if ((throttle_up || !ap.land_complete) && tnow_ms-takeoff_time_ms < 10000 && current_loc.alt-takeoff_alt_cm < 150.0f) {
+    // latch to on when throttle is raised
+    // latch to off when height passes 50 cm or 10 seconds has elapsed from throttle up
+    // reset to false when disarmed
+    if ((throttle_up || !ap.land_complete) && !takeoffExpected && (tnow_ms-takeoff_time_ms < 1000)) {
         takeoffExpected = true;
-    } else {
+    } else if ((tnow_ms-takeoff_time_ms > 10000 ) || current_loc.alt-takeoff_alt_cm > 50.0f) {
         takeoffExpected = false;
     }
 
