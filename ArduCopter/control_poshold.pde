@@ -525,6 +525,7 @@ static void poshold_run()
         }
         // update altitude target and call position controller
         pos_control.set_alt_target_from_climb_rate(target_climb_rate, G_Dt);
+        tkoff_increment_alt_target(G_Dt);
         pos_control.update_z_controller();
     }
 }

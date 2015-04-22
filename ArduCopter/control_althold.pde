@@ -43,7 +43,7 @@ static void althold_run()
     target_yaw_rate = get_pilot_desired_yaw_rate(g.rc_4.control_in);
 
     // get pilot desired climb rate
-    target_climb_rate = get_pilot_desired_climb_rate(g.rc_3.control_in) + tkoff_get_climb_rate();
+    target_climb_rate = get_pilot_desired_climb_rate(g.rc_3.control_in);
     target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
 
     // check for take-off
@@ -75,6 +75,7 @@ static void althold_run()
 
         // call position controller
         pos_control.set_alt_target_from_climb_rate(target_climb_rate, G_Dt);
+        tkoff_increment_alt_target(G_Dt);
         pos_control.update_z_controller();
     }
 }

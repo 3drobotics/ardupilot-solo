@@ -64,11 +64,11 @@ static void tkoff_timer_update()
     }
 }
 
-static float tkoff_get_climb_rate()
+static void tkoff_increment_alt_target(float dt)
 {
     if (takeoff_state.running) {
-        return takeoff_state.speed;
-    } else {
-        return 0.0f;
+        Vector3f pos_target = pos_control.get_pos_target();
+        pos_target.z += takeoff_state.speed*dt;
+        pos_control.set_pos_target(pos_target);
     }
 }
