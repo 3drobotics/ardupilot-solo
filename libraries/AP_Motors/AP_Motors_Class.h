@@ -156,6 +156,9 @@ public:
     // set_current - set current to be used for output scaling
     virtual void        set_current(float current){ _batt_current = current; }
 
+    // set_density_ratio - sets air density as a proportion of sea level density
+    void                set_air_density_ratio(float ratio) { _air_density_ratio = ratio; }
+
     // set_throttle_low_comp - set desired throttle_low_comp (actual throttle_low_comp is slewed towards this value over 1~2 seconds)
     //  low values favour pilot/autopilot throttle over attitude control, high values favour attitude control over throttle
     //  has no effect when throttle is above hover throttle
@@ -219,7 +222,7 @@ protected:
     // apply_thrust_curve_and_volt_scaling - thrust curve and voltage adjusted pwm value (i.e. 1000 ~ 2000)
     int16_t             apply_thrust_curve_and_volt_scaling(int16_t pwm_out, int16_t pwm_min, int16_t pwm_max) const;
 
-    // update_lift_max - used for voltage compensation
+    // update _lift_max from battery voltage and air density
     void                update_lift_max();
 
     // update_battery_resistance - calculate battery resistance when throttle is above hover_out
@@ -278,7 +281,8 @@ protected:
     float               _batt_current_resting;  // battery's current when motors at minimum
     float               _batt_resistance;       // battery's resistance calculated by comparing resting voltage vs in flight voltage
     int16_t             _batt_timer;            // timer used in battery resistance calcs
-    float               _lift_max;              // maximum lift ratio from battery voltage
+    float               _air_density_ratio;     // air density / sea level density - decreases in altitude
+    float               _lift_max;              // maximum lift ratio from battery voltage and air density
     float               _throttle_limit;        // ratio of throttle limit between hover and maximum
     float               _throttle_in;           // last throttle input from set_throttle caller
     LowPassFilterFloat  _throttle_filter;       // throttle input filter

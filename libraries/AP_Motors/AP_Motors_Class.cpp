@@ -116,6 +116,7 @@ AP_Motors::AP_Motors(RC_Channel& rc_roll, RC_Channel& rc_pitch, RC_Channel& rc_t
     _batt_current_resting(0.0f),
     _batt_resistance(0.0f),
     _batt_timer(0),
+    _air_density_ratio(1.0f),
     _lift_max(1.0f),
     _throttle_limit(1.0f),
     _throttle_in(0.0f),
@@ -304,7 +305,7 @@ int16_t AP_Motors::apply_thrust_curve_and_volt_scaling(int16_t pwm_out, int16_t 
     return (int16_t)constrain_float(throttle_ratio*(pwm_max-pwm_min)+pwm_min, pwm_min, (pwm_max-pwm_min)*_thrust_curve_max+pwm_min);
 }
 
-// update_lift_max from battery voltage - used for voltage compensation
+// update _lift_max from battery voltage and air density
 void AP_Motors::update_lift_max()
 {
     // sanity check battery_voltage_min is not too small
@@ -326,6 +327,12 @@ void AP_Motors::update_lift_max()
 
     // calculate lift max
     _lift_max = bvf*(1-_thrust_curve_expo) + _thrust_curve_expo*bvf*bvf;
+
+    // air density ratio is increasing in density / decreasing in altitude
+    if (_air_density_ratio > 0.3f) {
+        _lift_max *= constrain_float(_air_density_ratio,0.3f,1.25f);
+        _lift_max = constrain_float(_lift_max,0.0f,1.0f);
+    }
 }
 
 // update_battery_resistance - calculate battery resistance when throttle is above hover_out
