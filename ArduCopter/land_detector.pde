@@ -94,20 +94,22 @@ static void update_throttle_low_comp()
 
 static void update_ground_effect_detector(void)
 {
+    static bool takeoffCompleted = false;
     static bool takeoffExpected = false;
+    static uint32_t takeoff_time_ms;
+    static float takeoff_alt_cm;
 
     if(!motors.armed()) {
         // disarmed - disable ground effect and return
         ahrs.setTakeoffExpected(false);
         ahrs.setTouchdownExpected(false);
         takeoffExpected = false;
+        takeoffCompleted = false;
         return;
     }
 
     // variable initialization
     uint32_t tnow_ms = hal.scheduler->millis();
-    static uint32_t takeoff_time_ms;
-    static float takeoff_alt_cm;
     float xy_des_speed_cms = 0.0f;
     float xy_speed_cms = 0.0f;
     float des_climb_rate_cms = pos_control.get_desired_velocity().z;
@@ -125,19 +127,24 @@ static void update_ground_effect_detector(void)
     }
 
     // takeoff logic
+
+    // if we are armed and we haven't ever set takeoffExpected to true
+    if (motors.armed() && !takeoffCompleted && !takeoffExpected) {
+        takeoffExpected = true;
+    }
+
+    // if we aren't taking off yet, reset the takeoff timer and altitude
     bool throttle_up = mode_has_manual_throttle(control_mode) && g.rc_3.control_in > 0;
     if (!throttle_up && ap.land_complete) {
         takeoff_time_ms = tnow_ms;
         takeoff_alt_cm = inertial_nav.get_altitude();
     }
 
-    // latch to on when throttle is raised
-    // latch to off when height passes 50 cm or 10 seconds has elapsed from throttle up
-    // reset to false when disarmed
-    if ((throttle_up || !ap.land_complete) && !takeoffExpected && (tnow_ms-takeoff_time_ms < 1000)) {
-        takeoffExpected = true;
-    } else if ((tnow_ms-takeoff_time_ms > 10000 ) || inertial_nav.get_altitude()-takeoff_alt_cm > 50.0f) {
+    // if we are in takeoffExpected and we meet the conditions for having taken off
+    // end the takeoffExpected state
+    if (takeoffExpected && (tnow_ms-takeoff_time_ms > 5000 || inertial_nav.get_altitude()-takeoff_alt_cm > 50.0f)) {
         takeoffExpected = false;
+        takeoffCompleted = true;
     }
 
     // landing logic
