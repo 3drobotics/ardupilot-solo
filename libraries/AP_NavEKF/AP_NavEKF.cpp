@@ -417,8 +417,8 @@ NavEKF::NavEKF(const AP_AHRS *ahrs, AP_Baro &baro) :
     flowTimeDeltaAvg_ms(100),       // average interval between optical flow measurements (msec)
     flowIntervalMax_ms(100),        // maximum allowable time between flow fusion events
     gndEffectTimeout_ms(1000),          // time in msec that baro ground effect compensation will timeout after initiation
-    gndEffectBaroScaler(4.0f)      // scaler applied to the barometer observation variance when operating in ground effect
-
+    gndEffectBaroScaler(4.0f),      // scaler applied to the barometer observation variance when operating in ground effect
+    attStepSmoothTC(2.0f)           // time constant for attitude step smoothing, seconds
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     ,_perf_UpdateFilter(perf_alloc(PC_ELAPSED, "EKF_UpdateFilter")),
     _perf_CovariancePrediction(perf_alloc(PC_ELAPSED, "EKF_CovariancePrediction")),
@@ -727,6 +727,9 @@ void NavEKF::UpdateFilter()
 
     // run the strapdown INS equations every IMU update
     UpdateStrapdownEquationsNED();
+
+    // update the smoothed attitude reference for use by controllers
+    UpdateAttitudeForControl();
 
     // store the predicted states for subsequent use by measurement fusion
     StoreStates();
@@ -1186,6 +1189,29 @@ void NavEKF::UpdateStrapdownEquationsNED()
 
     // limit states to protect against divergence
     ConstrainStates();
+}
+
+// update the smoothed attitude reference for use by controllers
+void NavEKF::UpdateAttitudeForControl()
+{
+    // rotate attitude for control by the same amount as state.quat
+    attitudeForControl *= correctedDelAngQuat;
+
+    Vector3f attitudeAdj;
+    (attitudeForControl.inverse()*state.quat).to_axis_angle(attitudeAdj);
+    float attitudeAdjMag = attitudeAdj.length();
+
+    // strictly constrain attitudeForControl to within attCorrMax radians of attitude solution state
+    static const float attCorrMax = radians(15.0f);
+    if (attitudeAdjMag < attCorrMax) {
+        float alpha = constrain_float(dtIMUactual / (dtIMUactual+attStepSmoothTC),0.0f,1.0f);
+        attitudeAdj *= alpha;
+    } else {
+        attitudeAdj *= (attitudeAdjMag-attCorrMax)/attitudeAdjMag;
+    }
+
+    attitudeForControl.rotate(attitudeAdj);
+    attitudeForControl.normalize();
 }
 
 // calculate the predicted state covariance matrix
@@ -3580,6 +3606,11 @@ void NavEKF::getEulerAngles(Vector3f &euler) const
 {
     state.quat.to_euler(euler.x, euler.y, euler.z);
     euler = euler - _ahrs->get_trim();
+}
+
+// return euler yaw from the control attitude
+float NavEKF::getEulerYawForControl() const {
+    return attitudeForControl.get_euler_yaw();
 }
 
 // This returns the specific forces in the NED frame

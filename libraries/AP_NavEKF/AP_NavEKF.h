@@ -172,6 +172,9 @@ public:
     // return the Euler roll, pitch and yaw angle in radians
     void getEulerAngles(Vector3f &eulers) const;
 
+    // return euler yaw from the control attitude
+    float getEulerYawForControl(void) const;
+
     // return the transformation matrix from XYZ (body) to NED axes
     void getRotationBodyToNED(Matrix3f &mat) const;
 
@@ -271,6 +274,9 @@ private:
 
     // update the quaternion, velocity and position states using IMU measurements
     void UpdateStrapdownEquationsNED();
+
+    // update the smoothed attitude reference for use by controllers
+    void UpdateAttitudeForControl();
 
     // calculate the predicted state covariance matrix
     void CovariancePrediction();
@@ -498,6 +504,7 @@ private:
     const float fScaleFactorPnoise;     // Process noise added to focal length scale factor state variance at each time step
     const uint8_t flowTimeDeltaAvg_ms;  // average interval between optical flow measurements (msec)
     const uint32_t flowIntervalMax_ms;  // maximum allowable time between flow fusion events
+    const float attStepSmoothTC;        // time constant for control attitude step smoothing, seconds
 
 
     // ground effect tuning parameters
@@ -719,6 +726,8 @@ private:
 
     float dtDelVel1;
     float dtDelVel2;
+
+    Quaternion attitudeForControl;
 
     // states held by optical flow fusion across time steps
     // optical flow X,Y motion compensated rate measurements are fused across two time steps
