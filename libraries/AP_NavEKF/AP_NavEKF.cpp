@@ -1128,9 +1128,6 @@ void NavEKF::UpdateStrapdownEquationsNED()
     // % * - and + operators have been overloaded
     correctedDelAng   = correctedDelAng - prevTnb * earthRateNED*dtIMUactual;
 
-    // save current measurements
-    prevDelAng = correctedDelAng;
-
     // convert the rotation vector to its equivalent quaternion
     rotationMag = correctedDelAng.length();
     if (rotationMag < 1e-12f)
@@ -4550,7 +4547,6 @@ void NavEKF::InitialiseVariables()
     hgtMea = 0;
     storeIndex = 0;
     lastGyroBias.zero();
-	prevDelAng.zero();
     lastAngRate.zero();
     lastAccel1.zero();
     lastAccel2.zero();
