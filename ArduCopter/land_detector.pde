@@ -94,7 +94,6 @@ static void update_throttle_low_comp()
 
 static void update_ground_effect_detector(void)
 {
-    static bool takeoffCompleted = false;
     static bool takeoffExpected = false;
     static uint32_t takeoff_time_ms;
     static float takeoff_alt_cm;
@@ -104,7 +103,6 @@ static void update_ground_effect_detector(void)
         ahrs.setTakeoffExpected(false);
         ahrs.setTouchdownExpected(false);
         takeoffExpected = false;
-        takeoffCompleted = false;
         return;
     }
 
@@ -128,12 +126,12 @@ static void update_ground_effect_detector(void)
 
     // takeoff logic
 
-    // if we are armed and we haven't ever set takeoffExpected to true
-    if (motors.armed() && !takeoffCompleted && !takeoffExpected) {
+    // if we are armed and haven't yet taken off
+    if (motors.armed() && ap.land_complete && !takeoffExpected) {
         takeoffExpected = true;
     }
 
-    // if we aren't taking off yet, reset the takeoff timer and altitude
+    // if we aren't taking off yet, reset the takeoff timer, altitude and complete flag
     bool throttle_up = mode_has_manual_throttle(control_mode) && g.rc_3.control_in > 0;
     if (!throttle_up && ap.land_complete) {
         takeoff_time_ms = tnow_ms;
@@ -144,7 +142,6 @@ static void update_ground_effect_detector(void)
     // end the takeoffExpected state
     if (takeoffExpected && (tnow_ms-takeoff_time_ms > 5000 || inertial_nav.get_altitude()-takeoff_alt_cm > 50.0f)) {
         takeoffExpected = false;
-        takeoffCompleted = true;
     }
 
     // landing logic
