@@ -22,21 +22,20 @@ static float tkoff_get_speed()
     return min(wp_nav.get_speed_up(), safe_speed_cms);
 }
 
-static bool do_user_takeoff(float takeoff_alt, bool must_navigate)
+static bool do_user_takeoff(float takeoff_alt_cm, bool must_navigate)
 {
-    if (motors.armed() && ap.land_complete && current_mode_has_user_takeoff(must_navigate)) {
+    if (motors.armed() && ap.land_complete && current_mode_has_user_takeoff(must_navigate) && takeoff_alt_cm > current_loc.alt) {
         switch(control_mode) {
             case GUIDED:
                 set_auto_armed(true);
-                takeoff_alt = max(takeoff_alt*100.0f,current_loc.alt);
-                guided_takeoff_start(takeoff_alt);
+                guided_takeoff_start(takeoff_alt_cm);
                 return true;
             case LOITER:
             case POSHOLD:
             case ALT_HOLD:
             case SPORT:
                 set_auto_armed(true);
-                tkoff_timer_start(pv_alt_above_origin(takeoff_alt)-pos_control.get_pos_target().z);
+                tkoff_timer_start(pv_alt_above_origin(takeoff_alt_cm)-pos_control.get_pos_target().z);
                 return true;
         }
     }

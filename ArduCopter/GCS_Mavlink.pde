@@ -1051,8 +1051,6 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             // param7 : altitude [metres]
 
             float takeoff_alt = packet.param7 * 100;      // Convert m to cm
-            takeoff_alt = max(takeoff_alt,current_loc.alt);
-            takeoff_alt = max(takeoff_alt,100.0f);
 
             if(do_user_takeoff(takeoff_alt, !packet.param3)) {
                 result = MAV_RESULT_ACCEPTED;
