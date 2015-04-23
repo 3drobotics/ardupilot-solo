@@ -291,6 +291,8 @@ public:
         return _flags.have_initial_yaw;
     }
 
+    virtual float get_yaw_for_control_cd(void) const { return yaw_sensor; }
+
     // set the fast gains flag
     void set_fast_gains(bool setting) {
         _flags.fast_ground_gains = setting;
