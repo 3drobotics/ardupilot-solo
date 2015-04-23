@@ -219,8 +219,8 @@ protected:
     // apply_thrust_curve_and_volt_scaling - thrust curve and voltage adjusted pwm value (i.e. 1000 ~ 2000)
     int16_t             apply_thrust_curve_and_volt_scaling(int16_t pwm_out, int16_t pwm_min, int16_t pwm_max) const;
 
-    // update_lift_max_from_batt_voltage - used for voltage compensation
-    void                update_lift_max_from_batt_voltage();
+    // update_lift_max - used for voltage compensation
+    void                update_lift_max();
 
     // update_battery_resistance - calculate battery resistance when throttle is above hover_out
     void                update_battery_resistance();

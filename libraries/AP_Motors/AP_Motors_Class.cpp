@@ -183,7 +183,7 @@ void AP_Motors::output()
     update_battery_resistance();
 
     // calc filtered battery voltage and lift_max
-    update_lift_max_from_batt_voltage();
+    update_lift_max();
 
     // move throttle_low_comp towards desired throttle low comp
     update_throttle_low_comp();
@@ -298,7 +298,7 @@ int16_t AP_Motors::apply_thrust_curve_and_volt_scaling(int16_t pwm_out, int16_t 
 }
 
 // update_lift_max from battery voltage - used for voltage compensation
-void AP_Motors::update_lift_max_from_batt_voltage()
+void AP_Motors::update_lift_max()
 {
     // sanity check battery_voltage_min is not too small
     // if disabled or misconfigured exit immediately
