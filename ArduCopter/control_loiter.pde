@@ -53,7 +53,7 @@ static void loiter_run()
 
         // get pilot desired climb rate
         target_climb_rate = get_pilot_desired_climb_rate(g.rc_3.control_in);
-        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max-tkoff_get_speed(), g.pilot_velocity_z_max-tkoff_get_speed());
 
         // check for take-off
         if (ap.land_complete && (takeoff_state.running || g.rc_3.control_in > get_takeoff_trigger_throttle())) {
