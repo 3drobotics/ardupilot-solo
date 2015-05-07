@@ -1068,12 +1068,17 @@ static void one_hz_loop()
         Log_Write_Data(DATA_AP_STATE, ap.value);
     }
 
-    // perform pre-arm checks & display failures every 30 seconds
+    // perform pre-arm checks & display failures every 2 seconds
     static uint8_t pre_arm_display_counter = 0;
     pre_arm_display_counter++;
     if (pre_arm_display_counter >= 2) {
         pre_arm_checks(true);
         pre_arm_display_counter = 0;
+        if (ap.pre_arm_check) {
+            // pre-arm checks have passed, run arming checks in order to display failures
+            // this is a HACK that allows the GCS to display arming failures without attempting to arm
+            arm_checks(true,true);
+        }
     }else{
         pre_arm_checks(false);
     }
