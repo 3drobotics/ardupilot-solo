@@ -4054,8 +4054,8 @@ bool NavEKF::readDeltaAngle(uint8_t ins_index, Vector3f &dAng) {
     const AP_InertialSensor &ins = _ahrs->get_ins();
 
     if (ins_index < ins.get_gyro_count()) {
-        if (!ins.get_delta_angle(ins_index,dAng)) {
-            dAng = ins.get_gyro(ins_index) * dtIMUactual;
+        if (!ins.get_delta_angle(2,dAng)) {
+            dAng = ins.get_gyro(2) * dtIMUactual;
         }
         return true;
     }
