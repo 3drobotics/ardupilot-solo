@@ -1069,9 +1069,9 @@ static void one_hz_loop()
     }
 
     // perform pre-arm checks & display failures every 30 seconds
-    static uint8_t pre_arm_display_counter = 15;
+    static uint8_t pre_arm_display_counter = 0;
     pre_arm_display_counter++;
-    if (pre_arm_display_counter >= 30) {
+    if (pre_arm_display_counter >= 2) {
         pre_arm_checks(true);
         pre_arm_display_counter = 0;
     }else{
