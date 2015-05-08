@@ -197,6 +197,26 @@ static bool init_arm_motors(bool arming_from_gcs)
     return true;
 }
 
+static bool mode_deprecated(uint8_t mode) {
+    return ((1UL<<mode) & DEPRECATED_MODES_MASK) != 0;
+}
+
+static uint32_t get_ready_to_arm_mode_mask()
+{
+    uint32_t ret = 0;
+    uint8_t saved_control_mode = control_mode;
+    for (control_mode=0; control_mode<NUM_MODES; control_mode++) {
+        if (!mode_deprecated(control_mode) && pre_arm_checks(false) && arm_checks(false,true)) {
+            ret |= 1UL << control_mode;
+        }
+    }
+
+    ret &= ~DEPRECATED_MODES_MASK;
+
+    control_mode = saved_control_mode;
+    return ret;
+}
+
 // perform pre-arm checks and set ap.pre_arm_check flag
 //  return true if the checks pass successfully
 static bool pre_arm_checks(bool display_failure)
@@ -216,7 +236,6 @@ static bool pre_arm_checks(bool display_failure)
 
     // succeed if pre arm checks are disabled
     if(g.arming_check == ARMING_CHECK_NONE) {
-        set_pre_arm_check(true);
         set_pre_arm_rc_check(true);
         return true;
     }
@@ -467,8 +486,6 @@ static bool pre_arm_checks(bool display_failure)
 #endif
     }
 
-    // if we've gotten this far then pre arm checks have completed
-    set_pre_arm_check(true);
     return true;
 }
 
