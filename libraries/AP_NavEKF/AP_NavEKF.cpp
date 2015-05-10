@@ -4951,6 +4951,7 @@ void NavEKF::performArmingChecks()
         if (vehicleArmed) {
             // Reset filter position to GPS when transitioning into flight mode
             // We need to do this becasue the vehicle may have moved since the EKF origin was set
+            ResetVelocity();
             ResetPosition();
             StoreStatesReset();
         } else {
