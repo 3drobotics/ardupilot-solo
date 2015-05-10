@@ -1187,6 +1187,16 @@ void NavEKF::UpdateStrapdownEquationsNED()
     // capture current angular rate to augmented state vector for use by optical flow fusion
     state.omega = correctedDelAng / dtIMUactual;
 
+    // LPF the yaw rate using a 1 second time constant yaw rate and determine if we are doing continual
+    // fast rotations that can cause problems due to gyro scale factor errors.
+    float alphaLPF = constrain_float(dtIMUactual, 0.0f, 1.0f);
+    yawRateFilt += (state.omega.z - yawRateFilt)*alphaLPF;
+    if (fabs(yawRateFilt) > 1.0f) {
+        highYawRate = true;
+    } else {
+        highYawRate = false;
+    }
+
     // limit states to protect against divergence
     ConstrainStates();
 }
@@ -1253,6 +1263,11 @@ void NavEKF::CovariancePrediction()
             processNoise[i] *= gyroBiasNoiseScaler;
         }
     }
+    // if we are yawing rapidly, inhibit yaw gyro bias learning to prevent gyro scale factor errors from corrupting the bias estimate
+    if (highYawRate) {
+        processNoise[12] = 0.0f;
+        P[12][12] = 0.0f;
+    }
     // scale accel bias noise when disarmed to allow for faster bias estimation
     // inhibit bias estimation during takeoff with ground effect to prevent bad bias learning
     if (expectGndEffectTakeoff) {
@@ -1285,7 +1300,8 @@ void NavEKF::CovariancePrediction()
     _gyrNoise = constrain_float(_gyrNoise, 1e-3f, 5e-2f);
     daxCov = sq(dt*_gyrNoise);
     dayCov = sq(dt*_gyrNoise);
-    dazCov = sq(dt*_gyrNoise);
+    // Account for 3% scale factor error on Z angular rate. This reduces chance of continuous fast rotations causing loss of yaw reference.
+    dazCov = sq(dt*_gyrNoise) + sq(dt*0.03f*yawRateFilt);
     _accNoise = constrain_float(_accNoise, 5e-2f, 1.0f);
     dvxCov = sq(dt*_accNoise);
     dvyCov = sq(dt*_accNoise);
@@ -2606,10 +2622,18 @@ void NavEKF::FuseMagnetometer()
         float minorFramesToGo = float(magUpdateCountMax) - float(magUpdateCount);
         // correct the state vector or store corrections to be applied incrementally
         for (uint8_t j= 0; j<=21; j++) {
-            // If we are forced to use a bad compass, we reduce the weighting by a factor of 4
-            if (!magHealth) {
+            // If we are forced to use a bad compass in flight, we reduce the weighting by a factor of 4
+            if (!magHealth && !constPosMode) {
                 Kfusion[j] *= 0.25f;
             }
+            // If in the air and there is no other form of heading reference or we are yawing rapidly which creates larger inertial yaw errors,
+            // we strengthen the magnetometer attitude correction
+            if (vehicleArmed && (constPosMode || highYawRate) && j <= 3) {
+                Kfusion[j] *= 4.0f;
+            }
+            // We don't need to spread corrections for non-dynamic states or if we are in a  constant postion mode
+            // We can't spread corrections if there is not enough time remaining
+            // We don't spread corrections to attitude states if we are rotating rapidly
             if ((j <= 3 && highRates) || j >= 10 || constPosMode || minorFramesToGo < 1.5f ) {
                 states[j] = states[j] - Kfusion[j] * innovMag[obsIndex];
             } else {
@@ -4644,6 +4668,8 @@ void NavEKF::InitialiseVariables()
     gpsSpdAccuracy = 0.0f;
     baroHgtOffset = 0.0f;
     gpsAidingBad = false;
+    highYawRate = false;
+    yawRateFilt = 0.0f;
 }
 
 // return true if we should use the airspeed sensor
@@ -5029,6 +5055,7 @@ void NavEKF::setTouchdownExpected(bool val)
 }
 
 // Monitor GPS data to see if quality is good enough to initialise the EKF
+// Monitor magnetometer innovations to to see if the heading is good enough to use GPS
 // Return true if all criteria pass for 10 seconds
 bool NavEKF::calcGpsGoodToAlign(void)
 {
@@ -5051,9 +5078,17 @@ bool NavEKF::calcGpsGoodToAlign(void)
     } else {
         hAccFail =  false;
     }
+    // fail if magnetometer innovations are outside limits indicating bad yaw
+    // with bad yaw we are unable to use GPS
+    bool yawFail;
+    if (magTestRatio.x > 1.0f || magTestRatio.y > 1.0f) {
+        yawFail = true;
+    } else {
+        yawFail = false;
+    }
     // record time of fail
     // assume  fail first time called
-    if (gpsVelFail || numSatsFail || hAccFail || lastGpsVelFail_ms == 0) {
+    if (gpsVelFail || numSatsFail || hAccFail || yawFail || lastGpsVelFail_ms == 0) {
         lastGpsVelFail_ms = imuSampleTime_ms;
     }
     // DEBUG PRINT
