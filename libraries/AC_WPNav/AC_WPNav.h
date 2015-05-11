@@ -68,7 +68,7 @@ public:
     void init_loiter_target(const Vector3f& position, bool reset_I=true);
 
     /// init_loiter_target - initialize's loiter position and feed-forward velocity from current pos and velocity
-    void init_loiter_target();
+    void init_loiter_target(bool flying);
 
     /// loiter_soften_for_landing - reduce response for landing
     void loiter_soften_for_landing();

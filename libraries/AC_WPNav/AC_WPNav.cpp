@@ -160,13 +160,13 @@ void AC_WPNav::init_loiter_target(const Vector3f& position, bool reset_I)
 }
 
 /// init_loiter_target - initialize's loiter position and feed-forward velocity from current pos and velocity
-void AC_WPNav::init_loiter_target()
+void AC_WPNav::init_loiter_target(bool flying)
 {
     const Vector3f& curr_pos = _inav.get_position();
     const Vector3f& curr_vel = _inav.get_velocity();
 
     // initialise position controller
-    _pos_control.init_xy_controller();
+    _pos_control.init_xy_controller(!flying);
 
     // initialise pos controller speed and acceleration
     _pos_control.set_speed_xy(_loiter_speed_cms);
@@ -175,12 +175,18 @@ void AC_WPNav::init_loiter_target()
     // set target position
     _pos_control.set_xy_target(curr_pos.x, curr_pos.y);
 
-    // move current vehicle velocity into feed forward velocity
-    _pos_control.set_desired_velocity_xy(curr_vel.x, curr_vel.y);
+    if (flying) {
+        // move current vehicle velocity into feed forward velocity
+        _pos_control.set_desired_velocity_xy(curr_vel.x, curr_vel.y);
 
-    // initialise desired accel and add fake wind
-    _loiter_desired_accel.x = (_loiter_accel_cmss)*curr_vel.x/_loiter_speed_cms;
-    _loiter_desired_accel.y = (_loiter_accel_cmss)*curr_vel.y/_loiter_speed_cms;
+        // initialise desired accel to apply jerk limiting
+        _loiter_desired_accel.x = (_loiter_accel_cmss)*curr_vel.x/_loiter_speed_cms;
+        _loiter_desired_accel.y = (_loiter_accel_cmss)*curr_vel.y/_loiter_speed_cms;
+    } else {
+        _pos_control.set_desired_velocity_xy(0, 0);
+        _loiter_desired_accel.x = 0;
+        _loiter_desired_accel.y = 0;
+    }
 
     // initialise pilot input
     _pilot_accel_fwd_cms = 0;
