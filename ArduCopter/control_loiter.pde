@@ -10,7 +10,7 @@ static bool loiter_init(bool ignore_checks)
     if (position_ok() || optflow_position_ok() || ignore_checks) {
 
         // set target to current position
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
 
         // initialize vertical speed and acceleration
         pos_control.set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
@@ -39,7 +39,7 @@ static void loiter_run()
 
     // if not auto armed set throttle to zero and exit immediately
     if(!ap.auto_armed) {
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
         attitude_control.set_throttle_out_unstabilized(0,true,g.throttle_filt);
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(g.rc_3.control_in)-throttle_average);
         return;
@@ -86,7 +86,7 @@ static void loiter_run()
 
     // when landed reset targets and output zero throttle
     if (ap.land_complete) {
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
         // move throttle to between minimum and non-takeoff-throttle to keep us on the ground
         attitude_control.set_throttle_out_unstabilized(get_throttle_pre_takeoff(g.rc_3.control_in),true,g.throttle_filt);
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(g.rc_3.control_in)-throttle_average);
