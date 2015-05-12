@@ -296,6 +296,7 @@ AP_InertialSensor::AP_InertialSensor() :
     memset(_delta_angle_valid,0,sizeof(_delta_angle_valid));
     memset(_accel_startup_error_count,0,sizeof(_accel_startup_error_count));
     memset(_gyro_startup_error_count,0,sizeof(_gyro_startup_error_count));
+    _startup_ms = hal.scheduler->millis();
 }
 
 
@@ -1084,7 +1085,9 @@ void AP_InertialSensor::update(void)
                 _accel_startup_error_count[i] = _accel_error_count[i];
                 _gyro_startup_error_count[i] = _gyro_error_count[i];
             }
-            _startup_error_counts_set = true;
+            if (hal.scheduler->millis()-_startup_ms > 2000) {
+                _startup_error_counts_set = true;
+            }
         }
 
         for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
