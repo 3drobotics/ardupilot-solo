@@ -222,10 +222,16 @@ static void exit_mode(uint8_t old_control_mode, uint8_t new_control_mode)
         if (mission.state() == AP_Mission::MISSION_RUNNING) {
             mission.stop();
         }
-#if MOUNT == ENABLED
-        camera_mount.set_mode_to_default();
-#endif  // MOUNT == ENABLED
     }
+
+    // handle mount mode when entering LAND or exiting AUTO
+#if MOUNT == ENABLED
+    if (new_control_mode == LAND) {
+        camera_mount.set_mode(MAV_MOUNT_MODE_NEUTRAL);
+    }else if ((old_control_mode == AUTO)){
+        camera_mount.set_mode_to_default();
+    }
+#endif  // MOUNT == ENABLED
 
     // smooth throttle transition when switching from manual to automatic flight modes
     if (mode_has_manual_throttle(old_control_mode) && !mode_has_manual_throttle(new_control_mode) && motors.armed() && !ap.land_complete) {
