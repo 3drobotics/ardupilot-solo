@@ -24,7 +24,6 @@
 #define __AP_GPS_UBLOX_H__
 
 #include <AP_GPS.h>
-
 /*
  *  try to put a UBlox into binary mode. This is in two parts. 
  *
@@ -48,7 +47,7 @@ public:
     bool read();
 
     static bool _detect(struct UBLOX_detect_state &state, uint8_t data);
-
+    AP_GPS::GPS_Diag get_gps_diagnostic() { return _diag; }
 private:
     // u-blox UBX protocol essentials
     struct PACKED ubx_header {
@@ -112,6 +111,17 @@ private:
         uint32_t time_to_first_fix;
         uint32_t uptime;                                // milliseconds
     };
+    struct PACKED ubx_nav_sat_info {
+        uint8_t		chn; 		/**< Channel number, 255 for SVs not assigned to a channel */
+        uint8_t		svid; 		/**< Satellite ID */
+        uint8_t		flags;
+        uint8_t		quality;
+        uint8_t		cno;		/**< Carrier to Noise Ratio (Signal Strength) [dbHz] */
+        int8_t		elev; 		/**< Elevation [deg] */
+        int16_t		azim; 		/**< Azimuth [deg] */
+        int32_t		prRes; 		/**< Pseudo range residual [cm] */
+    };
+    
     struct PACKED ubx_nav_solution {
         uint32_t time;
         int32_t time_nsec;
@@ -217,6 +227,10 @@ private:
         ubx_cfg_sbas sbas;
         ubx_nav_svinfo_header svinfo_header;
         ubx_ack_ack ack;
+        struct{
+            ubx_nav_svinfo_header svinfo_header;
+            ubx_nav_sat_info satellite_info[SAT_INFO_MAX_SATELLITES];
+        };
         uint8_t bytes[];
     } _buffer;
 
@@ -289,7 +303,8 @@ private:
 
     // Buffer parse & GPS state update
     bool        _parse_gps();
-
+    ubx_nav_sat_info* _sattelite_info;
+    AP_GPS::GPS_Diag _diag;
     // used to update fix between status and position packets
     AP_GPS::GPS_Status next_fix;
 

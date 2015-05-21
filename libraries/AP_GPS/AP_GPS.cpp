@@ -505,6 +505,10 @@ AP_GPS::send_mavlink_gps_raw(mavlink_channel_t chan)
         num_sats(0));
 }
 
+AP_GPS::GPS_Diag AP_GPS::get_gps_diagnostic(uint8_t instance) const
+{
+    return drivers[instance]->get_gps_diagnostic();
+}
 #if GPS_MAX_INSTANCES > 1
 void 
 AP_GPS::send_mavlink_gps2_raw(mavlink_channel_t chan)
