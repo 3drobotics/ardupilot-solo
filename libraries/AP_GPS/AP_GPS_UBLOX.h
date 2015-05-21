@@ -225,7 +225,6 @@ private:
         ubx_mon_hw_68 mon_hw_68;
         ubx_mon_hw2 mon_hw2;
         ubx_cfg_sbas sbas;
-        ubx_nav_svinfo_header svinfo_header;
         ubx_ack_ack ack;
         struct{
             ubx_nav_svinfo_header svinfo_header;

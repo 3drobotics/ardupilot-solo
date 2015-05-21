@@ -708,6 +708,30 @@ void DataFlash_Class::Log_Write_GPS(const AP_GPS &gps, uint8_t i, int32_t relati
 #endif
 }
 
+//Write an GPS Diagnostic Packet
+void DataFlash_Class::Log_Write_GPSdiag(const AP_GPS &gps, uint8_t instance)
+{
+    AP_GPS::GPS_Diag diag;
+
+    diag = gps.get_gps_diagnostic(instance);
+    for(uint8_t cnt=0; cnt<diag.cnt; cnt++){
+        struct log_GPSdiag pkt = {
+            LOG_PACKET_HEADER_INIT(LOG_GPSDIAG_MSG),
+            timestamp   : hal.scheduler->millis(),
+            chn         : diag.satellite_info[cnt].chn,
+            svid        : diag.satellite_info[cnt].svid,
+            flags       : diag.satellite_info[cnt].flags,
+            quality     : diag.satellite_info[cnt].quality,
+            cno         : diag.satellite_info[cnt].cno,
+            elev        : diag.satellite_info[cnt].elev,
+            azim        : diag.satellite_info[cnt].azim,
+            prRes       : diag.satellite_info[cnt].prRes,
+            ttff        : diag.ttff
+        };
+        WriteBlock(&pkt, sizeof(pkt));
+    }
+}
+
 // Write an RCIN packet
 void DataFlash_Class::Log_Write_RCIN(void)
 {
