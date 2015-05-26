@@ -246,6 +246,9 @@ static void init_ardupilot()
     // trad heli specific initialisation
     heli_init();
 #endif
+    startup_ground(false);
+
+    startup_wait_for_level();
 
     startup_ground(true);
 
@@ -270,6 +273,35 @@ static void init_ardupilot()
     ap.initialised = true;
 }
 
+static void startup_wait_for_level()
+{
+    uint32_t last_heartbeat = 0;
+    uint32_t last_print = millis();
+    while(true) {
+        ins.wait_for_sample();
+        ins.update();
+        delay(3);
+        Vector3f accel = ins.get_accel();
+        float accel_mag = accel.length();
+
+        if (accel_mag > GRAVITY_MSS-1.0f && accel_mag < GRAVITY_MSS+1.0f &&
+            degrees(atan2f(pythagorous2(accel.x,accel.y),-accel.z))*100.0f < aparm.angle_max) {
+            break;
+        }
+
+        if (millis() - last_heartbeat >= 1000) {
+            // sent heartbeats so that controller displays telem screen
+            gcs_send_heartbeat();
+            last_heartbeat = millis();
+        }
+
+        if (millis() - last_print >= 2000) {
+            // send "Arm: Leaning" so that controller displays instructions to right the vehicle
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Leaning"));
+            last_print = millis();
+        }
+    }
+}
 
 //******************************************************************************
 //This function does all the calibrations, etc. that we need during a ground start
