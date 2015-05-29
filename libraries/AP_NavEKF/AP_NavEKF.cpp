@@ -4666,6 +4666,7 @@ void NavEKF::InitialiseVariables()
     validOrigin = false;
     takeoffExpectedSet_ms = 0;
     expectGndEffectTakeoff = false;
+    prevExpectGndEffectTakeoff = false;
     touchdownExpectedSet_ms = 0;
     expectGndEffectTouchdown = false;
     gpsSpdAccuracy = 0.0f;
@@ -4880,9 +4881,10 @@ void NavEKF::performArmingChecks()
             getEulerAngles(eulerAngles);
             state.quat = calcQuatAndFieldStates(eulerAngles.x, eulerAngles.y);
         }
-        // store vertical position at arming to use as a reference for ground relative cehcks
+        // store vertical position at arming or start of takeoff to use as a reference for ground relative checks
+        // this is be set again if a ground effect takeoff condition rising edge is detected
         if (vehicleArmed) {
-            posDownAtArming = state.position.z;
+            posDownAtTakeoff = state.position.z;
         }
         // zero stored velocities used to do dead-reckoning
         heldVelNE.zero();
@@ -4956,6 +4958,10 @@ void NavEKF::performArmingChecks()
             // We need to do this becasue the vehicle may have moved since the EKF origin was set
             ResetPosition();
             StoreStatesReset();
+            // if a ground effect takeoff is commenced, reset the takeoff start height
+            if(!prevExpectGndEffectTakeoff && expectGndEffectTakeoff) {
+                posDownAtTakeoff = state.position.z;
+            }
         } else {
             // Reset all position and velocity states when transitioning out of flight mode
             // We need to do this becasue we are going into a mode that assumes zero position and velocity
@@ -4964,14 +4970,15 @@ void NavEKF::performArmingChecks()
             StoreStatesReset();
         }
 
-    } else if (vehicleArmed && !firstMagYawInit && (state.position.z  - posDownAtArming) < -1.5f && !assume_zero_sideslip()) {
+    } else if (vehicleArmed && !firstMagYawInit && (state.position.z  - posDownAtTakeoff) < -1.5f && !assume_zero_sideslip() && !expectGndEffectTakeoff) {
         // Do the first in-air yaw and earth mag field initialisation when the vehicle has gained 1.5m of altitude after arming if it is a non-fly forward vehicle (vertical takeoff)
+        // If performing a takeoff in ground effect, delay until takeoff is complete because height change detected could be unreliable
         // This is done to prevent magnetic field distoration from steel roofs and adjacent structures causing bad earth field and initial yaw values
         Vector3f eulerAngles;
         getEulerAngles(eulerAngles);
         state.quat = calcQuatAndFieldStates(eulerAngles.x, eulerAngles.y);
         firstMagYawInit = true;
-    } else if (vehicleArmed && !secondMagYawInit && (state.position.z - posDownAtArming) < -5.0f && !assume_zero_sideslip()) {
+    } else if (vehicleArmed && !secondMagYawInit && (state.position.z - posDownAtTakeoff) < -5.0f && !assume_zero_sideslip()) {
         // Do the second and final yaw and earth mag field initialisation when the vehicle has gained 5.0m of altitude after arming if it is a non-fly forward vehicle (vertical takeoff)
         // This second and final correction is needed for flight from large metal structures where the magnetic field distortion can extend up to 5m
         Vector3f eulerAngles;
@@ -5024,6 +5031,7 @@ bool NavEKF::setOriginLLH(struct Location &loc)
 bool NavEKF::getTakeoffExpected()
 {
     if (expectGndEffectTakeoff && imuSampleTime_ms - takeoffExpectedSet_ms > gndEffectTimeout_ms) {
+        prevExpectGndEffectTakeoff = expectGndEffectTakeoff;
         expectGndEffectTakeoff = false;
     }
 
@@ -5035,6 +5043,7 @@ bool NavEKF::getTakeoffExpected()
 void NavEKF::setTakeoffExpected(bool val)
 {
     takeoffExpectedSet_ms = imuSampleTime_ms;
+    prevExpectGndEffectTakeoff = expectGndEffectTakeoff;
     expectGndEffectTakeoff = val;
 }
 
