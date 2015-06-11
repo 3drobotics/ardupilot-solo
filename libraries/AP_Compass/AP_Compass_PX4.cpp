@@ -134,6 +134,10 @@ void AP_Compass_PX4::accumulate(void)
         while (::read(_mag_fd[i], &mag_report, sizeof(mag_report)) == sizeof(mag_report) &&
                mag_report.timestamp != _last_timestamp[i]) {
 
+            update_saturated(mag_report.is_saturated, frontend_instance);
+            if(mag_report.is_saturated){
+                break;
+            }
             uint32_t time_us = (uint32_t)mag_report.timestamp;
             // get raw_field - sensor frame, uncorrected
             Vector3f raw_field = Vector3f(mag_report.x, mag_report.y, mag_report.z)*1.0e3f;

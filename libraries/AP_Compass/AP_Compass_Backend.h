@@ -63,6 +63,7 @@ protected:
     void correct_field(Vector3f &mag, uint8_t i);
     void publish_unfiltered_field(const Vector3f &mag, uint32_t time_us, uint8_t instance);
     void publish_filtered_field(const Vector3f &mag, uint8_t instance);
+    void update_saturated(const bool is_saturated, uint8_t instance);
 
     // register a new compass instance with the frontend
     uint8_t register_compass(void) const;
