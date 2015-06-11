@@ -414,7 +414,7 @@ NavEKF::NavEKF(const AP_AHRS *ahrs, AP_Baro &baro, const RangeFinder &rng) :
     fScaleFactorPnoise(1e-10f),     // Process noise added to focal length scale factor state variance at each time step
     flowTimeDeltaAvg_ms(100),       // average interval between optical flow measurements (msec)
     flowIntervalMax_ms(100),        // maximum allowable time between flow fusion events
-    gndEffectTimeout_ms(1000),          // time in msec that baro ground effect compensation will timeout after initiation
+    flightPhaseTimeout_ms(1000),          // time in msec that baro ground effect compensation will timeout after initiation
     gndEffectBaroScaler(4.0f)      // scaler applied to the barometer observation variance when operating in ground effect
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
@@ -1275,7 +1275,7 @@ void NavEKF::CovariancePrediction()
     }
     // scale accel bias noise when disarmed to allow for faster bias estimation
     // inhibit bias estimation during takeoff with ground effect to prevent bad bias learning
-    if (expectGndEffectTakeoff) {
+    if (getTakeoffExpected()) {
         processNoise[13] = 0.0f;
     } else if (!vehicleArmed) {
         processNoise[13] = dVelBiasSigma * accelBiasNoiseScaler;
@@ -4664,10 +4664,8 @@ void NavEKF::InitialiseVariables()
     gndOffsetValid =  false;
     flowXfailed = false;
     validOrigin = false;
-    takeoffExpectedSet_ms = 0;
-    expectGndEffectTakeoff = false;
-    touchdownExpectedSet_ms = 0;
-    expectGndEffectTouchdown = false;
+    flightPhaseSet_ms = 0;
+    flightPhase = FLIGHT_PHASE_DISARMED;
     gpsSpdAccuracy = 0.0f;
     baroHgtOffset = 0.0f;
     gpsAidingBad = false;
@@ -4829,8 +4827,8 @@ void  NavEKF::getFilterStatus(nav_filter_status &status) const
     status.flags.pred_horiz_pos_rel = (optFlowNavPossible || gpsNavPossible) && filterHealthy; // we should be able to estimate a relative position when we enter flight mode
     status.flags.pred_horiz_pos_abs = gpsNavPossible && filterHealthy; // we should be able to estimate an absolute position when we enter flight mode
     status.flags.takeoff_detected = takeOffDetected; // takeoff for optical flow navigation has been detected
-    status.flags.takeoff = expectGndEffectTakeoff; // The EKF has been told to expect takeoff and is in a ground effect mitigation mode
-    status.flags.touchdown = expectGndEffectTouchdown; // The EKF has been told to detect touchdown and is in a ground effect mitigation mode
+    status.flags.takeoff = (flightPhase == FLIGHT_PHASE_ARMED_PRE_TAKEOFF || flightPhase == FLIGHT_PHASE_ARMED_TAKEOFF); // The EKF has been told to expect takeoff and is in a ground effect mitigation mode
+    status.flags.touchdown = (flightPhase == FLIGHT_PHASE_ARMED_LANDING); // The EKF has been told to detect touchdown and is in a ground effect mitigation mode
 }
 
 // send an EKF_STATUS message to GCS
@@ -5020,41 +5018,35 @@ bool NavEKF::setOriginLLH(struct Location &loc)
     return true;
 }
 
+// called by vehicle code to specify the phase of flight
+// phase of flight is used to determine whether we compensate for baro errors
+// due to ground effect and to determine when the mag state reset should happen
+void NavEKF::setFlightPhase(enum nav_filter_flight_phase val)
+{
+    flightPhaseSet_ms = imuSampleTime_ms;
+    flightPhase = val;
+}
+
+// get phase of flight - reverts to armed/disarmed if we didn't get an update from vehicle code
+enum nav_filter_flight_phase NavEKF::getFlightPhase()
+{
+    if (imuSampleTime_ms - flightPhaseSet_ms > flightPhaseTimeout_ms) {
+        flightPhase = vehicleArmed ? FLIGHT_PHASE_ARMED_FLYING : FLIGHT_PHASE_DISARMED;
+    }
+
+    return flightPhase;
+}
+
 // determine if a takeoff is expected so that we can compensate for expected barometer errors due to ground effect
 bool NavEKF::getTakeoffExpected()
 {
-    if (expectGndEffectTakeoff && imuSampleTime_ms - takeoffExpectedSet_ms > gndEffectTimeout_ms) {
-        expectGndEffectTakeoff = false;
-    }
-
-    return expectGndEffectTakeoff;
+    return getFlightPhase() == FLIGHT_PHASE_ARMED_PRE_TAKEOFF || getFlightPhase() == FLIGHT_PHASE_ARMED_TAKEOFF;
 }
-
-// called by vehicle code to specify that a takeoff is happening
-// causes the EKF to compensate for expected barometer errors due to ground effect
-void NavEKF::setTakeoffExpected(bool val)
-{
-    takeoffExpectedSet_ms = imuSampleTime_ms;
-    expectGndEffectTakeoff = val;
-}
-
 
 // determine if a touchdown is expected so that we can compensate for expected barometer errors due to ground effect
 bool NavEKF::getTouchdownExpected()
 {
-    if (expectGndEffectTouchdown && imuSampleTime_ms - touchdownExpectedSet_ms > gndEffectTimeout_ms) {
-        expectGndEffectTouchdown = false;
-    }
-
-    return expectGndEffectTouchdown;
-}
-
-// called by vehicle code to specify that a touchdown is expected to happen
-// causes the EKF to compensate for expected barometer errors due to ground effect
-void NavEKF::setTouchdownExpected(bool val)
-{
-    touchdownExpectedSet_ms = imuSampleTime_ms;
-    expectGndEffectTouchdown = val;
+    return getFlightPhase() == FLIGHT_PHASE_ARMED_LANDING;
 }
 
 // Monitor GPS data to see if quality is good enough to initialise the EKF
