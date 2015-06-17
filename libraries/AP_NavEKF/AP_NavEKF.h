@@ -661,7 +661,7 @@ private:
     Vector3f lastMagOffsets;        // magnetometer offsets returned by compass object from previous update
     bool gpsAidingBad;              // true when GPS position measurements have been consistently rejected by the filter
     uint32_t lastGpsAidBadTime_ms;  // time in msec gps aiding was last detected to be bad
-    float posDownAtArming;          // flight vehicle vertical position at arming used as a reference point
+    float posDownAtTakeoff;          // flight vehicle vertical position at arming used as a reference point
     bool highYawRate;               // true when the vehicle is doing rapid yaw rotation where gyro scel factor errors could cause loss of heading reference
     float yawRateFilt;              // filtered yaw rate used to determine when the vehicle is doing rapid yaw rotation where gyro scel factor errors could cause loss of heading reference
     bool gpsGoodToAlign;            // true when GPS quality is good enough to set an EKF origin and commence GPS navigation
@@ -748,6 +748,7 @@ private:
 
     // baro ground effect
     bool expectGndEffectTakeoff;      // external state from ArduCopter - takeoff expected
+    bool prevExpectGndEffectTakeoff;  // value of expectGndEffectTakeoff from previous frame - used to detect rising or falling edge
     uint32_t takeoffExpectedSet_ms;   // system time at which expectGndEffectTakeoff was set
     bool expectGndEffectTouchdown;    // external state from ArduCopter - touchdown expected
     uint32_t touchdownExpectedSet_ms; // system time at which expectGndEffectTouchdown was set
