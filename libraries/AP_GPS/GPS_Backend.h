@@ -38,7 +38,7 @@ public:
     virtual bool read() = 0;
 
     virtual void inject_data(uint8_t *data, uint8_t len) { return; }
-
+    virtual AP_GPS::GPS_Diag get_gps_diagnostic() { AP_GPS::GPS_Diag gpsdiag = {0}; return gpsdiag; } 
 #if GPS_RTK_AVAILABLE
     // Highest status supported by this GPS. 
     // Allows external system to identify type of receiver connected.
@@ -57,7 +57,6 @@ protected:
     AP_HAL::UARTDriver *port;           ///< UART we are attached to
     AP_GPS &gps;                        ///< access to frontend (for parameters)
     AP_GPS::GPS_State &state;           ///< public state for this instance
-
     // common utility functions
     int32_t swap_int32(int32_t v) const;
     int16_t swap_int16(int16_t v) const;

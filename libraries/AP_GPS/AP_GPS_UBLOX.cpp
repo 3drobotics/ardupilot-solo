@@ -107,18 +107,20 @@ AP_GPS_UBLOX::send_next_rate_update(void)
     case 4:
         _configure_message_rate(CLASS_NAV, MSG_VELNED, 1); // 36+8 bytes
         break;
-#if UBLOX_HW_LOGGING
     case 5:
+        _configure_message_rate(CLASS_NAV, MSG_NAV_SVINFO, 1);
+#if UBLOX_HW_LOGGING
+    case 6:
         // gather MON_HW at 0.5Hz
         _configure_message_rate(CLASS_MON, MSG_MON_HW, 2); // 64+8 bytes
         break;
-    case 6:
+    case 7:
         // gather MON_HW2 at 0.5Hz
         _configure_message_rate(CLASS_MON, MSG_MON_HW2, 2); // 24+8 bytes
         break;
 #endif
-#if UBLOX_VERSION_AUTODETECTION 
-    case 7:
+#if UBLOX_VERSION_AUTODETECTION
+    case 8:
         _request_version();
         break;
 #endif
@@ -500,6 +502,7 @@ AP_GPS_UBLOX::_parse_gps(void)
             next_fix = AP_GPS::NO_FIX;
             state.status = AP_GPS::NO_FIX;
         }
+        _diag.ttff = _buffer.status.time_to_first_fix;
 #if UBLOX_FAKE_3DLOCK
         state.status = AP_GPS::GPS_OK_FIX_3D;
         next_fix = state.status;
@@ -558,10 +561,10 @@ AP_GPS_UBLOX::_parse_gps(void)
         state.speed_accuracy = _buffer.velned.speed_accuracy*0.01f;
         _new_speed = true;
         break;
-#if UBLOX_VERSION_AUTODETECTION
     case MSG_NAV_SVINFO:
-        {
+    {
         Debug("MSG_NAV_SVINFO\n");
+#if UBLOX_VERSION_AUTODETECTION
         static const uint8_t HardwareGenerationMask = 0x07;
         uint8_t hardware_generation = _buffer.svinfo_header.globalFlags & HardwareGenerationMask;
         switch (hardware_generation) {
@@ -578,11 +581,31 @@ AP_GPS_UBLOX::_parse_gps(void)
                 hal.console->printf("Wrong Ublox' Hardware Version%u\n", hardware_generation);
                 break;
         };
-        /* We don't need that anymore */
-        _configure_message_rate(CLASS_NAV, MSG_NAV_SVINFO, 0);
-        break;
-        }
 #endif
+        uint8_t count = min(_buffer.svinfo_header.numCh, SAT_INFO_MAX_SATELLITES);
+        _diag.cnt = count;
+        for(uint8_t i = 0; i < count; i++){
+            Debug("SVINFO #%d  used %u  snr %3d  elevation %3d  azimuth %3d  svid %3d\n",
+                    i+1,
+                    _buffer.satellite_info[i].flags & 0x01,
+                    _buffer.satellite_info[i].cno,
+                    _buffer.satellite_info[i].elev,
+                    _buffer.satellite_info[i].azim,
+                    _buffer.satellite_info[i].svid);
+            _diag.satellite_info[i].chn = _buffer.satellite_info[i].chn;
+            _diag.satellite_info[i].svid = _buffer.satellite_info[i].svid;
+            _diag.satellite_info[i].flags = _buffer.satellite_info[i].flags;
+            _diag.satellite_info[i].quality = _buffer.satellite_info[i].quality;
+            _diag.satellite_info[i].cno = _buffer.satellite_info[i].cno;
+            _diag.satellite_info[i].elev = _buffer.satellite_info[i].elev;
+            _diag.satellite_info[i].azim = _buffer.satellite_info[i].azim;
+            _diag.satellite_info[i].prRes = _buffer.satellite_info[i].prRes;      
+        }
+
+        break;
+
+    }
+
     default:
         Debug("Unexpected NAV message 0x%02x", (unsigned)_msg_id);
         if (++_disable_counter == 0) {

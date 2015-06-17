@@ -44,6 +44,7 @@
 #define GPS_RTK_AVAILABLE 0
 #endif
 
+#define SAT_INFO_MAX_SATELLITES 22
 /**
  * save flash by skipping NMEA and SIRF support on ArduCopter on APM1/2 or any frame type on AVR1280 CPUs
  */
@@ -139,6 +140,23 @@ public:
         uint32_t last_gps_time_ms;          ///< the system time we got the last GPS timestamp, milliseconds
     };
 
+    //GPS Diagnostic structure filled by the backend
+    struct GPS_Diag {
+        uint8_t     cnt;
+        uint32_t    ttff;
+        struct {
+            uint8_t		chn; 		/**< Channel number, 255 for SVs not assigned to a channel */
+            uint8_t		svid; 		/**< Satellite ID */
+            uint8_t		flags;
+            uint8_t		quality;
+            uint8_t		cno;		/**< Carrier to Noise Ratio (Signal Strength) [dbHz] */
+            int8_t		elev; 		/**< Elevation [deg] */
+            int16_t		azim; 		/**< Azimuth [deg] */
+            int32_t		prRes; 		/**< Pseudo range residual [cm] */
+        }satellite_info[SAT_INFO_MAX_SATELLITES];
+    };
+    
+    AP_GPS::GPS_Diag get_gps_diagnostic(uint8_t instance) const;
     // Accessor functions
 
     // return number of active GPS sensors. Note that if the first GPS
