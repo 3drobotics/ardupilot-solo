@@ -38,4 +38,12 @@ union nav_filter_status {
     uint16_t value;
 };
 
+enum nav_filter_flight_phase {
+    FLIGHT_PHASE_DISARMED = 0,
+    FLIGHT_PHASE_ARMED_PRE_TAKEOFF,
+    FLIGHT_PHASE_ARMED_TAKEOFF,
+    FLIGHT_PHASE_ARMED_FLYING,
+    FLIGHT_PHASE_ARMED_LANDING
+};
+
 #endif // AP_Nav_Common

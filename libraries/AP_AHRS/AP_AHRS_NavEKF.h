@@ -115,10 +115,6 @@ public:
 
     void set_ekf_use(bool setting);
 
-
-    void setTakeoffExpected(bool val);
-    void setTouchdownExpected(bool val);
-
     float get_yaw_for_control_cd() const;
 
     // is the AHRS subsystem healthy?

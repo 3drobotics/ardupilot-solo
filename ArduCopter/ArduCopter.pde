@@ -392,7 +392,7 @@ static struct {
     bool touchdown_expected;
     uint32_t takeoff_time_ms;
     float takeoff_alt_cm;
-} gndeffect_state;
+} flight_phase_state;
 
 static RCMapper rcmap;
 
@@ -942,7 +942,7 @@ static void throttle_loop()
     // update throttle_low_comp value (controls priority of throttle vs attitude control)
     update_throttle_thr_mix();
 
-    update_ground_effect_detector();
+    update_ekf_flight_phase();
 
     // check auto_armed status
     update_auto_armed();
