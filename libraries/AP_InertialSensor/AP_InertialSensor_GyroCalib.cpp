@@ -142,7 +142,7 @@ bool AP_InertialSensor_GyroCalib::step(Vector3f accel_value)
 {
     
     if(_status == CALIBRATE_STEP){
-        if(_num_steps >= MAX_GYRO_CALIB_STEPS || _converged == true){
+        if(_converged == true){
             set_status(COMPLETE);
             return true;
         }

@@ -4,7 +4,6 @@
 #define __AP_INERTIAL_SENSOR_GYRO_CALIB_H__
 
 #define MAX_GYRO_CALIB_SAMPLES  100
-#define MAX_GYRO_CALIB_STEPS    120
 enum gyro_calib_status_t {
     WAITING=0,
     INITIAL=1,
