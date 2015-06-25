@@ -16,9 +16,9 @@ enum gyro_calib_status_t {
 class AP_InertialSensor_GyroCalib {
 public:
     AP_InertialSensor_GyroCalib();
-    void init(enum Rotation &board_orientation);
+    void init();
     bool step(Vector3f accel_value);
-    bool get_new_offsets(enum Rotation &board_orientation, AP_Vector3f &offsets);
+    bool get_new_offsets(enum Rotation board_orientation, AP_Vector3f &offsets);
     void collect_samples(Vector3f sample, Vector3f accel_value);
     gyro_calib_status_t get_status(){ return _status;}
 

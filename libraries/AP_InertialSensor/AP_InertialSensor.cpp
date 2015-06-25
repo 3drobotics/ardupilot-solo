@@ -718,7 +718,7 @@ AP_InertialSensor::_init_gyro()
             _gyro_offset[i].set(Vector3f());
         }
         for(uint8_t i = 0; i<get_gyro_count();i++){
-            gyro_calib[i].init(_board_orientation);
+            gyro_calib[i].init();
             _calibrating = true;
         }
         for(int8_t c = 0; c < 5; c++) {

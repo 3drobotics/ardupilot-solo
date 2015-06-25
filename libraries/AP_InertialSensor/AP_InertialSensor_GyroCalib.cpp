@@ -11,20 +11,13 @@ AP_InertialSensor_GyroCalib::AP_InertialSensor_GyroCalib() :
 {
 }
 
-void AP_InertialSensor_GyroCalib::init(enum Rotation &board_orientation)
+void AP_InertialSensor_GyroCalib::init()
 {
     // flash leds to tell user to keep the IMU still
     AP_Notify::flags.initialising = true;
 
     // cold start
     hal.console->print_P(PSTR("Gyro Initialisation Started\n"));
-
-    /*
-      we do the gyro calibration with no board rotation. This avoids
-      having to rotate readings during the calibration
-    */
-    _saved_orientation = board_orientation;
-    board_orientation = ROTATION_NONE;
 
     // remove existing gyro offsets
     _new_gyro_offset.zero();
@@ -90,29 +83,28 @@ void AP_InertialSensor_GyroCalib::calibrate(Vector3f accel_value)
     _last_average = gyro_avg;
 }
 
-bool AP_InertialSensor_GyroCalib::get_new_offsets(enum Rotation &board_orientation, AP_Vector3f &offsets){
+bool AP_InertialSensor_GyroCalib::get_new_offsets(enum Rotation board_orientation, AP_Vector3f &offsets){
     // we've kept the user waiting long enough - use the best pair we
     // found so far
     bool ret;
     if (!_converged) {
         hal.console->printf_P(PSTR("gyro did not converge: diff=%f dps\n"), ToDeg(_best_diff));
+        _best_avg.rotate_inverse(board_orientation);
         offsets = _best_avg;
         // flag calibration as failed for this gyro
         ret = false;
     } else {
+        _new_gyro_offset.rotate_inverse(board_orientation);
         offsets = _new_gyro_offset;
         ret = true;
     }
-
-    // restore orientation
-    board_orientation = _saved_orientation;
 
     // stop flashing leds
     AP_Notify::flags.initialising = false;
     set_status(WAITING);
     return ret;
 }
-
+//TODO: send mavlink status to GCS
 void AP_InertialSensor_GyroCalib::set_status(enum gyro_calib_status_t status)
 {
     switch(status){
