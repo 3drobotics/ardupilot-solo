@@ -120,7 +120,7 @@ public:
         k_param_serial2_baud,           // deprecated - remove
         k_param_land_repositioning,
         k_param_sonar, // sonar object
-        k_param_ekfcheck_thresh,
+        k_param_fs_ekf_thresh,
         k_param_terrain,
         k_param_acro_expo,
         k_param_throttle_deadzone,
@@ -331,6 +331,7 @@ public:
         k_param_autotune_axis_bitmask,  // 245
         k_param_autotune_aggressiveness,  // 246
         k_param_pi_vel_xy,  // 247
+        k_param_fs_ekf_action, // 248
 
         // 254,255: reserved
     };
@@ -417,7 +418,8 @@ public:
     AP_Int8         arming_check;
 
     AP_Int8         land_repositioning;
-    AP_Float        ekfcheck_thresh;
+    AP_Int8         fs_ekf_action;
+    AP_Float        fs_ekf_thresh;
 
 #if FRAME_CONFIG ==     HELI_FRAME
     // Heli
