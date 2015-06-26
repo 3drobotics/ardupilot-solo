@@ -68,12 +68,12 @@ static void arm_motors_check()
     }
 }
 
-// auto_disarm_check - disarms the copter if it has been sitting on the ground in manual mode with throttle low for at least 15 seconds
+// auto_disarm_check - disarms the copter if it has been sitting on the ground in manual mode for at least 15 seconds
 // called at 1hz
 static void auto_disarm_check()
 {
     // exit immediately if we are already disarmed or throttle is not zero
-    if (!motors.armed() || !ap.throttle_zero) {
+    if (!motors.armed()) {
         auto_disarming_counter = 0;
         return;
     }
