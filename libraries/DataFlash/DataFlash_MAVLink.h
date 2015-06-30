@@ -25,9 +25,8 @@ class DataFlash_MAVLink : public DataFlash_Backend
     friend class DataFlash_Class; // for access to stats on Log_Df_Mav_Stats
 public:
     // constructor
-    DataFlash_MAVLink(DataFlash_Class &front, mavlink_channel_t chan) :
+    DataFlash_MAVLink(DataFlash_Class &front) :
         DataFlash_Backend(front),
-        _chan(chan),
         _initialised(false),
         _next_seq_num(0),
         _current_block(NULL),
@@ -91,11 +90,11 @@ public:
     };
     void push_log_blocks();
     virtual bool send_log_block(struct dm_block &block);
-    virtual void handle_ack(mavlink_message_t* msg, uint32_t seqno);
+    virtual void handle_ack(mavlink_channel_t chan, mavlink_message_t* msg, uint32_t seqno);
     virtual void handle_retry(uint32_t block_num);
     void do_resends(uint32_t now);
     virtual void set_channel(mavlink_channel_t chan);
-    virtual void remote_log_block_status_msg(mavlink_message_t* msg);
+    virtual void remote_log_block_status_msg(mavlink_channel_t chan, mavlink_message_t* msg);
     void free_all_blocks();
 
 protected:
