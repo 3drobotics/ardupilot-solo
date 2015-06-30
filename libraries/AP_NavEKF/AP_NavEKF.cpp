@@ -40,8 +40,8 @@
 #define ABIAS_PNOISE_DEFAULT    0.00005f
 #define MAGE_PNOISE_DEFAULT     0.0003f
 #define MAGB_PNOISE_DEFAULT     0.0003f
-#define VEL_GATE_DEFAULT        5
-#define POS_GATE_DEFAULT        10
+#define VEL_GATE_DEFAULT        4
+#define POS_GATE_DEFAULT        5
 #define HGT_GATE_DEFAULT        10
 #define MAG_GATE_DEFAULT        3
 #define MAG_CAL_DEFAULT         1
@@ -386,7 +386,7 @@ NavEKF::NavEKF(const AP_AHRS *ahrs, AP_Baro &baro, const RangeFinder &rng) :
     state(*reinterpret_cast<struct state_elements *>(&states)),
     gpsNEVelVarAccScale(0.05f),     // Scale factor applied to horizontal velocity measurement variance due to manoeuvre acceleration - used when GPS doesn't report speed error
     gpsDVelVarAccScale(0.07f),      // Scale factor applied to vertical velocity measurement variance due to manoeuvre acceleration - used when GPS doesn't report speed error
-    gpsPosVarAccScale(0.05f),       // Scale factor applied to horizontal position measurement variance due to manoeuvre acceleration
+    gpsPosVarAccScale(0.1f),       // Scale factor applied to horizontal position measurement variance due to manoeuvre acceleration
     msecHgtDelay(60),               // Height measurement delay (msec)
     msecMagDelay(40),               // Magnetometer measurement delay (msec)
     msecTasDelay(240),              // Airspeed measurement delay (msec)
@@ -738,7 +738,7 @@ void NavEKF::UpdateFilter()
 
     // sum delta angles and time used by covariance prediction
     summedDelAng = summedDelAng + correctedDelAng;
-    summedDelVel = summedDelVel + correctedDelVel1;
+    summedDelVel = summedDelVel + correctedDelVel12;
     dt += dtIMUactual;
 
     // perform a covariance prediction if the total delta angle has exceeded the limit
@@ -829,8 +829,11 @@ void NavEKF::SelectVelPosFusion()
             // If a long time since last GPS update, then reset position and velocity and reset stored state history
             if (imuSampleTime_ms - secondLastFixTime_ms > gpsRetryTimeout) {
                 // Apply an offset to the GPS position so that the position can be corrected gradually
-                gpsPosGlitchOffsetNE.x = statesAtPosTime.position.x - gpsPosNE.x;
-                gpsPosGlitchOffsetNE.y = statesAtPosTime.position.y - gpsPosNE.y;
+                // If hard position resets are allowed, then we don't adjust the GPS offset and move the filter position to the GPS instead
+                if (!allowHardPosReset) {
+                    gpsPosGlitchOffsetNE.x = statesAtPosTime.position.x - gpsPosNE.x;
+                    gpsPosGlitchOffsetNE.y = statesAtPosTime.position.y - gpsPosNE.y;
+                }
                 // limit the radius of the offset to 100m and decay the offset to zero radially
                 decayGpsOffset();
                 ResetPosition();
@@ -2021,8 +2024,11 @@ void NavEKF::FuseVelPosNED()
                     lastPosPassTime = imuSampleTime_ms;
                     // if timed out or outside the specified glitch radius, increment the offset applied to GPS data to compensate for large GPS position jumps
                     if (posTimeout || (maxPosInnov2 > sq(float(_gpsGlitchRadiusMax)))) {
-                        gpsPosGlitchOffsetNE.x += innovVelPos[3];
-                        gpsPosGlitchOffsetNE.y += innovVelPos[4];
+                        // If hard position resets are allowed, then we don't adjust the GPS offset and move the filter position to the GPS instead
+                        if (!allowHardPosReset) {
+                            gpsPosGlitchOffsetNE.x += innovVelPos[3];
+                            gpsPosGlitchOffsetNE.y += innovVelPos[4];
+                        }
                         // limit the radius of the offset and decay the offset to zero radially
                         decayGpsOffset();
                         // reset the position to the current GPS position which will include the glitch correction offset
@@ -4095,7 +4101,7 @@ void NavEKF::readIMUData()
     const AP_InertialSensor &ins = _ahrs->get_ins();
 
     dtIMUavg = 1.0f/ins.get_sample_rate();
-    dtIMUactual = max(ins.get_delta_time(),1.0e-3f);
+    dtIMUactual = max(ins.get_delta_time(),1.0e-4f);
 
     // the imu sample time is used as a common time reference throughout the filter
     imuSampleTime_ms = hal.scheduler->millis();
@@ -4183,6 +4189,9 @@ void NavEKF::readGpsData()
 
         // Monitor quality of the GPS velocity data for alignment
         gpsGoodToAlign = calcGpsGoodToAlign();
+
+        // Monitor quality of GPS data inflight
+        calcGpsGoodForFlight();
 
         // read latitutde and longitude from GPS and convert to local NE position relative to the stored origin
         // If we don't have an origin, then set it to the current GPS coordinates
@@ -4589,6 +4598,7 @@ void NavEKF::InitialiseVariables()
     ekfStartTime_ms = imuSampleTime_ms;
     lastGpsVelFail_ms = 0;
     lastGpsAidBadTime_ms = 0;
+    timeAtDisarm_ms = 0;
 
     // initialise other variables
     gpsNoiseScaler = 1.0f;
@@ -4672,6 +4682,11 @@ void NavEKF::InitialiseVariables()
     gpsAidingBad = false;
     highYawRate = false;
     yawRateFilt = 0.0f;
+    gpsAccuracyGood = false;
+    gpsDriftNE = 0.0f;
+    gpsVertVelFilt = 0.0f;
+    gpsHorizVelFilt = 0.0f;
+    allowHardPosReset = false;
 }
 
 // return true if we should use the airspeed sensor
@@ -4830,6 +4845,7 @@ void  NavEKF::getFilterStatus(nav_filter_status &status) const
     status.flags.takeoff_detected = takeOffDetected; // takeoff for optical flow navigation has been detected
     status.flags.takeoff = expectGndEffectTakeoff; // The EKF has been told to expect takeoff and is in a ground effect mitigation mode
     status.flags.touchdown = expectGndEffectTouchdown; // The EKF has been told to detect touchdown and is in a ground effect mitigation mode
+    status.flags.gps_glitching = !gpsAccuracyGood; // The GPS is glitching
 }
 
 // send an EKF_STATUS message to GCS
@@ -4851,6 +4867,7 @@ void NavEKF::send_status_report(mavlink_channel_t chan)
     if (filt_state.flags.const_pos_mode) { flags |= EKF_CONST_POS_MODE; }
     if (filt_state.flags.pred_horiz_pos_rel) { flags |= EKF_PRED_POS_HORIZ_REL; }
     if (filt_state.flags.pred_horiz_pos_abs) { flags |= EKF_PRED_POS_HORIZ_ABS; }
+    if (filt_state.flags.gps_glitching) { flags |= (1<<15); }
 
     // get variances
     float velVar, posVar, hgtVar, tasVar;
@@ -4903,6 +4920,19 @@ void NavEKF::performArmingChecks()
             meaHgtAtTakeOff = hgtMea;
             // reset the vertical position state to faster recover from baro errors experienced during touchdown
             state.position.z = -hgtMea;
+            // record the time we disarmed
+            timeAtDisarm_ms = imuSampleTime_ms;
+            // if the GPS is not glitching when we land, we reset the timer used to check GPS quality
+            // timer is not set to zero to avoid triggering an automatic fail
+            if (gpsAccuracyGood) {
+                lastGpsVelFail_ms = 1;
+                gpsGoodToAlign = true;
+            }
+            // we reset the GPS drift checks when disarming as the vehicle has been moving during flight
+            gpsDriftNE = 0.0f;
+            gpsVertVelFilt = 0.0f;
+            gpsHorizVelFilt = 0.0f;
+
         } else if (_fusionModeGPS == 3) { // arming when GPS useage has been prohibited
             if (optFlowDataPresent()) {
                 PV_AidingMode = AID_RELATIVE; // we have optical flow data and can estimate all vehicle states
@@ -5059,6 +5089,8 @@ void NavEKF::setTouchdownExpected(bool val)
 // Monitor GPS data to see if quality is good enough to initialise the EKF
 // Monitor magnetometer innovations to to see if the heading is good enough to use GPS
 // Return true if all criteria pass for 10 seconds
+// Once we have set the origin and are operating in GPS mode the status is set to true to avoid a race conditon with remote useage
+// If we have landed with good GPS, then the status is assumed good for 5 seconds to allow transients to settle
 bool NavEKF::calcGpsGoodToAlign(void)
 {
     static struct Location gpsloc_prev;    // LLH location of previous GPS measurement
@@ -5076,6 +5108,9 @@ bool NavEKF::calcGpsGoodToAlign(void)
 
     // fail if not enough sats
     bool numSatsFail = _ahrs->get_gps().num_sats() < 6;
+
+    // fail if satellite geometry is poor
+    bool hdopFail = _ahrs->get_gps().get_hdop() > 250;
 
     // fail if horiziontal position accuracy not sufficient
     float hAcc = 0.0f;
@@ -5098,7 +5133,6 @@ bool NavEKF::calcGpsGoodToAlign(void)
     // Check for significant change in GPS posiiton if disarmed which indicates bad GPS
     // Note: this assumes we are not flying from a moving vehicle, eg boat
     const struct Location &gpsloc = _ahrs->get_gps().location(); // Current location
-    static float gpsDriftNE = 0.0f; // amount of position drift detected
     const float posFiltTimeConst = 10.0f; // time constant used to decay position drift
     // calculate time lapsesd since last GPS fix and limit to prevent numerical errors
     float deltaTime = constrain_float(float(lastFixTime_ms - secondLastFixTime_ms)*0.001f,0.01f,posFiltTimeConst);
@@ -5115,7 +5149,6 @@ bool NavEKF::calcGpsGoodToAlign(void)
 
     // Check that the vertical GPS vertical velocity is reasonable after noise filtering
     bool gpsVertVelFail;
-    static float gpsVertVelFilt = 0.0f;
     if (_ahrs->get_gps().have_vertical_velocity() && !vehicleArmed) {
         // check that the average vertical GPS velocity is close to zero
         gpsVertVelFilt = 0.1f * velNED.z + 0.9f * gpsVertVelFilt;
@@ -5130,7 +5163,6 @@ bool NavEKF::calcGpsGoodToAlign(void)
 
     // Check that the horizontal GPS vertical velocity is reasonable after noise filtering
     bool gpsHorizVelFail;
-    static float gpsHorizVelFilt;
     if (!vehicleArmed) {
         gpsHorizVelFilt = 0.1f * pythagorous2(velNED.x,velNED.y) + 0.9f * gpsHorizVelFilt;
         gpsHorizVelFilt = constrain_float(gpsHorizVelFilt,-10.0f,10.0f);
@@ -5139,9 +5171,18 @@ bool NavEKF::calcGpsGoodToAlign(void)
         gpsHorizVelFail = false;
     }
 
+    // return healthy if we already have an origin and are inflight to prevent a race condition when checking the status on the ground after landing
+    // return healthy for a few seconds after landing so that filter disturbances don't fail the GPS
+    bool disarmTimeout = ((imuSampleTime_ms - timeAtDisarm_ms) < 5000) && !vehicleArmed && gpsAccuracyGood;
+    bool usingInFlight = vehicleArmed && validOrigin && !constVelMode && !constPosMode;
+
+    if (disarmTimeout || usingInFlight) {
+        return true;
+    }
+
     // record time of fail
     // assume  fail first time called
-    if (gpsVelFail || numSatsFail || hAccFail || yawFail || gpsDriftFail || gpsVertVelFail || gpsHorizVelFail || lastGpsVelFail_ms == 0) {
+    if (gpsVelFail || numSatsFail || hdopFail || hAccFail || yawFail || gpsDriftFail || gpsVertVelFail || gpsHorizVelFail || lastGpsVelFail_ms == 0) {
         lastGpsVelFail_ms = imuSampleTime_ms;
     }
 
@@ -5260,5 +5301,83 @@ void NavEKF::getQuaternion(Quaternion& ret) const
 {
     ret = state.quat;
 }
+
+// update inflight calculaton that determines if GPS data is good enough for reliable navigation
+void NavEKF::calcGpsGoodForFlight(void)
+{
+    // use a simple criteria based on the GPS receivers claimed speed accuracy and the EKF innovation consistency checks
+    static bool gpsSpdAccPass = false;
+    static bool ekfInnovationsPass = false;
+
+    // set up varaibles and constants used by filter that is applied to GPS speed accuracy
+    const float alpha1 = 0.2f; // coefficient for first stage LPF applied to raw speed accuracy data
+    const float tau = 10.0f; // time constant (sec) of peak hold decay
+    static float lpfFilterState = 0.0f; // first stage LPF filter state
+    static float peakHoldFilterState = 0.0f; // peak hold with exponential decay filter state
+    static uint32_t lastTime_ms = 0;
+    if (lastTime_ms == 0) {
+        lastTime_ms =  imuSampleTime_ms;
+    }
+    float dtLPF = (imuSampleTime_ms - lastTime_ms) * 1e-3f;
+    lastTime_ms = imuSampleTime_ms;
+    float alpha2 = constrain_float(dtLPF/tau,0.0f,1.0f);
+
+    // get the receivers reported speed accuracy
+    float gpsSpdAccRaw;
+    if (!_ahrs->get_gps().speed_accuracy(gpsSpdAccRaw)) {
+        gpsSpdAccRaw = 0.0f;
+    }
+
+    // filter the raw speed accuracy using a LPF
+    lpfFilterState = constrain_float((alpha1 * gpsSpdAccRaw + (1.0f - alpha1) * lpfFilterState),0.0f,10.0f);
+
+    // apply a peak hold filter to the LPF output
+    peakHoldFilterState = max(lpfFilterState,((1.0f - alpha2) * peakHoldFilterState));
+
+    // Apply a threshold test with hysteresis to the filtered GPS speed accuracy data
+    if (peakHoldFilterState > 1.5f ) {
+        gpsSpdAccPass = false;
+    } else if(peakHoldFilterState < 1.0f) {
+        gpsSpdAccPass = true;
+    }
+
+    // Apply a threshold test with hysteresis to the normalised position and velocity innovations
+    // Require a fail for one second and a pass for 5 seconds to transition
+    static uint32_t lastInnovPassTime_ms = 0;
+    static uint32_t lastInnovFailTime_ms = 0;
+    if (lastInnovFailTime_ms == 0) {
+        lastInnovFailTime_ms = imuSampleTime_ms;
+        lastInnovPassTime_ms = imuSampleTime_ms;
+    }
+    if (velTestRatio < 1.0f && posTestRatio < 1.0f) {
+        lastInnovPassTime_ms = imuSampleTime_ms;
+    } else if (velTestRatio > 0.7f || posTestRatio > 0.7f) {
+        lastInnovFailTime_ms = imuSampleTime_ms;
+    }
+    if ((imuSampleTime_ms - lastInnovPassTime_ms) > 1000) {
+        ekfInnovationsPass = false;
+    } else if ((imuSampleTime_ms - lastInnovFailTime_ms) > 5000) {
+        ekfInnovationsPass = true;
+    }
+
+    // both GPS speed accuracy and EKF innovations must pass
+    gpsAccuracyGood = gpsSpdAccPass && ekfInnovationsPass;
+}
+
+// returns true of the EKF thinks the GPS is glitching or unavailable
+bool NavEKF::getGpsGlitchStatus(void) const
+{
+    return !gpsAccuracyGood;
+}
+
+// Set to true to allow the EKF to do hard position resets following recovery from loss of GPS.
+// Works as a toggle (last value set is held).
+// Must be set to false when the EKF positon is being used by the controller to avoid large jumps in EKF position following a reset
+// Can be set to true when the EKF position is not being used by the controller to enable faster recovery from bad GPS
+void NavEKF::setAllowHardPosResets(bool val)
+{
+    allowHardPosReset = val;
+}
+
 
 #endif // HAL_CPU_CLASS

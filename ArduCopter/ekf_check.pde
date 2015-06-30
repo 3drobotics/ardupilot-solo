@@ -29,7 +29,7 @@ static struct {
 void ekf_check()
 {
     // return immediately if motors are not armed, ekf check is disabled, not using ekf or usb is connected
-    if (!motors.armed() || ap.usb_connected || (g.ekfcheck_thresh <= 0.0f)) {
+    if (!motors.armed() || ap.usb_connected || (g.fs_ekf_thresh <= 0.0f)) {
         ekf_check_state.fail_count = 0;
         ekf_check_state.bad_variance = false;
         AP_Notify::flags.ekf_bad = ekf_check_state.bad_variance;
@@ -85,12 +85,12 @@ static bool ekf_over_threshold()
 {
 #if AP_AHRS_NAVEKF_AVAILABLE
     // return false immediately if disabled
-    if (g.ekfcheck_thresh <= 0.0f) {
+    if (g.fs_ekf_thresh <= 0.0f) {
         return false;
     }
 
     // return true immediately if position is bad
-    if (!position_ok() && !optflow_position_ok()) {
+    if (!ekf_position_ok() && !optflow_position_ok()) {
         return true;
     }
 
@@ -104,7 +104,7 @@ static bool ekf_over_threshold()
     compass_variance = magVar.length();
 
     // return true if compass and velocity variance over the threshold
-    return (compass_variance >= g.ekfcheck_thresh && vel_variance >= g.ekfcheck_thresh);
+    return (compass_variance >= g.fs_ekf_thresh && vel_variance >= g.fs_ekf_thresh);
 #else
     return false;
 #endif
@@ -119,8 +119,13 @@ static void failsafe_ekf_event()
         return;
     }
 
-    // do nothing if motors disarmed or not in flight mode that requires GPS
-    if (!motors.armed() || !mode_requires_GPS(control_mode)) {
+    // do nothing if motors disarmed
+    if (!motors.armed()) {
+        return;
+    }
+
+    // do nothing if not in GPS flight mode and ekf-action is not land-even-stabilize
+    if (!mode_requires_GPS(control_mode) && (g.fs_ekf_action != FS_EKF_ACTION_LAND_EVEN_STABILIZE)) {
         return;
     }
 
@@ -128,12 +133,20 @@ static void failsafe_ekf_event()
     failsafe.ekf = true;
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_EKFINAV, ERROR_CODE_FAILSAFE_OCCURRED);
 
-    // take action based on flight mode
-    if (mode_requires_GPS(control_mode)) {
-        set_mode_land_with_pause();
+    // take action based on fs_ekf_action parameter
+    switch (g.fs_ekf_action) {
+        case FS_EKF_ACTION_ALTHOLD:
+            // AltHold
+            if (failsafe.radio || !set_mode(ALT_HOLD)) {
+                set_mode_land_with_pause();
+            }
+            break;
+        default:
+            set_mode_land_with_pause();
+            break;
     }
 
-    // if flight mode is LAND ensure it's not the GPS controlled LAND
+    // if flight mode is already LAND ensure it's not the GPS controlled LAND
     if (control_mode == LAND) {
         land_do_not_use_GPS();
     }
