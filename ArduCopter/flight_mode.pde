@@ -9,6 +9,7 @@
 // optional force parameter used to force the flight mode change (used only first time mode is set)
 // returns true if mode was succesfully set
 // ACRO, STABILIZE, ALTHOLD, LAND, DRIFT and SPORT can always be set successfully but the return state of other flight modes should be checked and the caller should deal with failures appropriately
+// If we are in a mode that doesn't require a stable GPs position, then hard reset of the EKF position following a GPS glitch or outage is allowed for faster recovery.
 static bool set_mode(uint8_t mode)
 {
     // boolean to record if flight mode could be set
@@ -27,6 +28,7 @@ static bool set_mode(uint8_t mode)
             #else
                 success = acro_init(ignore_checks);
             #endif
+            if (success) ahrs.setAllowHardPosResets(true);
             break;
 
         case STABILIZE:
@@ -35,66 +37,81 @@ static bool set_mode(uint8_t mode)
             #else
                 success = stabilize_init(ignore_checks);
             #endif
+            if (success) ahrs.setAllowHardPosResets(true);
             break;
 
         case ALT_HOLD:
             success = althold_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(true);
             break;
 
         case AUTO:
             success = auto_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 
         case CIRCLE:
             success = circle_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 
         case LOITER:
             success = loiter_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 
         case GUIDED:
             success = guided_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 
         case LAND:
             success = land_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 
         case RTL:
             success = rtl_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 
         case DRIFT:
             success = drift_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 
         case SPORT:
             success = sport_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(true);
             break;
 
         case FLIP:
             success = flip_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 
 #if AUTOTUNE_ENABLED == ENABLED
         case AUTOTUNE:
             success = autotune_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(true);
             break;
 #endif
 
 #if POSHOLD_ENABLED == ENABLED
         case POSHOLD:
             success = poshold_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 #endif
 
         case STOP:
             success = stop_init(ignore_checks);
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
 
         default:
             success = false;
+            if (success) ahrs.setAllowHardPosResets(false);
             break;
     }
 
