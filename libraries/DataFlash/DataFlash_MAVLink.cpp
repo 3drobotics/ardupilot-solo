@@ -1,7 +1,7 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 /* 
-   DataFlash Remote(via serial) logging - file oriented variant
+   DataFlash Remote(via MAVLink) logging
 */
 
 #include <AP_HAL.h>
@@ -48,7 +48,9 @@ DataFlash_MAVLink::DataFlash_MAVLink(DataFlash_Class &front, mavlink_channel_t c
     _latest_block_len(0),
     _next_block_number_to_resend(0),
     _stats_last_collected_time(0),
-    _stats_last_logged_time(0)
+    _stats_last_logged_time(0),
+    _logging_started(false),
+    _sending_to_client(false)
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     ,_perf_errors(perf_alloc(PC_COUNT, "DF_errors")),
     _perf_overruns(perf_alloc(PC_COUNT, "DF_overruns"))
@@ -77,6 +79,10 @@ void DataFlash_MAVLink::Init(const struct LogStructure *structure, uint8_t num_t
     }
 
     _initialised = true;
+    _logging_started = true; // in actual fact, we throw away
+                             // everything until a client connects.
+                             // This stops calls to start_new_log from
+                             // the vehicles
 }
 
 /* Write a block of data at current offset */
@@ -85,8 +91,8 @@ uint16_t DataFlash_MAVLink::bufferspace_available() {
 }
 
 void DataFlash_MAVLink::WriteBlock(const void *pBuffer, uint16_t size)
-{
-    if (!_initialised || !_logging_started) {
+{   
+    if (!_initialised || !_sending_to_client || !_writes_enabled) {
         return;
     }
 
@@ -154,7 +160,7 @@ void DataFlash_MAVLink::handle_ack(mavlink_message_t* msg,
         _logging_started = false;
         return;
     }
-    if(seqno == 4294967295){
+    if(seqno == 4294967295 && !_sending_to_client) {
         Debug("\nStarting New Log!!\n");
         for(uint8_t i=0; i < _blockcount; i++) {
             _blocks[i].state = BLOCK_STATE_FREE;
