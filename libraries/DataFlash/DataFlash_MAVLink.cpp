@@ -147,7 +147,9 @@ void DataFlash_MAVLink::free_all_blocks()
     _latest_block_len = 0;
 }
 
-void DataFlash_MAVLink::handle_ack(mavlink_message_t* msg, const uint32_t seqno)
+void DataFlash_MAVLink::handle_ack(mavlink_channel_t chan,
+                                   mavlink_message_t* msg,
+                                   uint32_t seqno)
 {
     if (!_initialised) {
         return;
@@ -171,6 +173,7 @@ void DataFlash_MAVLink::handle_ack(mavlink_message_t* msg, const uint32_t seqno)
             _sending_to_client = true;
             _target_system_id = msg->sysid;
             _target_component_id = msg->compid;
+            _chan = chan;
             _next_seq_num = 0;
             _front.StartNewLog();
             _last_response_time = hal.scheduler->millis();
@@ -190,14 +193,15 @@ void DataFlash_MAVLink::handle_ack(mavlink_message_t* msg, const uint32_t seqno)
     }
 }
 
-void DataFlash_MAVLink::remote_log_block_status_msg(mavlink_message_t* msg)
+void DataFlash_MAVLink::remote_log_block_status_msg(mavlink_channel_t chan,
+                                                    mavlink_message_t* msg)
 {
     mavlink_remote_log_block_status_t packet;
     mavlink_msg_remote_log_block_status_decode(msg, &packet);
     if(packet.block_status == 0){
         handle_retry(packet.block_cnt);
     } else{
-        handle_ack(msg, packet.block_cnt);
+        handle_ack(chan, msg, packet.block_cnt);
     }
 }
 
