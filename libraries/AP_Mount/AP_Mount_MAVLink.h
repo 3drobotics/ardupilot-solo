@@ -51,6 +51,11 @@ private:
     // internal variables
     bool _initialised;              // true once the driver has been initialised
 
+    // Write a gimbal measurament and estimation data packet
+    void Log_Write_Gimbal(AP_Gimbal &gimbal);
+
+    bool _params_saved;
+
     AP_Gimbal _gimbal;
 };
 

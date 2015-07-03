@@ -653,7 +653,6 @@ bool GCS_MAVLINK::try_send_message(enum ap_message id)
         ahrs.get_NavEKF().send_status_report(chan);
 #endif
         break;
-
     case MSG_FENCE_STATUS:
     case MSG_WIND:
         // unused
@@ -963,7 +962,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_PARAM_VALUE:{
         if(msg->compid == MAV_COMP_ID_GIMBAL){
-            camera_mount._externalParameters.handle_param_value(msg);
+            camera_mount._externalParameters.handle_param_value(&DataFlash, msg);
         }
         break;
     }
@@ -1734,6 +1733,11 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         // send message to Notify
         AP_Notify::handle_led_control(msg);
         break;
+#if defined(HAL_BOARD_REMOTE_LOG_PORT)
+    case MAVLINK_MSG_ID_REMOTE_LOG_BLOCK_STATUS:
+        handle_remote_log_status(msg, DataFlash);
+        break;
+#endif
 
     }     // end switch
 } // end handle mavlink

@@ -10,7 +10,6 @@
 #include <AP_Param.h>
 #include <AP_GPS.h>
 #include <AP_InertialSensor.h>
-#include <AP_Gimbal.h>
 #include <AP_Baro.h>
 #include <AP_AHRS.h>
 #include "../AP_Airspeed/AP_Airspeed.h"
@@ -83,9 +82,8 @@ public:
 	void Log_Write_Current(const AP_BattMonitor &battery, int16_t throttle);
     void Log_Write_Compass(const Compass &compass);
     void Log_Write_Mode(uint8_t mode);
-    void Log_Write_Gimbal(const AP_Gimbal &gimbal);
 
-    bool logging_started(void) const { return log_write_started; }
+    bool logging_started(void) const { return _logging_started; }
 
 	/*
       every logged packet starts with 3 bytes
@@ -111,13 +109,13 @@ protected:
     const struct LogStructure *_structures;
     uint8_t _num_types;
     bool _writes_enabled;
-    bool log_write_started;
+    bool _logging_started;
 
     /*
       read a block
     */
     virtual void ReadBlock(void *pkt, uint16_t size) = 0;
-
+    bool is_critical_block;
 };
 
 /*
@@ -758,5 +756,6 @@ Format characters in the format string for binary log messages
 
 #include "DataFlash_Block.h"
 #include "DataFlash_File.h"
+#include "DataFlash_MAVLink.h"
 
 #endif
