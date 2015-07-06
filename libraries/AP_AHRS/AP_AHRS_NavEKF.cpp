@@ -491,5 +491,14 @@ void AP_AHRS_NavEKF::setTouchdownExpected(bool val)
     EKF.setTouchdownExpected(val);
 }
 
+// Set to true to allow the EKF to do hard position resets following recovery from loss of GPS.
+// Works as a toggle (last value set is held).
+// Must be set to false when the EKF positon is being used by the controller to avoid large jumps in EKF position following a reset
+// Can be set to true when the EKF position is not being used by the controller to enable faster recovery from bad GPS
+void AP_AHRS_NavEKF::setAllowHardPosResets(bool val)
+{
+    EKF.setAllowHardPosResets(val);
+}
+
 #endif // AP_AHRS_NAVEKF_AVAILABLE
 

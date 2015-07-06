@@ -258,6 +258,12 @@ public:
     // returns true of the EKF thinks the GPS is glitching
     bool getGpsGlitchStatus(void) const;
 
+    // Set to true to allow the EKF to do hard position resets following recovery from loss of GPS.
+    // Works as a toggle (last value set is held).
+    // Must be set to false when the EKF positon is being used by the controller to avoid large jumps in EKF position following a reset
+    // Can be set to true when the EKF position is not being used by the controller to enable faster recovery from bad GPS
+    void setAllowHardPosResets(bool val);
+
     static const struct AP_Param::GroupInfo var_info[];
 
 private:
@@ -676,6 +682,7 @@ private:
     float gpsDriftNE;               // amount of drift detected in the GPS position during pre-flight GPs checks
     float gpsVertVelFilt;           // amount of filterred vertical GPS velocity detected durng pre-flight GPS checks
     float gpsHorizVelFilt;          // amount of filtered horizontal GPS velocity detected during pre-flight GPS checks
+    bool allowHardPosReset;         // true if hard position resets following recovery from loss of GPS are allowed
 
     // Used by smoothing of state corrections
     Vector10 gpsIncrStateDelta;    // vector of corrections to attitude, velocity and position to be applied over the period between the current and next GPS measurement

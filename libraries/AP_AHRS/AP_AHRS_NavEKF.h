@@ -134,6 +134,12 @@ public:
     // true if offsets are valid
     bool getMagOffsets(Vector3f &magOffsets);
 
+    // Set to true to allow the EKF to do hard position resets following recovery from loss of GPS.
+    // Works as a toggle (last value set is held).
+    // Must be set to false when the EKF positon is being used by the controller to avoid large jumps in EKF position following a reset
+    // Can be set to true when the EKF position is not being used by the controller to enable faster recovery from bad GPS
+    void setAllowHardPosResets(bool val);
+
 private:
     bool using_EKF(void) const;
 

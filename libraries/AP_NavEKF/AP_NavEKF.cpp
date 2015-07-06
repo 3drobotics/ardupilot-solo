@@ -829,8 +829,11 @@ void NavEKF::SelectVelPosFusion()
             // If a long time since last GPS update, then reset position and velocity and reset stored state history
             if (imuSampleTime_ms - secondLastFixTime_ms > gpsRetryTimeout) {
                 // Apply an offset to the GPS position so that the position can be corrected gradually
-                gpsPosGlitchOffsetNE.x = statesAtPosTime.position.x - gpsPosNE.x;
-                gpsPosGlitchOffsetNE.y = statesAtPosTime.position.y - gpsPosNE.y;
+                // If hard position resets are allowed, then we don't adjust the GPS offset and move the filter position to the GPS instead
+                if (!allowHardPosReset) {
+                    gpsPosGlitchOffsetNE.x = statesAtPosTime.position.x - gpsPosNE.x;
+                    gpsPosGlitchOffsetNE.y = statesAtPosTime.position.y - gpsPosNE.y;
+                }
                 // limit the radius of the offset to 100m and decay the offset to zero radially
                 decayGpsOffset();
                 ResetPosition();
@@ -2021,8 +2024,11 @@ void NavEKF::FuseVelPosNED()
                     lastPosPassTime = imuSampleTime_ms;
                     // if timed out or outside the specified glitch radius, increment the offset applied to GPS data to compensate for large GPS position jumps
                     if (posTimeout || (maxPosInnov2 > sq(float(_gpsGlitchRadiusMax)))) {
-                        gpsPosGlitchOffsetNE.x += innovVelPos[3];
-                        gpsPosGlitchOffsetNE.y += innovVelPos[4];
+                        // If hard position resets are allowed, then we don't adjust the GPS offset and move the filter position to the GPS instead
+                        if (!allowHardPosReset) {
+                            gpsPosGlitchOffsetNE.x += innovVelPos[3];
+                            gpsPosGlitchOffsetNE.y += innovVelPos[4];
+                        }
                         // limit the radius of the offset and decay the offset to zero radially
                         decayGpsOffset();
                         // reset the position to the current GPS position which will include the glitch correction offset
@@ -4680,6 +4686,7 @@ void NavEKF::InitialiseVariables()
     gpsDriftNE = 0.0f;
     gpsVertVelFilt = 0.0f;
     gpsHorizVelFilt = 0.0f;
+    allowHardPosReset = false;
 }
 
 // return true if we should use the airspeed sensor
@@ -5362,5 +5369,15 @@ bool NavEKF::getGpsGlitchStatus(void) const
 {
     return !gpsAccuracyGood;
 }
+
+// Set to true to allow the EKF to do hard position resets following recovery from loss of GPS.
+// Works as a toggle (last value set is held).
+// Must be set to false when the EKF positon is being used by the controller to avoid large jumps in EKF position following a reset
+// Can be set to true when the EKF position is not being used by the controller to enable faster recovery from bad GPS
+void NavEKF::setAllowHardPosResets(bool val)
+{
+    allowHardPosReset = val;
+}
+
 
 #endif // HAL_CPU_CLASS
