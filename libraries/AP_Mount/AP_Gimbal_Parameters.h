@@ -23,7 +23,7 @@ class AP_Gimbal_Parameters
 {
 public:
     Vector3f     delta_angles_offsets;
-    Vector3f     delta_velocity_offsets;
+    Vector3f     accel_offsets;
     Vector3f     joint_angles_offsets;
     float        K_gimbalRate;
     
