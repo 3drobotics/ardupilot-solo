@@ -7,18 +7,25 @@
 #include <AP_HAL.h>
 #include <AP_Notify.h>
 #include <AP_Vehicle.h>
-
+#include <stdio.h>
 /*
   enable TIMING_DEBUG to track down scheduling issues with the main
   loop. Output is on the debug console
  */
 #define TIMING_DEBUG 0
-
+#define DEBUG 0
 #if TIMING_DEBUG
 #include <stdio.h>
 #define timing_printf(fmt, args...)      do { printf("[timing] " fmt, ##args); } while(0)
 #else
 #define timing_printf(fmt, args...)
+#endif
+
+#if DEBUG
+#include <stdio.h>
+#define Debug(fmt, args...)             printf(fmt, ##args);
+#else
+#define Debug(fmt, args...)
 #endif
 
 extern const AP_HAL::HAL& hal;
@@ -285,7 +292,9 @@ AP_InertialSensor::AP_InertialSensor() :
     _startup_error_counts_set(false),
     _startup_ms(0),
     _log_raw_data(false),
-    _dataflash(NULL)
+    _dataflash(NULL),
+    _acal_complete(false),
+    _interact(NULL)
 {
     AP_Param::setup_object_defaults(this, var_info);        
     for (uint8_t i=0; i<INS_MAX_BACKENDS; i++) {
@@ -1282,3 +1291,109 @@ void AP_InertialSensor::set_gyro(uint8_t instance, const Vector3f &gyro)
     }
 }
 
+void AP_InertialSensor::acal_start(AP_InertialSensor_UserInteract_MAVLink &interact)
+{
+    for(uint8_t i=0; i<get_accel_count(); i++){
+        _accel_cal[i].start();
+    }
+    _interact = interact;
+    _acal_orient_step = 0;
+    for (uint8_t k=0; k<get_accel_count(); k++) {
+        // clear accelerometer offsets and scaling
+        _accel_offset[k] = Vector3f(0,0,0);
+        _accel_scale[k] = Vector3f(1,1,1);
+        _save_parameters();
+    }
+    _interact.printf_P(
+            PSTR("Place vehicle level and press any key.\n"));
+}
+
+void AP_InertialSensor::acal_cancel()
+{
+    for(uint8_t i=0; i<get_accel_count(); i++){
+        _accel_cal[i].clear();
+    }
+}
+
+void AP_InertialSensor::acal_collect_sample()
+{
+    if(_acal_collecting_sample) {
+        return;
+    }
+   const prog_char_t *msg;
+
+    // display message to user
+    switch ( _acal_orient_step++ ) {
+        case 0:
+            msg = PSTR("on its LEFT side");
+            break;
+        case 1:
+            msg = PSTR("on its RIGHT side");
+            break;
+        case 2:
+            msg = PSTR("nose DOWN");
+            break;
+        case 3:
+            msg = PSTR("nose UP");
+            break;
+        default:    // default added to avoid compiler warning
+        case 4:
+            msg = PSTR("on its BACK");
+            break;
+    }
+    _interact.printf_P(PSTR("Place vehicle %S and press any key.\n"), msg);
+    for(uint8_t i=0; i<get_accel_count(); i++){
+        _accel_cal[i].collect_sample();
+    }
+}
+
+bool AP_InertialSensor::acal_is_calibrating()
+{
+    bool ret = false;
+
+    for(uint8_t i=0; i<get_accel_count(); i++){
+        if(_accel_cal[i].get_status() != ACCEL_CAL_NOT_STARTED) {
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+void AP_InertialSensor::acal_update()
+{
+    _acal_collecting_sample = false;
+
+    for(uint8_t i=0; i<get_accel_count(); i++){
+        if(_accel_cal[i].get_status() != ACCEL_CAL_WAITING_FOR_ORIENTATION) {
+            _acal_collecting_sample = true;
+            break;
+        }
+    }
+
+    bool done = true;
+    for(uint8_t i=0; i<get_accel_count(); i++){
+        if(_accel_cal[i].get_status() != ACCEL_CAL_SUCCESS) {
+            done = false;
+        }
+        if(_accel_cal[i].get_status() == ACCEL_CAL_FAILED) {
+            _interact.printf_P(PSTR("Calibration FAILED\n"));
+        }
+    }
+    
+    if(done) {
+        for(uint8_t i=0; i<get_accel_count(); i++){
+            Vector3f o, s;
+            float f;
+            _accel_cal[i].get_calibration(o, s);
+            Debug("Offsets: %0.5f %0.5f %0.5f Scale_factors: %0.5f %0.5f %0.5f Fitness: %0.6f\n", o.x,o.y,o.z,s.x,s.y,s.z,_accel_cal[i].get_fitness());
+            // set and save calibration
+            _accel_offset[i].set(Vector3f(o.x, o.y, o.z));
+            _accel_scale[i].set(Vector3f(s.x, s.y, s.z));
+            _accel_cal[i].clear();
+        }
+        _save_parameters();
+        _interact.printf_P(PSTR("Calibration successful\n"));
+        _acal_complete = true;
+    }
+
+}

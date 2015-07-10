@@ -63,6 +63,7 @@ void AP_InertialSensor_Backend::_publish_delta_velocity(uint8_t instance, const 
     _imu._delta_velocity[instance] = delta_velocity;
     _imu._delta_velocity_dt[instance] = dt;
     _imu._delta_velocity_valid[instance] = true;
+    _imu._accel_cal[instance].new_sample(delta_velocity, dt, _imu._board_orientation);
 }
 
 /*
