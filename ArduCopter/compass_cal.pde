@@ -31,3 +31,41 @@ static void compass_cal_update() {
         }
     }
 }
+
+static void accel_cal_update() {
+    ins.acal_update();
+    if (motors.armed()) {
+        return;
+    }
+
+    uint32_t tnow = millis();
+    static uint32_t start_gesture_begin = 0;
+    static uint32_t last_continue = 0;
+
+    bool start_gesture_detected = g.rc_1.control_in > 4000 && g.rc_2.control_in < -4000;
+    bool cancel_gesture_detected = g.rc_1.control_in < -4000 && g.rc_2.control_in < -4000;
+    bool continue_gesture_detected = g.rc_1.control_in > 4000 && g.rc_2.control_in > 4000;
+
+    if (!start_gesture_detected) {
+        start_gesture_begin = tnow;
+    }
+
+    if (ins.acal_is_calibrating()) {
+        if (cancel_gesture_detected) {
+            ins.acal_cancel();
+        }
+
+        if (continue_gesture_detected && tnow-last_continue > 2000) {
+            last_continue = tnow;
+            ins.acal_collect_sample();
+        }
+
+        camera_mount.set_mode(MAV_MOUNT_MODE_RETRACT);
+
+        return;
+    }
+
+    if(start_gesture_detected && tnow-start_gesture_begin > 2000) {
+        ins.acal_start();
+    }
+}
