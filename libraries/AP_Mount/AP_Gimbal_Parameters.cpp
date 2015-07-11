@@ -36,13 +36,13 @@ void AP_Gimbal_Parameters::handle_param_value(DataFlash_Class *dataflash, mavlin
     mavlink_msg_param_value_decode(msg, &packet);
     
     if (!strcmp(packet.param_id, "GMB_OFF_ACC_X")){
-        delta_velocity_offsets.x = packet.param_value;
+        accel_offsets.x = packet.param_value;
         _mask|= MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X;
     }else if (!strcmp(packet.param_id, "GMB_OFF_ACC_Y")){
-        delta_velocity_offsets.y = packet.param_value;
+        accel_offsets.y = packet.param_value;
         _mask|= MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y;
     }else if (!strcmp(packet.param_id, "GMB_OFF_ACC_Z")){
-        delta_velocity_offsets.z = packet.param_value;
+        accel_offsets.z = packet.param_value;
         _mask|= MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z;
     }else if (!strcmp(packet.param_id, "GMB_OFF_GYRO_X")){
         delta_angles_offsets.x = packet.param_value;
