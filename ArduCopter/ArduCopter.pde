@@ -227,7 +227,9 @@ static void gcs_send_text_fmt(const prog_char_t *fmt, ...);
 ////////////////////////////////////////////////////////////////////////////////
 // Dataflash
 ////////////////////////////////////////////////////////////////////////////////
-#if defined(HAL_BOARD_LOG_DIRECTORY)
+#if defined(HAL_BOARD_REMOTE_LOG_PORT)
+static DataFlash_MAVLink DataFlash(HAL_BOARD_REMOTE_LOG_PORT);
+#elif defined(HAL_BOARD_LOG_DIRECTORY)
 static DataFlash_File DataFlash(HAL_BOARD_LOG_DIRECTORY);
 #else
 static DataFlash_Empty DataFlash;

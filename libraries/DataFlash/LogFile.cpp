@@ -17,6 +17,7 @@ void DataFlash_Class::Init(const struct LogStructure *structure, uint8_t num_typ
     _num_types = num_types;
     _structures = structure;
     _writes_enabled = true;
+    is_critical_block = false;
 }
 
 // This function determines the number of whole or partial log files in the DataFlash
@@ -68,7 +69,7 @@ uint16_t DataFlash_Block::start_new_log(void)
         SetFileNumber(1);
         StartWrite(1);
         //Serial.println("start log from 0");
-        log_write_started = true;
+        _logging_started = true;
         return 1;
     }
 
@@ -89,7 +90,7 @@ uint16_t DataFlash_Block::start_new_log(void)
         SetFileNumber(new_log_num);
         StartWrite(last_page + 1);
     }
-    log_write_started = true;
+    _logging_started = true;
     return new_log_num;
 }
 
@@ -611,7 +612,9 @@ void DataFlash_Class::Log_Write_Format(const struct LogStructure *s)
 {
     struct log_Format pkt;
     Log_Fill_Format(s, pkt);
+    is_critical_block = true;
     WriteBlock(&pkt, sizeof(pkt));
+    is_critical_block = false;
 }
 
 /*
@@ -625,7 +628,9 @@ void DataFlash_Class::Log_Write_Parameter(const char *name, float value)
         value : value
     };
     strncpy(pkt.name, name, sizeof(pkt.name));
+    is_critical_block = true;
     WriteBlock(&pkt, sizeof(pkt));
+    is_critical_block = false;
 }
 
 /*
