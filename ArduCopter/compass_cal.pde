@@ -37,7 +37,13 @@ static void accel_cal_update() {
     if (motors.armed()) {
         return;
     }
+
     if (ins.acal_is_calibrating()) {
         camera_mount.set_mode(MAV_MOUNT_MODE_RETRACT);
+        return;
+    } else if(ins.acal_completed()) {
+        hal.scheduler->delay(1000);
+        hal.scheduler->reboot(false);
     }
+
 }
