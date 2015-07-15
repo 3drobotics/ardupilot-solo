@@ -28,6 +28,7 @@ public:
     void get_calibration(Vector3f& offset);
     void get_calibration(Vector3f& offset, Vector3f& diag);
     void get_calibration(Vector3f& offset, Vector3f& diag, Vector3f& offdiag);
+    void get_sample(uint8_t i, Vector3f& s) const { s = _sample_buffer[i].delta_velocity / _sample_buffer[i].delta_time; }
     void set_tolerance(float tolerance) { _conf_tolerance = tolerance; }
     enum accel_cal_status_t get_status() { return _status; }
 
@@ -62,7 +63,6 @@ private:
     bool accept_sample(const Vector3f& sample);
     void reset_state();
     void set_status(enum accel_cal_status_t);
-    void get_sample(uint8_t i, Vector3f& s) const { s = _sample_buffer[i].delta_velocity / _sample_buffer[i].delta_time; }
     uint8_t get_num_params();
 
     float calc_residual(const Vector3f& sample, const struct param_t& params) const;
