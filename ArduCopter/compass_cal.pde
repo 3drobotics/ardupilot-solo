@@ -33,15 +33,24 @@ static void compass_cal_update() {
 }
 
 static void accel_cal_update() {
-    ins.acal_update();
+    float trim_roll, trim_pitch;
+    static bool _trim_saved;
+    ins.acal_update(trim_roll, trim_pitch);
     if (motors.armed()) {
         return;
     }
 
     if (ins.acal_is_calibrating()) {
         camera_mount.set_mode(MAV_MOUNT_MODE_RETRACT);
+        _trim_saved = false;
         return;
-    } else if(ins.acal_completed()) {
+    } else if(ins.acal_completed() && !_trim_saved) {
+
+        hal.console->printf("Trim OK: roll=%.5f pitch=%.5f\n",
+                              degrees(trim_roll),
+                              degrees(trim_pitch));
+        ahrs.set_trim(Vector3f(trim_roll, trim_pitch, 0));
+        _trim_saved = true;
         hal.scheduler->delay(1000);
         hal.scheduler->reboot(false);
     }

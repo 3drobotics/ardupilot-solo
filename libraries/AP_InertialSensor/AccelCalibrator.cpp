@@ -177,11 +177,6 @@ void AccelCalibrator::set_status(enum accel_cal_status_t status) {
             }
 
             _samples_collected = 0;
-            if (_sample_buffer != NULL) {
-                free(_sample_buffer);
-                _sample_buffer = NULL;
-            }
-
             _status = ACCEL_CAL_SUCCESS;
             break;
 

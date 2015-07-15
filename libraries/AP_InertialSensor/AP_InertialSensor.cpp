@@ -463,6 +463,51 @@ bool AP_InertialSensor::_calculate_trim(const Vector3f &accel_sample, float& tri
     return true;
 }
 
+//trim calculation:
+//angle subtended between two vectors in quaternion terms:
+//q.w   = dot(u, v) + sqrt(length_2(u) * length_2(v))
+//q.xyz = cross(u, v)
+bool AP_InertialSensor::_calculate_trim(float& trim_roll, float& trim_pitch)
+{
+    wait_for_sample();
+    update();
+    Vector3f body_fixed;
+    Vector3f float_imu;
+
+    Vector3f off;
+    Vector3f sf;
+    
+    _accel_cal[0].get_sample(0,float_imu);
+    _accel_cal[BODY_FIXED_IMU].get_sample(0,body_fixed);
+    //apply scale factors and offsets
+    off = _accel_offset[BODY_FIXED_IMU].get();
+    sf = _accel_scale[BODY_FIXED_IMU].get();
+    body_fixed += off;
+    body_fixed = Vector3f(body_fixed.x*sf.x,body_fixed.y*sf.y,body_fixed.z*sf.z);
+
+    off = _accel_offset[0].get();
+    sf = _accel_scale[0].get();
+    float_imu += off;
+    float_imu = Vector3f(float_imu.x*sf.x,float_imu.y*sf.y,float_imu.z*sf.z);
+
+    Debug("V1 = %.5f %.5f %.5f\n V2 = %.5f %.5f %.5f\n", float_imu.x,float_imu.y,float_imu.z,
+                                    body_fixed.x, body_fixed.y,body_fixed.z);
+    
+    Vector3f cross = (float_imu%body_fixed);        //F x B
+    float dot = (body_fixed*float_imu);             //F.B
+    //q.w   = F.B + sqrt(|F|^2 * |B|^2)
+    //q.xyz = F x B
+    Quaternion q(sqrt(sq(float_imu.length())*sq(body_fixed.length()))+dot, cross.x, cross.y, cross.z);
+    q.normalize();
+    trim_roll = q.get_euler_roll();
+    trim_pitch = q.get_euler_pitch();
+
+    Debug("Trim OK: roll=%.5f pitch=%.5f\n",
+                          degrees(trim_roll),
+                          degrees(trim_pitch));
+    return true;
+}
+
 #if !defined( __AVR_ATmega1280__ )
 // calibrate_accel - perform accelerometer calibration including providing user
 // instructions and feedback Gauss-Newton accel calibration routines borrowed
@@ -1359,7 +1404,7 @@ bool AP_InertialSensor::acal_is_calibrating()
     return ret;
 }
 
-void AP_InertialSensor::acal_update()
+void AP_InertialSensor::acal_update(float &trim_roll, float &trim_pitch)
 {
     _acal_collecting_sample = false;
 
@@ -1381,6 +1426,10 @@ void AP_InertialSensor::acal_update()
     }
     
     if(done) {
+        if(!_calculate_trim(trim_roll, trim_pitch)) {
+            _interact.printf_P(PSTR("Calibration FAILED\n"));
+            return;
+        }
         for(uint8_t i=0; i<get_accel_count(); i++){
             Vector3f o, s;
             float f;

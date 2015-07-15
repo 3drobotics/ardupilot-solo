@@ -19,6 +19,7 @@
 #define INS_MAX_BACKENDS  1
 #endif
 
+#define BODY_FIXED_IMU 2
 
 #include <stdint.h>
 #include <AP_HAL.h>
@@ -230,7 +231,7 @@ public:
 
     bool acal_is_calibrating();
 
-    void acal_update();
+    void acal_update(float& trim_roll, float& trim_pitch);
     bool acal_completed() {return _acal_complete;}
     bool _acal_collecting_sample;
 
@@ -257,6 +258,7 @@ private:
     void _calibrate_reset_matrices(float dS[6], float JS[6][6]);
     void _calibrate_find_delta(float dS[6], float JS[6][6], float delta[6]);
     bool _calculate_trim(const Vector3f &accel_sample, float& trim_roll, float& trim_pitch);
+    bool _calculate_trim(float& trim_roll, float& trim_pitch);
 #endif
 
     // check if we have 3D accel calibration
