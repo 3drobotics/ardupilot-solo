@@ -1214,9 +1214,14 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 float trim_roll, trim_pitch;
                 // this blocks
                 AP_InertialSensor_UserInteract_MAVLink interact(this);
+                //Set gimbal to low torque body fixed mode
                 camera_mount.set_mode(MAV_MOUNT_MODE_RETRACT);
-                ins.acal_start(interact);
                 
+                //Start accel calibration for onboard and on gimbal IMUs
+                camera_mount.acal_start();
+                ins.acal_start();
+                //Send first string to acknowledge and instruct user to start calibration procedure
+                interact.printf_P(PSTR("Place vehicle level and press any key.\n"));
             } else if (packet.param6 == 1) {
                 // compassmot calibration
                 result = mavlink_compassmot(chan);
@@ -1445,8 +1450,9 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_COMMAND_ACK:        // MAV ID: 77
     {
-        if (ins.acal_is_calibrating()) {
-            ins.acal_collect_sample();
+        if (ins.acal_is_calibrating() || camera_mount.acal_is_calibrating()) {
+            //if we are calibrating we got ack for accel calibration so react accordingly
+            acal_collect_sample(this);  //start collecting samples
         }
         command_ack_counter++;
         break;
