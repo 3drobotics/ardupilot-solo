@@ -294,7 +294,7 @@ AP_InertialSensor::AP_InertialSensor() :
     _log_raw_data(false),
     _dataflash(NULL),
     _acal_complete(false),
-    _interact(NULL)
+    _acal_failed(false)
 {
     AP_Param::setup_object_defaults(this, var_info);        
     for (uint8_t i=0; i<INS_MAX_BACKENDS; i++) {
@@ -1336,57 +1336,33 @@ void AP_InertialSensor::set_gyro(uint8_t instance, const Vector3f &gyro)
     }
 }
 
-void AP_InertialSensor::acal_start(AP_InertialSensor_UserInteract_MAVLink &interact)
+
+void AP_InertialSensor::acal_start()
 {
     for(uint8_t i=0; i<get_accel_count(); i++){
         _accel_cal[i].start();
     }
-    _interact = interact;
-    _acal_orient_step = 0;
     for (uint8_t k=0; k<get_accel_count(); k++) {
         // clear accelerometer offsets and scaling
+        _accel_offset_bak[k] = _accel_offset[k];
+        _accel_scale_bak[k] = _accel_scale[k];
         _accel_offset[k] = Vector3f(0,0,0);
         _accel_scale[k] = Vector3f(1,1,1);
         _save_parameters();
     }
-    _interact.printf_P(
-            PSTR("Place vehicle level and press any key.\n"));
 }
 
-void AP_InertialSensor::acal_cancel()
+void AP_InertialSensor::acal_stop()
 {
     for(uint8_t i=0; i<get_accel_count(); i++){
         _accel_cal[i].clear();
     }
+    _acal_complete = false;
+    _acal_failed = false;
 }
 
 void AP_InertialSensor::acal_collect_sample()
 {
-    if(_acal_collecting_sample) {
-        return;
-    }
-   const prog_char_t *msg;
-
-    // display message to user
-    switch ( _acal_orient_step++ ) {
-        case 0:
-            msg = PSTR("on its LEFT side");
-            break;
-        case 1:
-            msg = PSTR("on its RIGHT side");
-            break;
-        case 2:
-            msg = PSTR("nose DOWN");
-            break;
-        case 3:
-            msg = PSTR("nose UP");
-            break;
-        default:    // default added to avoid compiler warning
-        case 4:
-            msg = PSTR("on its BACK");
-            break;
-    }
-    _interact.printf_P(PSTR("Place vehicle %S and press any key.\n"), msg);
     for(uint8_t i=0; i<get_accel_count(); i++){
         _accel_cal[i].collect_sample();
     }
@@ -1402,6 +1378,21 @@ bool AP_InertialSensor::acal_is_calibrating()
         }
     }
     return ret;
+}
+
+bool AP_InertialSensor::acal_collecting_sample() {
+    return _acal_collecting_sample;
+}
+
+//restore previous calibration, to be called in case of calibration faillure
+void AP_InertialSensor::_acal_reset()
+{
+    for(uint8_t i=0; i<get_accel_count(); i++) {
+        _accel_offset[i].set(_accel_offset_bak[i]);
+        _accel_scale[i].set(_accel_scale_bak[i]);
+        _accel_cal[i].clear();
+    }
+    _save_parameters();
 }
 
 void AP_InertialSensor::acal_update(float &trim_roll, float &trim_pitch)
@@ -1421,13 +1412,17 @@ void AP_InertialSensor::acal_update(float &trim_roll, float &trim_pitch)
             done = false;
         }
         if(_accel_cal[i].get_status() == ACCEL_CAL_FAILED) {
-            _interact.printf_P(PSTR("Calibration FAILED\n"));
+            _acal_reset();
+            _acal_failed = true;
+            return;
         }
     }
     
     if(done) {
-        if(!_calculate_trim(trim_roll, trim_pitch)) {
-            _interact.printf_P(PSTR("Calibration FAILED\n"));
+        //Callibration Completed!!
+        if(!_calculate_trim(trim_roll, trim_pitch)) { //calculate and set trim
+            _acal_reset();
+            _acal_failed = true;
             return;
         }
         for(uint8_t i=0; i<get_accel_count(); i++){
@@ -1441,7 +1436,6 @@ void AP_InertialSensor::acal_update(float &trim_roll, float &trim_pitch)
             _accel_cal[i].clear();
         }
         _save_parameters();
-        _interact.printf_P(PSTR("Calibration successful\n"));
         _acal_complete = true;
     }
 

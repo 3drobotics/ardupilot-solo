@@ -223,28 +223,38 @@ public:
     // enable/disable raw gyro/accel logging
     void set_raw_logging(bool enable) { _log_raw_data = enable; }
 
-    void acal_start(AP_InertialSensor_UserInteract_MAVLink &interact);
+    //Accel Calibration routines
+    void acal_start();
 
-    void acal_cancel();
+    void acal_stop();
 
     void acal_collect_sample();
 
     bool acal_is_calibrating();
 
     void acal_update(float& trim_roll, float& trim_pitch);
-    bool acal_completed() {return _acal_complete;}
-    bool _acal_collecting_sample;
+
+    bool acal_completed() {return _acal_complete; }
+
+    bool acal_failed() { return _acal_failed; }
+
+    bool acal_collecting_sample();
 
 private:
 
     // load backend drivers
     void _add_backend(AP_InertialSensor_Backend *(detect)(AP_InertialSensor &));
     void _detect_backends(void);
+
+    //Accel Calibration private members
+    void _acal_reset();
+    Vector3f _accel_offset_bak[INS_MAX_INSTANCES], _accel_scale_bak[INS_MAX_INSTANCES];
     bool _acal_complete;
-    uint8_t _acal_orient_step;
+    bool _acal_failed;
+    bool _acal_collecting_sample;
+
     // gyro initialisation
     void _init_gyro();
-    AP_InertialSensor_UserInteract_MAVLink _interact;
 #if !defined( __AVR_ATmega1280__ )
     // Calibration routines borrowed from Rolfe Schmidt
     // blog post describing the method: http://chionophilous.wordpress.com/2011/10/24/accelerometer-calibration-iv-1-implementing-gauss-newton-on-an-atmega/

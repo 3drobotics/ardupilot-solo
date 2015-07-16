@@ -1,3 +1,5 @@
+#ifndef __ACCELCALIBRATOR_H__
+#define __ACCELCALIBRATOR_H__
 #include <AP_Math.h>
 
 #define ACCEL_CAL_MAX_NUM_PARAMS 9
@@ -71,3 +73,4 @@ private:
     void calc_jacob(const Vector3f& sample, const struct param_t& params, float* ret) const;
     void run_fit(uint8_t max_iterations, float& fitness);
 };
+#endif //__ACCELCALIBRATOR_H__
