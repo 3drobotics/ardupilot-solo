@@ -74,6 +74,9 @@ public:
 
     virtual void update_fast() {}
 
+    // check if gimbal is conneceted
+    virtual bool gimbal_onboard_cal() { return false; }
+    
 protected:
 
     // update_targets_from_rc - updates angle targets (i.e. _angle_ef_target_rad) using input from receiver

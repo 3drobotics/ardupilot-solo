@@ -50,9 +50,12 @@ public:
 
     virtual void update_fast();
 
+    // check if gimbal is connected
+    virtual bool gimbal_onboard_cal() { return _cal_gimbal_onboard; }
 private:
     // internal variables
     bool _initialised;              // true once the driver has been initialised
+    bool _cal_gimbal_onboard;
 
     // Write a gimbal measurament and estimation data packet
     void Log_Write_Gimbal(AP_Gimbal &gimbal);

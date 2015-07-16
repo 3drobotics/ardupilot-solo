@@ -16,7 +16,8 @@ extern const AP_HAL::HAL& hal;
 AP_Mount_MAVLink::AP_Mount_MAVLink(AP_Mount &frontend, AP_Mount::mount_state &state, uint8_t instance) :
     AP_Mount_Backend(frontend, state, instance),
     _initialised(false),
-    _gimbal(frontend._ahrs,frontend._externalParameters)
+    _gimbal(frontend._ahrs,frontend._externalParameters),
+    _cal_gimbal_onboard(false)
 {}
 
 // init - performs any required initialisation for this instance
@@ -79,7 +80,8 @@ void AP_Mount_MAVLink::update()
     if (!_initialised) {
         return;
     }
-
+    //Gimbal is present enable onboard gimbal cal
+    _cal_gimbal_onboard = _gimbal.present();
     // update based on mount mode
     switch(get_mode()) {
         // move mount to a "retracted" position.  we do not implement a separate servo based retract mechanism
@@ -160,6 +162,13 @@ void AP_Mount_MAVLink::handle_gimbal_report(mavlink_channel_t chan, mavlink_mess
 {
     _gimbal.update_target(_angle_ef_target_rad);
     _gimbal.receive_feedback(chan,msg);
+    if(_frontend.acal_is_calibrating()) {
+        Vector3f sample(_gimbal._measurement.delta_velocity.x,
+                        _gimbal._measurement.delta_velocity.y,
+                        _gimbal._measurement.delta_velocity.z);    
+        _frontend._accel_cal[0].new_sample(sample, _gimbal._measurement.delta_time, ROTATION_NONE);         //currently only one instance
+    }
+
     Log_Write_Gimbal(_gimbal);
     if(!_params_saved) {
         _frontend._externalParameters.fetch_params();       //last parameter save might not be stored in dataflash so retry

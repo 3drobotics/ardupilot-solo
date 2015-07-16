@@ -10,6 +10,15 @@
 #include <AP_Mount_Alexmos.h>
 #include <AP_Mount_SToRM32.h>
 
+#define DEBUG 0
+
+#if DEBUG
+#include <stdio.h>
+#define Debug(fmt, args...)             printf(fmt, ##args);
+#else
+#define Debug(fmt, args...)
+#endif
+
 const AP_Param::GroupInfo AP_Mount::var_info[] PROGMEM = {
     // @Param: _DEFLT_MODE
     // @DisplayName: Mount default operating mode
@@ -390,7 +399,9 @@ AP_Mount::AP_Mount(const AP_AHRS_TYPE &ahrs, const struct Location &current_loc)
     _ahrs(ahrs),
     _current_loc(current_loc),
     _num_instances(0),
-    _primary(0)
+    _primary(0),
+    _acal_failed(false),
+    _acal_complete(false)
 {
 	AP_Param::setup_object_defaults(this, var_info);
 
@@ -606,4 +617,103 @@ void AP_Mount::send_gimbal_report(mavlink_channel_t chan)
             _backends[instance]->send_gimbal_report(chan);
         }
     }    
+}
+
+bool AP_Mount::gimbal_onboard_cal(){ 
+     return _backends[0]->gimbal_onboard_cal();
+}
+
+void AP_Mount::acal_start()
+{
+    if(!gimbal_onboard_cal()) {
+        return;
+    }
+    for(uint8_t i=0; i<AP_MOUNT_MAX_INSTANCES; i++){
+        _accel_cal[i].start();
+    }
+}
+
+void AP_Mount::acal_stop()
+{
+    if(!gimbal_onboard_cal()) {
+        return;
+    }
+    for(uint8_t i=0; i<AP_MOUNT_MAX_INSTANCES; i++){
+        _accel_cal[i].clear();
+    }
+    _acal_complete = false;
+    _acal_failed = false;
+}
+
+void AP_Mount::acal_collect_sample()
+{
+    if(!gimbal_onboard_cal()) {
+        return;
+    }
+    for(uint8_t i=0; i<AP_MOUNT_MAX_INSTANCES; i++){
+        _accel_cal[i].collect_sample();
+    }
+}
+
+bool AP_Mount::acal_is_calibrating()
+{
+    if(!gimbal_onboard_cal()) {
+        return false;
+    }
+    bool ret = false;
+
+    for(uint8_t i=0; i<AP_MOUNT_MAX_INSTANCES; i++){
+        if(_accel_cal[i].get_status() != ACCEL_CAL_NOT_STARTED) {
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+bool AP_Mount::acal_collecting_sample() {
+    return _acal_collecting_sample;
+}
+
+//returns -1 if state is different or cal is running
+void AP_Mount::acal_update()
+{
+    if(!gimbal_onboard_cal()) {
+        _acal_failed = false;
+        _acal_complete = true;
+        _acal_collecting_sample = false;
+        return;
+    }
+    _acal_collecting_sample = false;
+
+    for(uint8_t i=0; i<AP_MOUNT_MAX_INSTANCES; i++){
+        if(_accel_cal[i].get_status() != ACCEL_CAL_WAITING_FOR_ORIENTATION) {
+            _acal_collecting_sample = true;
+            break;
+        }
+    }
+
+    bool done = true;
+    for(uint8_t i=0; i<AP_MOUNT_MAX_INSTANCES; i++){
+        if(_accel_cal[i].get_status() != ACCEL_CAL_SUCCESS) {
+            done = false;
+            return;
+        }
+        if(_accel_cal[i].get_status() == ACCEL_CAL_FAILED) {
+            _acal_failed = true;
+            return;
+        }
+    }
+    
+    if(done) {
+        for(uint8_t i=0; i<AP_MOUNT_MAX_INSTANCES; i++){
+            Vector3f o, s;
+            float f;
+            _accel_cal[i].get_calibration(o, s);
+            Debug("Camera Accel Offsets: %0.5f %0.5f %0.5f Scale_factors: %0.5f %0.5f %0.5f Fitness: %0.6f\n", o.x,o.y,o.z,s.x,s.y,s.z,_accel_cal[i].get_fitness());
+            // set and save calibration
+
+            _accel_cal[i].clear();
+        }
+        _acal_complete = true;
+    }
 }
