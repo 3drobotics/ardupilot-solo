@@ -8,6 +8,7 @@ static void compass_cal_update() {
 
     static bool cal_has_run = false;
     if (compass.is_calibrating()) {
+        camera_mount.set_mode(MAV_MOUNT_MODE_RETRACT);
         cal_has_run = true;
         if(!motors.armed() && g.rc_4.control_in < -4000 && g.rc_3.control_in > 900) {
             compass.cancel_calibration_all();
@@ -29,4 +30,29 @@ static void compass_cal_update() {
             compass.start_calibration_all(true,true,COMPASS_CAL_DELAY);
         }
     }
+}
+
+static void accel_cal_update() {
+    float trim_roll, trim_pitch;
+    static bool _trim_saved;
+    ins.acal_update(trim_roll, trim_pitch);
+    if (motors.armed()) {
+        return;
+    }
+
+    if (ins.acal_is_calibrating()) {
+        camera_mount.set_mode(MAV_MOUNT_MODE_RETRACT);
+        _trim_saved = false;
+        return;
+    } else if(ins.acal_completed() && !_trim_saved) {
+
+        hal.console->printf("Trim OK: roll=%.5f pitch=%.5f\n",
+                              degrees(trim_roll),
+                              degrees(trim_pitch));
+        ahrs.set_trim(Vector3f(trim_roll, trim_pitch, 0));
+        _trim_saved = true;
+        hal.scheduler->delay(1000);
+        hal.scheduler->reboot(false);
+    }
+
 }

@@ -32,6 +32,7 @@ public:
         _gimbalParams(parameters),
         vehicleYawRateFilt(0.0f),
         yawRateFiltPole(10.0f),
+        lockedToBody(false),
         yawErrorLimit(0.1f)
     {
     }
@@ -55,6 +56,8 @@ public:
     Vector3f    gimbalRateDemVec;       // degrees/s
     Vector3f    _angle_ef_target_rad;   // desired earth-frame roll, tilt and pan angles in radians
 
+    bool lockedToBody;
+
 private:
     
 
@@ -76,6 +79,7 @@ private:
     void send_control(mavlink_channel_t chan);
     void update_state();
     void decode_feedback(mavlink_message_t *msg);
+    void update_joint_angle_est();
 
     bool isCopterFlipped();
 
@@ -84,7 +88,18 @@ private:
     Vector3f getGimbalRateDemVecTilt(const Quaternion &quatEst);
     Vector3f getGimbalRateDemVecForward(const Quaternion &quatEst);
     Vector3f getGimbalRateDemVecGyroBias();
+    Vector3f getGimbalRateBodyLock();
 
+    void gimbal_ang_vel_to_joint_rates(const Vector3f& ang_vel, Vector3f& joint_rates);
+    void joint_rates_to_gimbal_ang_vel(const Vector3f& joint_rates, Vector3f& ang_vel);
+
+    // joint angle filter states
+    Vector3f vehicle_delta_angles = Vector3f(0,0,0);
+
+    Quaternion vehicle_to_gimbal_quat = Quaternion();
+    Quaternion vehicle_to_gimbal_quat_filt = Quaternion();
+    Vector3f filtered_joint_angles = Vector3f(0,0,0);
+    Vector3f last_vehicle_gyro = Vector3f(0,0,0);
 };
 
 #endif // AP_AHRS_NAVEKF_AVAILABLE
