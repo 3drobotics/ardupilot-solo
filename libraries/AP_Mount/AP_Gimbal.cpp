@@ -143,7 +143,7 @@ void AP_Gimbal::update_joint_angle_est()
     float alpha = constrain_float(dt/(dt+tc),0.0f,1.0f);
 
     Matrix3f Tvg; // vehicle frame to gimbal frame
-    vehicle_to_gimbal_quat.inverse().rotation_matrix(Tvg);
+    get_Tvg(Tvg);
 
     Vector3f delta_angle_bias;
     _ekf.getGyroBias(delta_angle_bias);
@@ -193,7 +193,7 @@ Vector3f AP_Gimbal::getGimbalRateDemVecYaw(const Quaternion &quatEst)
 {
         // Define rotation from vehicle to gimbal using a 312 rotation sequence
         Matrix3f Tvg;
-        vehicle_to_gimbal_quat_filt.inverse().rotation_matrix(Tvg);
+        get_Tvg(Tvg);
 
         // multiply the yaw joint angle by a gain to calculate a demanded vehicle frame relative rate vector required to keep the yaw joint centred
         Vector3f gimbalRateDemVecYaw;
@@ -270,7 +270,7 @@ Vector3f AP_Gimbal::getGimbalRateBodyLock()
 {
         // Define rotation from vehicle to gimbal using a 312 rotation sequence
         Matrix3f Tvg;
-        vehicle_to_gimbal_quat_filt.inverse().rotation_matrix(Tvg);
+        get_Tvg(Tvg);
 
         // multiply the joint angles by a gain to calculate a rate vector required to keep the joints centred
         Vector3f gimbalRateDemVecYaw;
@@ -282,6 +282,16 @@ Vector3f AP_Gimbal::getGimbalRateBodyLock()
         gimbalRateDemVecYaw += Tvg * _ahrs.get_gyro();
 
         return gimbalRateDemVecYaw;
+}
+
+void AP_Gimbal::get_Tvg(Matrix3f &Tvg)
+{
+    vehicle_to_gimbal_quat.inverse().rotation_matrix(Tvg);
+}
+
+void AP_Gimbal::get_Tgv(Matrix3f &Tgv)
+{
+    vehicle_to_gimbal_quat.rotation_matrix(Tgv);
 }
 
 void AP_Gimbal::send_control(mavlink_channel_t chan)
