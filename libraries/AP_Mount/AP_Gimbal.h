@@ -87,6 +87,9 @@ private:
     void extract_feedback(const mavlink_gimbal_report_t& report_msg);
     void update_joint_angle_est();
 
+    void get_Tvg(Matrix3f& Tvg);
+    void get_Tgv(Matrix3f& Tgv);
+
     bool isCopterFlipped();
     bool joints_near_limits();
 
