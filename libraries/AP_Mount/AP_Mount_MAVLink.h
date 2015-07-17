@@ -52,10 +52,15 @@ public:
 
     // check if gimbal is connected
     virtual bool gimbal_onboard_cal() { return _cal_gimbal_onboard; }
+    
+    //set accel params
+    virtual void set_accel_params(Vector3f offset, Vector3f scale);
 private:
     // internal variables
     bool _initialised;              // true once the driver has been initialised
     bool _cal_gimbal_onboard;
+
+    mavlink_channel_t _chan;
 
     // Write a gimbal measurament and estimation data packet
     void Log_Write_Gimbal(AP_Gimbal &gimbal);

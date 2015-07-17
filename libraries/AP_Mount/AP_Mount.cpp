@@ -710,6 +710,8 @@ void AP_Mount::acal_update()
             float f;
             _accel_cal[i].get_calibration(o, s);
             Debug("Camera Accel Offsets: %0.5f %0.5f %0.5f Scale_factors: %0.5f %0.5f %0.5f Fitness: %0.6f\n", o.x,o.y,o.z,s.x,s.y,s.z,_accel_cal[i].get_fitness());
+            _backends[i]->set_accel_params(o, s);
+
             // set and save calibration
 
             _accel_cal[i].clear();

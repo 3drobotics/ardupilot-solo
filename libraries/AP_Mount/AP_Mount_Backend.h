@@ -76,6 +76,9 @@ public:
 
     // check if gimbal is conneceted
     virtual bool gimbal_onboard_cal() { return false; }
+
+    //set accel params
+    virtual void set_accel_params(Vector3f offset, Vector3f scale) {}
     
 protected:
 

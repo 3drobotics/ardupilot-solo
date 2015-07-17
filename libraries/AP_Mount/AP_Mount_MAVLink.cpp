@@ -160,12 +160,17 @@ void AP_Mount_MAVLink::status_msg(mavlink_channel_t chan)
  */
 void AP_Mount_MAVLink::handle_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg)
 {
+    _chan = chan;
     _gimbal.update_target(_angle_ef_target_rad);
     _gimbal.receive_feedback(chan,msg);
+
     if(_frontend.acal_is_calibrating()) {
-        Vector3f sample(_gimbal._measurement.delta_velocity.x,
-                        _gimbal._measurement.delta_velocity.y,
-                        _gimbal._measurement.delta_velocity.z);    
+        mavlink_gimbal_report_t report_msg;
+        mavlink_msg_gimbal_report_decode(msg, &report_msg);
+
+        Vector3f sample(report_msg.delta_velocity_x,
+                        report_msg.delta_velocity_y,
+                        report_msg.delta_velocity_z);
         _frontend._accel_cal[0].new_sample(sample, _gimbal._measurement.delta_time, ROTATION_NONE);         //currently only one instance
     }
 
@@ -195,6 +200,18 @@ void AP_Mount_MAVLink::handle_gimbal_torque_report(mavlink_channel_t chan, mavli
     _frontend._dataflash->WriteBlock(&pkt, sizeof(pkt));
 }
 
+/*
+set accel calibration parameters
+*/
+void AP_Mount_MAVLink::set_accel_params(Vector3f offset, Vector3f scale)
+{
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_OFF_ACC_X,offset.x);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_OFF_ACC_Y,offset.y);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_OFF_ACC_Z,offset.z);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_GN_ACC_X,scale.x);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_GN_ACC_Y,scale.y);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_GN_ACC_Z,scale.z);
+}
 /*
   send a GIMBAL_REPORT message to the GCS
  */
