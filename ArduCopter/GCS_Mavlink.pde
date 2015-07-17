@@ -1211,8 +1211,6 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 result = MAV_RESULT_UNSUPPORTED;
             } else if (packet.param5 == 1) {
                 // 3d accel calibration
-                float trim_roll, trim_pitch;
-                // this blocks
                 AP_InertialSensor_UserInteract_MAVLink interact(this);
                 //Set gimbal to low torque body fixed mode
                 camera_mount.set_mode(MAV_MOUNT_MODE_RETRACT);

@@ -81,7 +81,6 @@ static void accel_cal_update() {
 
 static void acal_collect_sample( GCS_MAVLINK* interact_gcs) {
     const prog_char_t *msg;
-    bool ret;
 
     interact = AP_InertialSensor_UserInteract_MAVLink(interact_gcs);
 
