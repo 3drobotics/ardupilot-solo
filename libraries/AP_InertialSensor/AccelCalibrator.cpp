@@ -98,16 +98,16 @@ void AccelCalibrator::new_sample(Vector3f delta_velocity, float dt, enum Rotatio
 
 
 void AccelCalibrator::get_calibration(Vector3f& offset) {
-    offset = _params.offset;
+    offset = -_params.offset;
 }
 
 void AccelCalibrator::get_calibration(Vector3f& offset, Vector3f& diag) {
-    offset = _params.offset;
+    offset = -_params.offset;
     diag = _params.diag;
 }
 
 void AccelCalibrator::get_calibration(Vector3f& offset, Vector3f& diag, Vector3f& offdiag) {
-    offset = _params.offset;
+    offset = -_params.offset;
     diag = _params.diag;
     offdiag = _params.offdiag;
 }
