@@ -1427,7 +1427,6 @@ void AP_InertialSensor::acal_update(float &trim_roll, float &trim_pitch)
         }
         for(uint8_t i=0; i<get_accel_count(); i++){
             Vector3f o, s;
-            float f;
             _accel_cal[i].get_calibration(o, s);
             Debug("Offsets: %0.5f %0.5f %0.5f Scale_factors: %0.5f %0.5f %0.5f Fitness: %0.6f\n", o.x,o.y,o.z,s.x,s.y,s.z,_accel_cal[i].get_fitness());
             // set and save calibration
