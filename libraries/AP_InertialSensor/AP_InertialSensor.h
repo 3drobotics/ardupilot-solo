@@ -19,11 +19,14 @@
 #define INS_MAX_BACKENDS  1
 #endif
 
+#define BODY_FIXED_IMU 2
 
 #include <stdint.h>
 #include <AP_HAL.h>
 #include <AP_Math.h>
 #include "AP_InertialSensor_UserInteract.h"
+#include "AP_InertialSensor_UserInteract_MAVLink.h"
+#include "AccelCalibrator.h"
 
 class AP_InertialSensor_Backend;
 
@@ -220,15 +223,38 @@ public:
     // enable/disable raw gyro/accel logging
     void set_raw_logging(bool enable) { _log_raw_data = enable; }
 
+    //Accel Calibration routines
+    void acal_start();
+
+    void acal_stop();
+
+    void acal_collect_sample();
+
+    bool acal_is_calibrating();
+
+    void acal_update(float& trim_roll, float& trim_pitch);
+
+    bool acal_completed() {return _acal_complete; }
+
+    bool acal_failed() { return _acal_failed; }
+
+    bool acal_collecting_sample();
+
 private:
 
     // load backend drivers
     void _add_backend(AP_InertialSensor_Backend *(detect)(AP_InertialSensor &));
     void _detect_backends(void);
 
+    //Accel Calibration private members
+    void _acal_reset();
+    Vector3f _accel_offset_bak[INS_MAX_INSTANCES], _accel_scale_bak[INS_MAX_INSTANCES];
+    bool _acal_complete;
+    bool _acal_failed;
+    bool _acal_collecting_sample;
+
     // gyro initialisation
     void _init_gyro();
-
 #if !defined( __AVR_ATmega1280__ )
     // Calibration routines borrowed from Rolfe Schmidt
     // blog post describing the method: http://chionophilous.wordpress.com/2011/10/24/accelerometer-calibration-iv-1-implementing-gauss-newton-on-an-atmega/
@@ -242,6 +268,7 @@ private:
     void _calibrate_reset_matrices(float dS[6], float JS[6][6]);
     void _calibrate_find_delta(float dS[6], float JS[6][6], float delta[6]);
     bool _calculate_trim(const Vector3f &accel_sample, float& trim_roll, float& trim_pitch);
+    bool _calculate_trim(float& trim_roll, float& trim_pitch);
 #endif
 
     // check if we have 3D accel calibration
@@ -337,6 +364,8 @@ private:
     uint32_t _gyro_startup_error_count[INS_MAX_INSTANCES];
     bool _startup_error_counts_set;
     uint32_t _startup_ms;
+
+    AccelCalibrator _accel_cal[INS_MAX_INSTANCES];
 
     DataFlash_Class *_dataflash;
 };

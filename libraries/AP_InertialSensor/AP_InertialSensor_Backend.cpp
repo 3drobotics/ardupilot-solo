@@ -19,12 +19,13 @@ void AP_InertialSensor_Backend::_rotate_and_correct_accel(uint8_t instance, Vect
 
     // apply scaling
     const Vector3f &accel_scale = _imu._accel_scale[instance].get();
-    accel.x *= accel_scale.x;
-    accel.y *= accel_scale.y;
-    accel.z *= accel_scale.z;
 
     // apply offsets
     accel -= _imu._accel_offset[instance];
+
+    accel.x *= accel_scale.x;
+    accel.y *= accel_scale.y;
+    accel.z *= accel_scale.z;
 
     // rotate to body frame
     accel.rotate(_imu._board_orientation);
@@ -63,6 +64,7 @@ void AP_InertialSensor_Backend::_publish_delta_velocity(uint8_t instance, const 
     _imu._delta_velocity[instance] = delta_velocity;
     _imu._delta_velocity_dt[instance] = dt;
     _imu._delta_velocity_valid[instance] = true;
+    _imu._accel_cal[instance].new_sample(delta_velocity, dt, _imu._board_orientation);
 }
 
 /*

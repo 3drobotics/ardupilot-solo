@@ -16,7 +16,8 @@ extern const AP_HAL::HAL& hal;
 AP_Mount_MAVLink::AP_Mount_MAVLink(AP_Mount &frontend, AP_Mount::mount_state &state, uint8_t instance) :
     AP_Mount_Backend(frontend, state, instance),
     _initialised(false),
-    _gimbal(frontend._ahrs,frontend._externalParameters)
+    _gimbal(frontend._ahrs,frontend._externalParameters),
+    _cal_gimbal_onboard(false)
 {}
 
 // init - performs any required initialisation for this instance
@@ -79,7 +80,8 @@ void AP_Mount_MAVLink::update()
     if (!_initialised) {
         return;
     }
-
+    //Gimbal is present enable onboard gimbal cal
+    _cal_gimbal_onboard = _gimbal.present();
     // update based on mount mode
     switch(get_mode()) {
         // move mount to a "retracted" position.  we do not implement a separate servo based retract mechanism
@@ -158,8 +160,20 @@ void AP_Mount_MAVLink::status_msg(mavlink_channel_t chan)
  */
 void AP_Mount_MAVLink::handle_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg)
 {
+    _chan = chan;
     _gimbal.update_target(_angle_ef_target_rad);
     _gimbal.receive_feedback(chan,msg);
+
+    if(_frontend.acal_is_calibrating()) {
+        mavlink_gimbal_report_t report_msg;
+        mavlink_msg_gimbal_report_decode(msg, &report_msg);
+
+        Vector3f sample(report_msg.delta_velocity_x,
+                        report_msg.delta_velocity_y,
+                        report_msg.delta_velocity_z);
+        _frontend._accel_cal[0].new_sample(sample, _gimbal._measurement.delta_time, ROTATION_NONE);         //currently only one instance
+    }
+
     Log_Write_Gimbal(_gimbal);
     if(!_params_saved) {
         _frontend._externalParameters.fetch_params();       //last parameter save might not be stored in dataflash so retry
@@ -186,6 +200,18 @@ void AP_Mount_MAVLink::handle_gimbal_torque_report(mavlink_channel_t chan, mavli
     _frontend._dataflash->WriteBlock(&pkt, sizeof(pkt));
 }
 
+/*
+set accel calibration parameters
+*/
+void AP_Mount_MAVLink::set_accel_params(Vector3f offset, Vector3f scale)
+{
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_OFF_ACC_X,offset.x);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_OFF_ACC_Y,offset.y);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_OFF_ACC_Z,offset.z);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_GN_ACC_X,scale.x);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_GN_ACC_Y,scale.y);
+    _frontend._externalParameters.set_param(_chan,GMB_PARAM_GMB_GN_ACC_Z,scale.z);
+}
 /*
   send a GIMBAL_REPORT message to the GCS
  */

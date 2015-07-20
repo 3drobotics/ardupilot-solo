@@ -29,6 +29,7 @@
 #include <GCS_MAVLink.h>
 #include <DataFlash.h>
 #include <AP_Gimbal_Parameters.h>
+#include "../AP_InertialSensor/AccelCalibrator.h"
 #include "../RC_Channel/RC_Channel.h"
 #include "../AP_SerialManager/AP_SerialManager.h"
 
@@ -125,14 +126,35 @@ public:
     // status_msg - called to allow mounts to send their status to GCS using the MOUNT_STATUS message
     void status_msg(mavlink_channel_t chan);
 
+    //check if primary gimbal/mount onboard accelcal is required
+    bool gimbal_onboard_cal();
+    
+    //Accel Calibration routines
+    void acal_start();
+
+    void acal_stop();
+
+    void acal_collect_sample();
+
+    bool acal_is_calibrating();
+
+    void acal_update();
+    bool acal_completed() { return _acal_complete; }
+    bool acal_failed() { return _acal_failed; }
+    bool acal_collecting_sample();
     // parameter var table
     static const struct AP_Param::GroupInfo        var_info[];
 
     AP_Gimbal_Parameters _externalParameters;
 
 protected:
-
     // private members
+
+    //Accel Calibration state variables
+    bool _acal_complete;
+    bool _acal_collecting_sample;
+    bool _acal_failed;
+
     const AP_AHRS_TYPE     &_ahrs;
     const struct Location   &_current_loc;  // reference to the vehicle's current location
 
@@ -143,7 +165,7 @@ protected:
     uint8_t             _num_instances;     // number of mounts instantiated
     uint8_t             _primary;           // primary mount
     AP_Mount_Backend    *_backends[AP_MOUNT_MAX_INSTANCES];         // pointers to instantiated mounts
-
+    AccelCalibrator     _accel_cal[AP_MOUNT_MAX_INSTANCES];
     DataFlash_Class *_dataflash;
 
     // backend state including parameters
