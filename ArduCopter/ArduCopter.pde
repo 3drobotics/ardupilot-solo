@@ -163,6 +163,8 @@
 #endif
 #include <AP_LandingGear.h>     // Landing Gear library
 #include <AP_Terrain.h>
+#include <AC_PrecLand.h>
+#include <AP_IRLock.h>
 
 // AP_HAL to Arduino compatibility layer
 #include "compat.h"
@@ -363,6 +365,8 @@ static union {
         uint8_t system_time_set     : 1; // 28      // true if the system time has been set from the GPS
         uint8_t gps_base_pos_set    : 1; // 29      // true when the gps base position has been set (used for RTK gps only)
         enum HomeState home_state   : 2; // 30,31   // home status (unset, set, locked)
+        uint8_t land_repo_active    : 1; // 32      // true if pilot has applied roll or pitch inputs during landing (used to disable automatic precision landing)
+
     };
     uint32_t value;
 } ap;
@@ -712,6 +716,13 @@ AP_Terrain terrain(ahrs, mission, rally);
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
+// Precision Landing
+////////////////////////////////////////////////////////////////////////////////
+#if PRECISION_LANDING == ENABLED
+static AC_PrecLand precland(ahrs, inertial_nav, g.pi_precland, MAIN_LOOP_SECONDS);
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
 // function definitions to keep compiler from complaining about undeclared functions
 ////////////////////////////////////////////////////////////////////////////////
 static bool pre_arm_checks(bool display_failure);
@@ -757,6 +768,9 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
     { compass_accumulate,    4,     42 },
     { compass_cal_update,    4,     40 },
     { barometer_accumulate,  8,     25 },
+#if PRECISION_LANDING == ENABLED
+    { update_precland,       8,     50 },
+#endif
 #if FRAME_CONFIG == HELI_FRAME
     { check_dynamic_flight,  8,     10 },
 #endif

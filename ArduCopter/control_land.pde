@@ -28,6 +28,9 @@ static bool land_init(bool ignore_checks)
 
     land_pause = false;
 
+    // reset flag indicating if pilot has applied roll or pitch inputs during landing
+    ap.land_repo_active = false;
+
     return true;
 }
 
@@ -92,6 +95,11 @@ static void land_gps_run()
             // process pilot's roll and pitch input
             roll_control = g.rc_1.control_in;
             pitch_control = g.rc_2.control_in;
+
+             // record if pilot has overriden roll or pitch
+            if (roll_control != 0 || pitch_control != 0) {
+                ap.land_repo_active = true;
+            }
         }
 
         // get pilot's desired yaw rate
@@ -100,6 +108,13 @@ static void land_gps_run()
 
     // process roll, pitch inputs
     wp_nav.set_pilot_desired_acceleration(roll_control, pitch_control);
+
+#if PRECISION_LANDING == ENABLED
+    // run precision landing
+    if (!ap.land_repo_active) {
+        wp_nav.shift_loiter_target(precland.get_target_shift(wp_nav.get_loiter_target()));
+    }
+#endif
 
     // run loiter controller
     wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
