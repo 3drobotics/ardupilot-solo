@@ -57,6 +57,7 @@ private:
         uint8_t vehicle_lost          : 1;    // 1 if lost copter tone requested
         uint8_t compass_cal_running   : 1;    // 1 if compass calibration is running
         uint8_t gps_connected         : 1;
+        uint8_t gyro_cal_done         : 1;
     } flags;
 
     int8_t _cont_tone_playing;
@@ -69,6 +70,8 @@ private:
     };
 
     const static Tone _tones[];
+
+    uint32_t _gyro_cal_done_ms;
 };
 
 #endif // __TONE_ALARM_PX4_H__
