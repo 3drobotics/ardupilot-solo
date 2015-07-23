@@ -853,6 +853,7 @@ AP_InertialSensor::_init_gyro()
 
     // stop flashing leds
     AP_Notify::flags.initialising = false;
+    AP_Notify::flags.gyro_cal_done = true;
 }
 
 #if !defined( __AVR_ATmega1280__ )
