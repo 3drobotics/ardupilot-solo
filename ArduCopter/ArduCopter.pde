@@ -163,6 +163,7 @@
 #endif
 #include <AP_LandingGear.h>     // Landing Gear library
 #include <AP_Terrain.h>
+#include <AP_AccelCal.h>
 
 // AP_HAL to Arduino compatibility layer
 #include "compat.h"
@@ -227,7 +228,9 @@ static void gcs_send_text_fmt(const prog_char_t *fmt, ...);
 ////////////////////////////////////////////////////////////////////////////////
 // Dataflash
 ////////////////////////////////////////////////////////////////////////////////
-#if defined(HAL_BOARD_LOG_DIRECTORY)
+#if defined(HAL_BOARD_REMOTE_LOG_PORT)
+static DataFlash_MAVLink DataFlash(HAL_BOARD_REMOTE_LOG_PORT);
+#elif defined(HAL_BOARD_LOG_DIRECTORY)
 static DataFlash_File DataFlash(HAL_BOARD_LOG_DIRECTORY);
 #else
 static DataFlash_Empty DataFlash;
@@ -265,7 +268,8 @@ static AP_Baro barometer;
 
 static Compass compass;
 
-AP_InertialSensor ins;
+static AP_AccelCal accelcal;
+AP_InertialSensor ins(accelcal);
 
 ////////////////////////////////////////////////////////////////////////////////
 // SONAR
@@ -559,7 +563,7 @@ static uint8_t sonar_alt_health;    // true if we can trust the altitude from th
 static float target_sonar_alt;      // desired altitude in cm above the ground
 static int32_t baro_alt;            // barometer altitude in cm above home
 static float baro_climbrate;        // barometer climbrate in cm/s
-static LowPassFilterVector3f land_accel_ef_filter(LAND_DETECTOR_ACCEL_LPF_CUTOFF); // accelerations for land detector test
+static LowPassFilterVector3f land_accel_ef_filter(LAND_DETECTOR_ACCEL_LPF_CUTOFF); // accelerations for land and crash detector test
 static LowPassFilterFloat rc_throttle_control_in_filter(1.0f);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -756,6 +760,7 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
     { three_hz_loop,       133,      9 },
     { compass_accumulate,    4,     42 },
     { compass_cal_update,    4,     40 },
+    { accel_cal_update,     40,    100 },
     { barometer_accumulate,  8,     25 },
 #if FRAME_CONFIG == HELI_FRAME
     { check_dynamic_flight,  8,     10 },
@@ -763,7 +768,6 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
     { update_notify,         8,     10 },
     { one_hz_loop,         400,     42 },
     { ekf_check,            40,      2 },
-    { crash_check,          40,      2 },
     { landinggear_update,   40,      1 },
     { lost_vehicle_check,   40,      2 },
     { gcs_check_input,       1,    550 },
@@ -917,12 +921,14 @@ static void fast_loop()
     // update home from EKF if necessary
     update_home_from_EKF();
 
-    // check if we've landed
-    update_land_detector();
+    // check if we've landed or crashed
+    update_land_and_crash_detectors();
 
     update_motor_fail_detector();
 
     gps_glitch_update();
+
+    camera_mount.update_fast();
 }
 
 // rc_loops - reads user input from transmitter/receiver

@@ -402,13 +402,15 @@ AP_Mount::AP_Mount(const AP_AHRS_TYPE &ahrs, const struct Location &current_loc)
 }
 
 // init - detect and initialise all mounts
-void AP_Mount::init(const AP_SerialManager& serial_manager)
+void AP_Mount::init(DataFlash_Class *dataflash, const AP_SerialManager& serial_manager)
 {
     // check init has not been called before
     if (_num_instances != 0) {
         return;
     }
 
+    _dataflash = dataflash;
+    
     // primary is reset to the first instantiated mount
     bool primary_set = false;
 
@@ -547,6 +549,15 @@ void AP_Mount::control_msg(uint8_t instance, mavlink_message_t *msg)
     _backends[instance]->control_msg(msg);
 }
 
+void AP_Mount::update_fast()
+{
+    for (uint8_t instance=0; instance<AP_MOUNT_MAX_INSTANCES; instance++) {
+        if (_backends[instance] != NULL) {
+            _backends[instance]->update_fast();
+        }
+    }
+}
+
 /// Return mount status information
 void AP_Mount::status_msg(mavlink_channel_t chan)
 {
@@ -573,6 +584,16 @@ void AP_Mount::handle_gimbal_report(mavlink_channel_t chan, mavlink_message_t *m
     for (uint8_t instance=0; instance<AP_MOUNT_MAX_INSTANCES; instance++) {
         if (_backends[instance] != NULL) {
             _backends[instance]->handle_gimbal_report(chan, msg);
+        }
+    }    
+}
+
+// pass a GIMBAL_REPORT message to the backend
+void AP_Mount::handle_gimbal_torque_report(mavlink_channel_t chan, mavlink_message_t *msg)
+{
+    for (uint8_t instance=0; instance<AP_MOUNT_MAX_INSTANCES; instance++) {
+        if (_backends[instance] != NULL) {
+            _backends[instance]->handle_gimbal_torque_report(chan, msg);
         }
     }    
 }

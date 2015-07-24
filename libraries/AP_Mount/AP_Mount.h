@@ -22,15 +22,15 @@
 #ifndef __AP_MOUNT_H__
 #define __AP_MOUNT_H__
 
-#include <AP_Gimbal_Parameters.h>
 #include <AP_Math.h>
 #include <AP_Common.h>
 #include <AP_GPS.h>
 #include <AP_AHRS.h>
 #include <GCS_MAVLink.h>
+#include <DataFlash.h>
+#include <AP_Gimbal_Parameters.h>
 #include "../RC_Channel/RC_Channel.h"
 #include "../AP_SerialManager/AP_SerialManager.h"
-
 
 // maximum number of mounts
 #define AP_MOUNT_MAX_INSTANCES          1
@@ -41,7 +41,6 @@ class AP_Mount_Servo;
 class AP_Mount_MAVLink;
 class AP_Mount_Alexmos;
 class AP_Mount_SToRM32;
-
 /*
   This is a workaround to allow the MAVLink backend access to the
   SmallEKF. It would be nice to find a neater solution to this
@@ -71,7 +70,7 @@ public:
     AP_Mount(const AP_AHRS_TYPE &ahrs, const struct Location &current_loc);
 
     // init - detect and initialise all mounts
-    void init(const AP_SerialManager& serial_manager);
+    void init(DataFlash_Class *dataflash ,const AP_SerialManager& serial_manager);
 
     // update - give mount opportunity to update servos.  should be called at 10hz or higher
     void update();
@@ -92,6 +91,8 @@ public:
     //  returns true if mode is successfully set
     void set_mode(enum MAV_MOUNT_MODE mode) { return set_mode(_primary, mode); }
     void set_mode(uint8_t instance, enum MAV_MOUNT_MODE mode);
+
+    void update_fast();
 
     // set_mode_to_default - restores the mode to it's default mode held in the MNT_DEFLT_MODE parameter
     //      this operation requires 230us on an APM2, 60us on a Pixhawk/PX4
@@ -116,6 +117,7 @@ public:
 
     // handle a GIMBAL_REPORT message
     void handle_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg);
+    void handle_gimbal_torque_report(mavlink_channel_t chan, mavlink_message_t *msg);
 
     // send a GIMBAL_REPORT message to GCS
     void send_gimbal_report(mavlink_channel_t chan);
@@ -141,6 +143,8 @@ protected:
     uint8_t             _num_instances;     // number of mounts instantiated
     uint8_t             _primary;           // primary mount
     AP_Mount_Backend    *_backends[AP_MOUNT_MAX_INSTANCES];         // pointers to instantiated mounts
+
+    DataFlash_Class *_dataflash;
 
     // backend state including parameters
     struct mount_state {

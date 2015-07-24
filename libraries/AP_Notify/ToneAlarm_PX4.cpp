@@ -67,7 +67,8 @@ const ToneAlarm_PX4::Tone ToneAlarm_PX4::_tones[] {
     { "MBNT255>B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8", true },
     #define AP_NOTIFY_PX4_TONE_QUIET_COMPASS_CALIBRATING_CTS 15
     { "MBMLT100O3L512eP4eP16bP16bP2", true },
-
+    #define AP_NOTIFY_PX4_TONE_LOUD_GPS_DISCONNECTED 16
+    { "MBMLT100O3L32dbaP16dP16", true }
 };
 
 bool ToneAlarm_PX4::init()
@@ -84,7 +85,10 @@ bool ToneAlarm_PX4::init()
     flags.armed = AP_Notify::flags.armed;
     flags.failsafe_battery = AP_Notify::flags.failsafe_battery;
     flags.pre_arm_check = 1;
+    flags.gps_connected = 1;
     _cont_tone_playing = -1;
+    _gyro_cal_done_ms = 0;
+    flags.gyro_cal_done = 0;
     return true;
 }
 
@@ -148,6 +152,27 @@ void ToneAlarm_PX4::update()
         }
     }
     flags.compass_cal_running = AP_Notify::flags.compass_cal_running;
+
+    //play tone if UBLOX gps not detected
+    uint32_t tnow_ms = hal.scheduler->millis();
+
+    if(AP_Notify::flags.gyro_cal_done && !flags.gyro_cal_done) {
+        _gyro_cal_done_ms = tnow_ms;
+    }
+    flags.gyro_cal_done = AP_Notify::flags.gyro_cal_done;
+
+    if (flags.gyro_cal_done && tnow_ms-_gyro_cal_done_ms > 10000) {
+        if (AP_Notify::flags.gps_connected != flags.gps_connected) {
+            if(!AP_Notify::flags.gps_connected) {
+                play_tone(AP_NOTIFY_PX4_TONE_LOUD_GPS_DISCONNECTED);
+            } else {
+                if(_cont_tone_playing == AP_NOTIFY_PX4_TONE_LOUD_GPS_DISCONNECTED) {
+                    stop_cont_tone();
+                }
+            }
+        }
+        flags.gps_connected = AP_Notify::flags.gps_connected;
+    }
 
     if (AP_Notify::events.compass_cal_canceled) {
         play_tone(AP_NOTIFY_PX4_TONE_QUIET_NEU_FEEDBACK);
