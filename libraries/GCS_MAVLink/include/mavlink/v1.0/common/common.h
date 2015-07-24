@@ -188,7 +188,6 @@ typedef enum MAV_STATE
 typedef enum MAV_COMPONENT
 {
 	MAV_COMP_ID_ALL=0, /*  | */
-	MAV_COMP_ID_LOG=50, /*  | */
 	MAV_COMP_ID_CAMERA=100, /*  | */
 	MAV_COMP_ID_SERVO1=140, /*  | */
 	MAV_COMP_ID_SERVO2=141, /*  | */
@@ -205,6 +204,7 @@ typedef enum MAV_COMPONENT
 	MAV_COMP_ID_SERVO13=152, /*  | */
 	MAV_COMP_ID_SERVO14=153, /*  | */
 	MAV_COMP_ID_GIMBAL=154, /*  | */
+	MAV_COMP_ID_LOG=155, /*  | */
 	MAV_COMP_ID_MAPPER=180, /*  | */
 	MAV_COMP_ID_MISSIONPLANNER=190, /*  | */
 	MAV_COMP_ID_PATHPLANNER=195, /*  | */
