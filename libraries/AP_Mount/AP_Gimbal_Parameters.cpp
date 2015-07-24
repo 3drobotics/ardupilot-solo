@@ -150,7 +150,7 @@ void AP_Gimbal_Parameters::update()
         bool done = true;
         for(uint8_t i=0; i<MAVLINK_GIMBAL_NUM_TRACKED_PARAMS; i++) {
             if (_params[i].state == GMB_PARAMSTATE_ATTEMPTING_TO_SET) {
-                ::printf("i %u\n",i);
+                // ::printf("i %u\n",i);
                 done = false;
                 break;
             }
