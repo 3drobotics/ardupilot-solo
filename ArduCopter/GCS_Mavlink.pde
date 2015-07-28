@@ -878,6 +878,8 @@ GCS_MAVLINK::data_stream_send(void)
         send_message(MSG_VFR_HUD);
     }
 
+    DataFlash.periodic_tasks(); // most of what this does is send GCS packets
+
     if (gcs_out_of_time) return;
 
     if (stream_trigger(STREAM_EXTRA3)) {
