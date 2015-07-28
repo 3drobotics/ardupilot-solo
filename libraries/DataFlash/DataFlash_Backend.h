@@ -74,6 +74,7 @@ public:
     virtual void handle_ack(uint32_t block_num) { };
     virtual void handle_retry(uint32_t block_num) { };
     virtual void remote_log_block_status_msg(mavlink_message_t* msg) { }
+    virtual void periodic_tasks() { }
     // end for Dataflash_MAVlink
 
 protected:
