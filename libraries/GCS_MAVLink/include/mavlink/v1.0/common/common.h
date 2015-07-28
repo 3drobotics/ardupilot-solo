@@ -570,6 +570,28 @@ typedef enum MAV_BATTERY_FUNCTION
 } MAV_BATTERY_FUNCTION;
 #endif
 
+/** @brief Special ACK block numbers control activation of dataflash log streaming */
+#ifndef HAVE_ENUM_MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS
+#define HAVE_ENUM_MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS
+typedef enum MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS
+{
+	MAV_REMOTE_LOG_DATA_BLOCK_STOP=4294967294, /* UAV to stop sending DataFlash blocks | */
+	MAV_REMOTE_LOG_DATA_BLOCK_START=4294967295, /* UAV to start sending DataFlash blocks | */
+	MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS_ENUM_END=4294967296, /*  | */
+} MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS;
+#endif
+
+/** @brief Possible remote log data block statuses */
+#ifndef HAVE_ENUM_MAV_REMOTE_LOG_DATA_BLOCK_STATUSES
+#define HAVE_ENUM_MAV_REMOTE_LOG_DATA_BLOCK_STATUSES
+typedef enum MAV_REMOTE_LOG_DATA_BLOCK_STATUSES
+{
+	MAV_REMOTE_LOG_DATA_BLOCK_NACK=0, /* This block has NOT been received | */
+	MAV_REMOTE_LOG_DATA_BLOCK_ACK=1, /* This block has been received | */
+	MAV_REMOTE_LOG_DATA_BLOCK_STATUSES_ENUM_END=2, /*  | */
+} MAV_REMOTE_LOG_DATA_BLOCK_STATUSES;
+#endif
+
 
 
 // MAVLINK VERSION
