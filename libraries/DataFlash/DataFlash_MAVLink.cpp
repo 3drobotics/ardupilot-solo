@@ -198,7 +198,7 @@ void DataFlash_MAVLink::handle_ack(mavlink_message_t* msg, const uint32_t seqno)
     _last_response_time = hal.scheduler->millis();
     if(seqno == 4294967294){ // 2^32-2
         Debug("Received stop-logging packet\n");
-        _logging_started = false;
+        _sending_to_client = false;
         return;
     }
     if(seqno == 4294967295 && !_sending_to_client) {
@@ -211,7 +211,6 @@ void DataFlash_MAVLink::handle_ack(mavlink_message_t* msg, const uint32_t seqno)
         // }
         stats_init();
         _sending_to_client = true;
-        _logging_started = true;
         _target_system_id = msg->sysid;
         _target_component_id = msg->compid;
         _next_seq_num = 0;
