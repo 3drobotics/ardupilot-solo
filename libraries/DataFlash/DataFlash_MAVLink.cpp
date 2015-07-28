@@ -196,12 +196,12 @@ void DataFlash_MAVLink::handle_ack(mavlink_message_t* msg, const uint32_t seqno)
         return;
     }
     _last_response_time = hal.scheduler->millis();
-    if(seqno == 4294967294){ // 2^32-2
+    if(seqno == MAV_REMOTE_LOG_DATA_BLOCK_STOP){ // 2^32-2
         Debug("Received stop-logging packet\n");
         _sending_to_client = false;
         return;
     }
-    if(seqno == 4294967295 && !_sending_to_client) {
+    if(seqno == MAV_REMOTE_LOG_DATA_BLOCK_START && !_sending_to_client) {
         Debug("\nStarting New Log!!\n");
         free_all_blocks();
         // _current_block = next_block();
