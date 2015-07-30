@@ -79,8 +79,6 @@ public:
     void Log_Fill_Format(const struct LogStructure *structure, struct log_Format &pkt);
 
     // for Dataflash_MAVlink
-    virtual void handle_ack(uint32_t block_num) { };
-    virtual void handle_retry(uint32_t block_num) { };
     virtual void remote_log_block_status_msg(mavlink_message_t* msg) { }
     // end for Dataflash_MAVlink
 

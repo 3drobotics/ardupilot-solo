@@ -30,13 +30,6 @@
 #endif
 
 extern const AP_HAL::HAL& hal;
-#ifndef MAV_SYS_ID_LOG
-#define MAV_SYS_ID_LOG  1
-#endif
-#ifndef MAV_COMP_ID_LOG
-#define MAV_COMP_ID_LOG 50
-#endif
-
 
 // initialisation
 void DataFlash_MAVLink::Init(const struct LogStructure *structure, uint8_t num_types)
