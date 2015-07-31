@@ -675,5 +675,9 @@ void DataFlash_File::_io_timer(void)
     perf_end(_perf_write);
 }
 
+void DataFlash_File::push_log_blocks() {
+    // diy-drones master has a flush() call which we might call here
+}
+
 #endif // HAL_OS_POSIX_IO
 
