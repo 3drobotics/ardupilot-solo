@@ -878,6 +878,8 @@ GCS_MAVLINK::data_stream_send(void)
         send_message(MSG_VFR_HUD);
     }
 
+    DataFlash.periodic_tasks(); // most of what this does is send GCS packets
+
     if (gcs_out_of_time) return;
 
     if (stream_trigger(STREAM_EXTRA3)) {
@@ -1733,12 +1735,10 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         // send message to Notify
         AP_Notify::handle_led_control(msg);
         break;
-#if defined(HAL_BOARD_REMOTE_LOG_PORT)
-    case MAVLINK_MSG_ID_REMOTE_LOG_BLOCK_STATUS:
-        handle_remote_log_status(msg, DataFlash);
-        break;
-#endif
 
+    case MAVLINK_MSG_ID_REMOTE_LOG_BLOCK_STATUS:
+        DataFlash.remote_log_block_status_msg(chan, msg);
+        break;
     }     // end switch
 } // end handle mavlink
 

@@ -7,7 +7,7 @@ typedef struct __mavlink_remote_log_block_status_t
  uint32_t block_cnt; ///< log data block count
  uint8_t target_system; ///< System ID
  uint8_t target_component; ///< Component ID
- uint8_t block_status; ///< 0:log data failed, 1:log received
+ uint8_t block_status; ///< log data block status
 } mavlink_remote_log_block_status_t;
 
 #define MAVLINK_MSG_ID_REMOTE_LOG_BLOCK_STATUS_LEN 7
@@ -38,7 +38,7 @@ typedef struct __mavlink_remote_log_block_status_t
  * @param target_system System ID
  * @param target_component Component ID
  * @param block_cnt log data block count
- * @param block_status 0:log data failed, 1:log received
+ * @param block_status log data block status
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_remote_log_block_status_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
@@ -79,7 +79,7 @@ static inline uint16_t mavlink_msg_remote_log_block_status_pack(uint8_t system_i
  * @param target_system System ID
  * @param target_component Component ID
  * @param block_cnt log data block count
- * @param block_status 0:log data failed, 1:log received
+ * @param block_status log data block status
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_remote_log_block_status_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
@@ -146,7 +146,7 @@ static inline uint16_t mavlink_msg_remote_log_block_status_encode_chan(uint8_t s
  * @param target_system System ID
  * @param target_component Component ID
  * @param block_cnt log data block count
- * @param block_status 0:log data failed, 1:log received
+ * @param block_status log data block status
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
@@ -255,7 +255,7 @@ static inline uint32_t mavlink_msg_remote_log_block_status_get_block_cnt(const m
 /**
  * @brief Get field block_status from remote_log_block_status message
  *
- * @return 0:log data failed, 1:log received
+ * @return log data block status
  */
 static inline uint8_t mavlink_msg_remote_log_block_status_get_block_status(const mavlink_message_t* msg)
 {

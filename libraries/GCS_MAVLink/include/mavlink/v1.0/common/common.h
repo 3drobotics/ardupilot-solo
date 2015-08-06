@@ -188,7 +188,6 @@ typedef enum MAV_STATE
 typedef enum MAV_COMPONENT
 {
 	MAV_COMP_ID_ALL=0, /*  | */
-	MAV_COMP_ID_LOG=50, /*  | */
 	MAV_COMP_ID_CAMERA=100, /*  | */
 	MAV_COMP_ID_SERVO1=140, /*  | */
 	MAV_COMP_ID_SERVO2=141, /*  | */
@@ -205,6 +204,7 @@ typedef enum MAV_COMPONENT
 	MAV_COMP_ID_SERVO13=152, /*  | */
 	MAV_COMP_ID_SERVO14=153, /*  | */
 	MAV_COMP_ID_GIMBAL=154, /*  | */
+	MAV_COMP_ID_LOG=155, /*  | */
 	MAV_COMP_ID_MAPPER=180, /*  | */
 	MAV_COMP_ID_MISSIONPLANNER=190, /*  | */
 	MAV_COMP_ID_PATHPLANNER=195, /*  | */
@@ -568,6 +568,28 @@ typedef enum MAV_BATTERY_FUNCTION
 	MAV_BATTERY_TYPE_PAYLOAD=4, /* Payload battery | */
 	MAV_BATTERY_FUNCTION_ENUM_END=5, /*  | */
 } MAV_BATTERY_FUNCTION;
+#endif
+
+/** @brief Special ACK block numbers control activation of dataflash log streaming */
+#ifndef HAVE_ENUM_MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS
+#define HAVE_ENUM_MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS
+typedef enum MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS
+{
+	MAV_REMOTE_LOG_DATA_BLOCK_STOP=4294967294, /* UAV to stop sending DataFlash blocks | */
+	MAV_REMOTE_LOG_DATA_BLOCK_START=4294967295, /* UAV to start sending DataFlash blocks | */
+	MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS_ENUM_END=4294967296, /*  | */
+} MAV_REMOTE_LOG_DATA_BLOCK_COMMANDS;
+#endif
+
+/** @brief Possible remote log data block statuses */
+#ifndef HAVE_ENUM_MAV_REMOTE_LOG_DATA_BLOCK_STATUSES
+#define HAVE_ENUM_MAV_REMOTE_LOG_DATA_BLOCK_STATUSES
+typedef enum MAV_REMOTE_LOG_DATA_BLOCK_STATUSES
+{
+	MAV_REMOTE_LOG_DATA_BLOCK_NACK=0, /* This block has NOT been received | */
+	MAV_REMOTE_LOG_DATA_BLOCK_ACK=1, /* This block has been received | */
+	MAV_REMOTE_LOG_DATA_BLOCK_STATUSES_ENUM_END=2, /*  | */
+} MAV_REMOTE_LOG_DATA_BLOCK_STATUSES;
 #endif
 
 

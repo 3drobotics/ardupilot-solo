@@ -18,12 +18,13 @@
 #define perf_count(x)
 #endif
 
+#include "DataFlash_Backend.h"
 
-class DataFlash_File : public DataFlash_Class
+class DataFlash_File : public DataFlash_Backend
 {
 public:
     // constructor
-    DataFlash_File(const char *log_directory);
+    DataFlash_File(DataFlash_Class &front, const char *log_directory);
 
     // initialisation
     void Init(const struct LogStructure *structure, uint8_t num_types);
@@ -34,8 +35,9 @@ public:
     void EraseAll();
 
     /* Write a block of data at current offset */
-    void WriteBlock(const void *pBuffer, uint16_t size);
-
+    bool WriteBlock(const void *pBuffer, uint16_t size);
+    uint16_t bufferspace_available();
+    
     // high level interface
     uint16_t find_last_log(void);
     void get_log_boundaries(uint16_t log_num, uint16_t & start_page, uint16_t & end_page);
@@ -51,6 +53,10 @@ public:
     void ShowDeviceInfo(AP_HAL::BetterStream *port);
     void ListAvailableLogs(AP_HAL::BetterStream *port);
 
+    void periodic_tasks();
+
+protected:
+    void push_log_blocks();
 private:
     int _write_fd;
     int _read_fd;

@@ -16,51 +16,62 @@
 #include "../AP_BattMonitor/AP_BattMonitor.h"
 #include <stdint.h>
 
+#include <GCS_MAVLink.h> // for mavlink_msg_t
+
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
 #include <uORB/topics/esc_status.h>
 #endif
 
+#include "LogStartup.h"
 
-#if HAL_CPU_CLASS < HAL_CPU_CLASS_75
-#define DATAFLASH_NO_CLI
-#endif
+class DataFlash_Backend;
+class DataFlash_MAVLink;
+class DFMessageWriter;
 
 class DataFlash_Class
 {
+    friend class DFMessageWriter_DFLogStart; // for access to _num_types etc
+
 public:
+    DataFlash_Class() :
+        _startup_messagewriter(NULL)
+        { }
+
     // initialisation
-    virtual void Init(const struct LogStructure *structure, uint8_t num_types);
-    virtual bool CardInserted(void) = 0;
+    void Init(const struct LogStructure *structure, uint8_t num_types);
+    bool CardInserted(void);
 
     // erase handling
-    virtual bool NeedErase(void) = 0;
-    virtual void EraseAll() = 0;
+    bool NeedErase(void);
+    void EraseAll();
 
     /* Write a block of data at current offset */
-    virtual void WriteBlock(const void *pBuffer, uint16_t size) = 0;
+    bool WriteBlock(const void *pBuffer, uint16_t size);
 
     // high level interface
-    virtual uint16_t find_last_log(void) = 0;
-    virtual void get_log_boundaries(uint16_t log_num, uint16_t & start_page, uint16_t & end_page) = 0;
-    virtual void get_log_info(uint16_t log_num, uint32_t &size, uint32_t &time_utc) = 0;
-    virtual int16_t get_log_data(uint16_t log_num, uint16_t page, uint32_t offset, uint16_t len, uint8_t *data) = 0;
-    virtual uint16_t get_num_logs(void) = 0;
+    uint16_t find_last_log(void);
+    void get_log_boundaries(uint16_t log_num, uint16_t & start_page, uint16_t & end_page);
+    void get_log_info(uint16_t log_num, uint32_t &size, uint32_t &time_utc);
+    int16_t get_log_data(uint16_t log_num, uint16_t page, uint32_t offset, uint16_t len, uint8_t *data);
+    uint16_t get_num_logs(void);
 #ifndef DATAFLASH_NO_CLI
-    virtual void LogReadProcess(uint16_t log_num,
+    void LogReadProcess(uint16_t log_num,
                                 uint16_t start_page, uint16_t end_page, 
                                 void (*printMode)(AP_HAL::BetterStream *port, uint8_t mode),
-                                AP_HAL::BetterStream *port) = 0;
-    virtual void DumpPageInfo(AP_HAL::BetterStream *port) = 0;
-    virtual void ShowDeviceInfo(AP_HAL::BetterStream *port) = 0;
-    virtual void ListAvailableLogs(AP_HAL::BetterStream *port) = 0;
+                                AP_HAL::BetterStream *port);
+    void DumpPageInfo(AP_HAL::BetterStream *port);
+    void ShowDeviceInfo(AP_HAL::BetterStream *port);
+    void ListAvailableLogs(AP_HAL::BetterStream *port);
 #endif // DATAFLASH_NO_CLI
 
-    /* logging methods common to all vehicles */
+    void setStartupMessageWriter(DFMessageWriter *messagewriter);
+
     uint16_t StartNewLog(void);
     void AddLogFormats(const struct LogStructure *structures, uint8_t num_types);
-    void EnableWrites(bool enable) { _writes_enabled = enable; }
-    void Log_Write_Format(const struct LogStructure *structure);
-    void Log_Write_Parameter(const char *name, float value);
+    void EnableWrites(bool enable);
+    void Log_Write_SysInfo(const prog_char_t *firmware_string);
+    bool Log_Write_Format(const struct LogStructure *structure);
+    bool Log_Write_Parameter(const char *name, float value);
     void Log_Write_GPS(const AP_GPS &gps, uint8_t instance, int32_t relative_alt);
     void Log_Write_IMU(const AP_InertialSensor &ins);
     void Log_Write_RCIN(void);
@@ -73,24 +84,32 @@ public:
 #endif
     void Log_Write_MavCmd(uint16_t cmd_total, const mavlink_mission_item_t& mav_cmd);
     void Log_Write_Radio(const mavlink_radio_t &packet);
-    void Log_Write_Message(const char *message);
-    void Log_Write_Message_P(const prog_char_t *message);
+    bool Log_Write_Message(const char *message);
+    bool Log_Write_Message_P(const prog_char_t *message);
     void Log_Write_Camera(const AP_AHRS &ahrs, const AP_GPS &gps, const Location &current_loc);
     void Log_Write_ESC(void);
     void Log_Write_Airspeed(AP_Airspeed &airspeed);
     void Log_Write_Attitude(AP_AHRS &ahrs, const Vector3f &targets);
 	void Log_Write_Current(const AP_BattMonitor &battery, int16_t throttle);
     void Log_Write_Compass(const Compass &compass);
-    void Log_Write_Mode(uint8_t mode);
+    bool Log_Write_Mode(uint8_t mode);
+    void Log_Write_DF_MAV(DataFlash_MAVLink &df);
 
-    bool logging_started(void) const { return _logging_started; }
+    bool logging_started(void);
 
-	/*
-      every logged packet starts with 3 bytes
-    */
-    struct log_Header {
-        uint8_t head1, head2, msgid;
-    };
+    // for DataFlash_MAVLink:
+    void remote_log_block_status_msg(mavlink_channel_t chan,
+                                     mavlink_message_t* msg);
+    // end for DataFlash_MAVLink:
+
+    void periodic_tasks(); // may want to split this into GCS/non-GCS duties
+
+    // this is out here for the trickle-startup-messages logging.
+    // Think before calling.
+    bool Log_Write_Parameter(const AP_Param *ap, const AP_Param::ParamToken &token, 
+                             enum ap_var_type type);
+
+    DFMessageWriter *_startup_messagewriter;
 
 protected:
     /*
@@ -101,21 +120,20 @@ protected:
                           AP_HAL::BetterStream *port);
     
     void Log_Fill_Format(const struct LogStructure *structure, struct log_Format &pkt);
-    void Log_Write_Parameter(const AP_Param *ap, const AP_Param::ParamToken &token, 
-                             enum ap_var_type type);
     void Log_Write_Parameters(void);
-    virtual uint16_t start_new_log(void) = 0;
+    uint16_t start_new_log(void);
 
     const struct LogStructure *_structures;
     uint8_t _num_types;
     bool _writes_enabled;
-    bool _logging_started;
 
     /*
       read a block
     */
-    virtual void ReadBlock(void *pkt, uint16_t size) = 0;
-    bool is_critical_block;
+    void ReadBlock(void *pkt, uint16_t size);
+
+private:
+    DataFlash_Backend *backend;
 };
 
 /*
@@ -562,6 +580,28 @@ struct PACKED log_GYRO {
     float GyrX, GyrY, GyrZ;
 };
 
+struct PACKED log_DF_MAV_Stats {
+    LOG_PACKET_HEADER;
+    uint32_t timestamp;
+    uint32_t seqno;
+    uint32_t dropped;
+    uint32_t retries;
+    uint32_t resends;
+    uint8_t internal_errors; // uint8_t - wishful thinking?
+    uint8_t state_free_avg;
+    uint8_t state_free_min;
+    uint8_t state_free_max;
+    uint8_t state_pending_avg;
+    uint8_t state_pending_min;
+    uint8_t state_pending_max;
+    uint8_t state_sent_avg;
+    uint8_t state_sent_min;
+    uint8_t state_sent_max;
+    // uint8_t state_retry_avg;
+    // uint8_t state_retry_min;
+    // uint8_t state_retry_max;
+};
+
 /*
 Format characters in the format string for binary log messages
   b   : int8_t
@@ -619,7 +659,9 @@ Format characters in the format string for binary log messages
     { LOG_COMPASS_MSG, sizeof(log_Compass), \
       "MAG", "IhhhhhhhhhB",    "TimeMS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ,Health" }, \
     { LOG_MODE_MSG, sizeof(log_Mode), \
-      "MODE", "IMB",         "TimeMS,Mode,ModeNum" }
+      "MODE", "IMB",         "TimeMS,Mode,ModeNum" }, \
+    { LOG_DF_MAV_STATS, sizeof(log_DF_MAV_Stats), \
+      "DMS", "IIIIIBBBBBBBBBB",         "TimeMS,N,Dp,RT,RS,Er,Fa,Fmn,Fmx,Pa,Pmn,Pmx,Sa,Smn,Smx" }
 
 // messages for more advanced boards
 #define LOG_EXTRA_STRUCTURES \
@@ -761,12 +803,9 @@ Format characters in the format string for binary log messages
 #define LOG_UACK_MSG      181
 #define LOG_UNAK_MSG      182
 #define LOG_USTG_MSG      183
+#define LOG_DF_MAV_STATS  184
 
 // message types 200 to 210 reversed for GPS driver use
 // message types 211 to 220 reversed for autotune use
-
-#include "DataFlash_Block.h"
-#include "DataFlash_File.h"
-#include "DataFlash_MAVLink.h"
 
 #endif
