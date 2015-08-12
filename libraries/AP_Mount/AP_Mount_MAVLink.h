@@ -43,13 +43,21 @@ public:
 
     // handle a GIMBAL_REPORT message
     virtual void handle_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg);
+    virtual void handle_gimbal_torque_report(mavlink_channel_t chan, mavlink_message_t *msg);
 
     // send a GIMBAL_REPORT message to the GCS
     virtual void send_gimbal_report(mavlink_channel_t chan);
 
+    virtual void update_fast();
+
 private:
     // internal variables
     bool _initialised;              // true once the driver has been initialised
+
+    // Write a gimbal measurament and estimation data packet
+    void Log_Write_Gimbal(AP_Gimbal &gimbal);
+
+    bool _params_saved;
 
     AP_Gimbal _gimbal;
 };

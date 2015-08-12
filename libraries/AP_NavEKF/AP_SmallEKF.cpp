@@ -91,7 +91,7 @@ void SmallEKF::RunEKF(float delta_time, const Vector3f &delta_angles, const Vect
     
     // Align the heading once there has been enough time for the filter to settle and the tilt corrections have dropped below a threshold
     // Force it to align if too much time has lapsed
-    if (((((imuSampleTime_ms - StartTime_ms) > 25000 && TiltCorrection < 1e-4f) || (imuSampleTime_ms - StartTime_ms) > 30000)) && !YawAligned) {
+    if (((((imuSampleTime_ms - StartTime_ms) > 3000 && TiltCorrection < 1e-4f) || (imuSampleTime_ms - StartTime_ms) > 30000)) && !YawAligned) {
         //calculate the initial heading using magnetometer, estimated tilt and declination
         alignHeading();
         YawAligned = true;
@@ -575,8 +575,12 @@ void SmallEKF::fuseVelocity(bool yawInit)
         // Calculate the velocity measurement innovation using the SmallEKF estimate as the observation
         // if heading isn't aligned, use zero velocity (static assumption)
         if (yawInit) {
-            Vector3f measVelNED;
-            _main_ekf.getVelNED(measVelNED);
+            Vector3f measVelNED(0,0,0);
+            nav_filter_status main_ekf_status;
+            _main_ekf.getFilterStatus(main_ekf_status);
+            if (main_ekf_status.flags.horiz_vel) {
+                _main_ekf.getVelNED(measVelNED);
+            }
             innovation[obsIndex] = state.velocity[obsIndex] - measVelNED[obsIndex];
         } else {
             innovation[obsIndex] = state.velocity[obsIndex];
@@ -859,7 +863,7 @@ float SmallEKF::calcMagHeadingInnov()
     if (_main_ekf.healthy()) {
         _main_ekf.getMagNED(earth_magfield);
         _main_ekf.getMagXYZ(body_magfield);
-        declination = atan2(earth_magfield.y,earth_magfield.x);
+        declination = atan2f(earth_magfield.y,earth_magfield.x);
     } else {
         body_magfield.zero();
         earth_magfield.zero();
@@ -873,7 +877,7 @@ float SmallEKF::calcMagHeadingInnov()
     Vector3f magMeasNED = Tmn*(magData - body_magfield);
 
     // calculate the innovation where the predicted measurement is the angle wrt magnetic north of the horizontal component of the measured field
-    float innovation = atan2(magMeasNED.y,magMeasNED.x) - declination;
+    float innovation = atan2f(magMeasNED.y,magMeasNED.x) - declination;
 
     // wrap the innovation so it sits on the range from +-pi
     if (innovation > 3.1415927f) {
@@ -910,7 +914,7 @@ void SmallEKF::getDebug(float &tilt, Vector3f &velocity, Vector3f &euler, Vector
     tilt = TiltCorrection;
     velocity = state.velocity;
     state.quat.to_euler(euler.x, euler.y, euler.z);
-    if (dtIMU < 1.0e-6) {
+    if (dtIMU < 1.0e-6f) {
         gyroBias.zero();
     } else {
         gyroBias = state.delAngBias / dtIMU;
@@ -920,7 +924,7 @@ void SmallEKF::getDebug(float &tilt, Vector3f &velocity, Vector3f &euler, Vector
 // get gyro bias data
 void SmallEKF::getGyroBias(Vector3f &gyroBias) const
 {
-    if (dtIMU < 1.0e-6) {
+    if (dtIMU < 1.0e-6f) {
         gyroBias.zero();
     } else {
         gyroBias = state.delAngBias / dtIMU;
