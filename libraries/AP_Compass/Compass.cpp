@@ -765,3 +765,48 @@ void Compass::motor_compensation_type(const uint8_t comp_type)
         }
     }
 }
+
+uint8_t Compass::get_use_mask()
+{
+    uint8_t ret = 0;
+    for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if (use_for_yaw(i)) {
+            ret |= 1 << i;
+        }
+    }
+    return ret;
+}
+
+bool Compass::consistent(uint8_t mask)
+{
+    Vector3f primary_mag_vec = get_field();
+    Vector3f primary_mag_vec_norm = primary_mag_vec;
+    primary_mag_vec_norm.normalize();
+
+    for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if ((mask&(1<<i)) != 0) {
+            // get next compass
+            Vector3f mag_vec = get_field(i);
+            Vector3f mag_vec_norm = mag_vec;
+            mag_vec_norm.normalize();
+            float xyz_ang_diff = acosf(mag_vec_norm * primary_mag_vec_norm);
+            float xy_ang_diff  = acosf(mag_vec_norm.x*primary_mag_vec_norm.x + mag_vec_norm.y*primary_mag_vec_norm.y);
+            float xy_len_diff  = sqrtf(sq(primary_mag_vec.x - mag_vec.x) + sq(primary_mag_vec.y - mag_vec.y));
+
+            // check for gross misalignment on all axes
+            bool xyz_ang_diff_large = xyz_ang_diff > AP_COMPASS_MAX_XYZ_ANG_DIFF;
+
+            // check for an unacceptable angle difference on the xy plane
+            bool xy_ang_diff_large = fabsf(xy_ang_diff) > AP_COMPASS_MAX_XY_ANG_DIFF;
+
+            // check for an unacceptable length difference on the xy plane
+            bool xy_length_diff_large = xy_len_diff > AP_COMPASS_MAX_XY_LENGTH_DIFF;
+
+            // check for inconsistency in the XY plane
+            if (xyz_ang_diff_large || xy_ang_diff_large || xy_length_diff_large) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
