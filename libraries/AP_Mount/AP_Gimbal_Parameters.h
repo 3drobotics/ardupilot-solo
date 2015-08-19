@@ -1,38 +1,92 @@
+#ifndef __AP_GIMBAL_PARAMETERS__
+#define __AP_GIMBAL_PARAMETERS__
 #include <AP_Math.h>
 #include <AP_Common.h>
 #include <GCS_MAVLink.h>
+#include <DataFlash.h>
 
+enum gmb_param_state_t {
+    GMB_PARAMSTATE_NOT_YET_READ=0, // parameter has yet to be initialized
+    GMB_PARAMSTATE_FETCH_AGAIN=1, // parameter is being fetched
+    GMB_PARAMSTATE_ATTEMPTING_TO_SET=2, // parameter is being set
+    GMB_PARAMSTATE_CONSISTENT=3, // parameter is consistent
+    GMB_PARAMSTATE_NONEXISTANT=4 // parameter does not seem to exist
+};
 
-#define MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X      0x001
-#define MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Y      0x002
-#define MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Z      0x004
-#define MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X      0x008
-#define MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y      0x010
-#define MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z      0x020
-#define MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_X     0x040
-#define MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Y     0x080
-#define MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Z     0x0100
-#define MAVLINK_GIMBAL_PARAM_GMB_K_RATE         0x0200
-#define MAVLINK_GIMBAL_PARAM_MASK_ALL           0x03FF
-#define MAVLINK_GIMBAL_PARAM_MASK_NONE          0x0000
+enum gmb_param_t {
+    GMB_PARAM_GMB_OFF_ACC_X=0,
+    GMB_PARAM_GMB_OFF_ACC_Y,
+    GMB_PARAM_GMB_OFF_ACC_Z,
+    GMB_PARAM_GMB_GN_ACC_X,
+    GMB_PARAM_GMB_GN_ACC_Y,
+    GMB_PARAM_GMB_GN_ACC_Z,
+    GMB_PARAM_GMB_OFF_GYRO_X,
+    GMB_PARAM_GMB_OFF_GYRO_Y,
+    GMB_PARAM_GMB_OFF_GYRO_Z,
+    GMB_PARAM_GMB_OFF_JNT_X,
+    GMB_PARAM_GMB_OFF_JNT_Y,
+    GMB_PARAM_GMB_OFF_JNT_Z,
+    GMB_PARAM_GMB_K_RATE,
+    GMB_PARAM_GMB_POS_HOLD,
+    GMB_PARAM_GMB_MAX_TORQUE,
+    GMB_PARAM_GMB_SYSID,
+    GMB_PARAM_GMB_FLASH,
+    MAVLINK_GIMBAL_NUM_TRACKED_PARAMS
+};
+
+enum gmb_flashing_step_t {
+    GMB_PARAM_NOT_FLASHING=0,
+    GMB_PARAM_FLASHING_WAITING_FOR_SET,
+    GMB_PARAM_FLASHING_WAITING_FOR_ACK
+};
 
 class AP_Gimbal_Parameters
 {
 public:
-    Vector3f     delta_angles_offsets;
-    Vector3f     delta_velocity_offsets;
-    Vector3f     joint_angles_offsets;
-    float        K_gimbalRate;
-    
-    bool received_all();
-	void handle_param_value(mavlink_message_t *msg);
-	void receive_missing_parameters(mavlink_channel_t chan);
+    AP_Gimbal_Parameters();
+    void reset();
 
-	AP_Gimbal_Parameters(){
-		_mask = MAVLINK_GIMBAL_PARAM_MASK_NONE;
-	};
+    bool initialized();
+    bool received_all();
+    void fetch_params();
+
+    void get_param(gmb_param_t param, float& value, float def_val = 0.0f);
+    void set_param(gmb_param_t param, float value);
+
+    void update();
+    void handle_param_value(DataFlash_Class *dataflash, mavlink_message_t *msg);
+
+    Vector3f get_accel_bias();
+    Vector3f get_accel_gain();
+    void set_accel_bias(const Vector3f& bias);
+    void set_accel_gain(const Vector3f& gain);
+    Vector3f get_gyro_bias();
+    Vector3f get_joint_bias();
+
+    float get_K_rate();
+    void flash();
+    bool flashing();
+
+    void set_channel(mavlink_channel_t chan) { _chan = chan; }
 
 private:
-	uint16_t     _mask;
+    static const char* get_param_name(gmb_param_t param);
 
+    static const uint32_t _retry_period;
+    static const uint8_t _max_fetch_attempts;
+
+    struct {
+        float value;
+        gmb_param_state_t state;
+        uint8_t fetch_attempts;
+        bool seen;
+    } _params[MAVLINK_GIMBAL_NUM_TRACKED_PARAMS];
+
+    uint32_t _last_request_ms;
+    gmb_flashing_step_t _flashing_step;
+
+    mavlink_channel_t _chan;
 };
+
+
+#endif

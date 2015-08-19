@@ -468,12 +468,24 @@ void MAVLink_routing::get_targets(const mavlink_message_t* msg, int16_t &sysid, 
         compid = mavlink_msg_v2_extension_get_target_component(msg);
         break;
     case MAVLINK_MSG_ID_GIMBAL_REPORT:
-        sysid  = mavlink_system.sysid;//mavlink_msg_gimbal_report_get_target_system(msg);
-        compid = mavlink_system.compid;//mavlink_msg_gimbal_report_get_target_component(msg);
+        sysid  = mavlink_msg_gimbal_report_get_target_system(msg);
+        compid = mavlink_msg_gimbal_report_get_target_component(msg);
         break;
     case MAVLINK_MSG_ID_GIMBAL_CONTROL:
         sysid  = mavlink_msg_gimbal_control_get_target_system(msg);
         compid = mavlink_msg_gimbal_control_get_target_component(msg);
+        break;
+    case MAVLINK_MSG_ID_GIMBAL_TORQUE_CMD_REPORT:
+        sysid  = mavlink_msg_gimbal_torque_cmd_report_get_target_system(msg);
+        compid = mavlink_msg_gimbal_torque_cmd_report_get_target_component(msg);
+        break;
+    case MAVLINK_MSG_ID_REMOTE_LOG_DATA_BLOCK:
+        sysid  = mavlink_msg_remote_log_data_block_get_target_system(msg);
+        compid = mavlink_msg_remote_log_data_block_get_target_component(msg);
+        break;
+    case MAVLINK_MSG_ID_REMOTE_LOG_BLOCK_STATUS:
+        sysid  = mavlink_msg_remote_log_block_status_get_target_system(msg);
+        compid = mavlink_msg_remote_log_block_status_get_target_component(msg);
         break;
     }
 }

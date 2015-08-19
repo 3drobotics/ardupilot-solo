@@ -17,6 +17,7 @@ void DataFlash_Class::Init(const struct LogStructure *structure, uint8_t num_typ
     _num_types = num_types;
     _structures = structure;
     _writes_enabled = true;
+    is_critical_block = false;
 }
 
 // This function determines the number of whole or partial log files in the DataFlash
@@ -68,7 +69,7 @@ uint16_t DataFlash_Block::start_new_log(void)
         SetFileNumber(1);
         StartWrite(1);
         //Serial.println("start log from 0");
-        log_write_started = true;
+        _logging_started = true;
         return 1;
     }
 
@@ -89,7 +90,7 @@ uint16_t DataFlash_Block::start_new_log(void)
         SetFileNumber(new_log_num);
         StartWrite(last_page + 1);
     }
-    log_write_started = true;
+    _logging_started = true;
     return new_log_num;
 }
 
@@ -611,7 +612,9 @@ void DataFlash_Class::Log_Write_Format(const struct LogStructure *s)
 {
     struct log_Format pkt;
     Log_Fill_Format(s, pkt);
+    is_critical_block = true;
     WriteBlock(&pkt, sizeof(pkt));
+    is_critical_block = false;
 }
 
 /*
@@ -625,7 +628,9 @@ void DataFlash_Class::Log_Write_Parameter(const char *name, float value)
         value : value
     };
     strncpy(pkt.name, name, sizeof(pkt.name));
+    is_critical_block = true;
     WriteBlock(&pkt, sizeof(pkt));
+    is_critical_block = false;
 }
 
 /*
@@ -837,50 +842,6 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
     WriteBlock(&pkt3, sizeof(pkt3));
 #endif
 }
-
-// Write a gimbal measurament and estimation data packet
-void DataFlash_Class::Log_Write_Gimbal(const AP_Gimbal &gimbal)
-{
-    uint32_t tstamp = hal.scheduler->millis();
-    Quaternion quatEst;
-    gimbal._ekf.getQuat(quatEst);
-    Vector3f eulerEst;
-    quatEst.to_euler(eulerEst.x, eulerEst.y, eulerEst.z);
-
-    struct log_Gimbal1 pkt1 = {
-        LOG_PACKET_HEADER_INIT(LOG_GIMBAL1_MSG),
-        time_ms : tstamp,
-        delta_time      : gimbal._measurement.delta_time,
-        delta_angles_x  : gimbal._measurement.delta_angles.x,
-        delta_angles_y  : gimbal._measurement.delta_angles.y,
-        delta_angles_z  : gimbal._measurement.delta_angles.z,
-        delta_velocity_x : gimbal._measurement.delta_velocity.x,
-        delta_velocity_y : gimbal._measurement.delta_velocity.y,
-        delta_velocity_z : gimbal._measurement.delta_velocity.z,
-        joint_angles_x  : gimbal._measurement.joint_angles.x,
-        joint_angles_y  : gimbal._measurement.joint_angles.y,
-        joint_angles_z  : gimbal._measurement.joint_angles.z
-    };
-    WriteBlock(&pkt1, sizeof(pkt1));
-
-    struct log_Gimbal2 pkt2 = {
-        LOG_PACKET_HEADER_INIT(LOG_GIMBAL2_MSG),
-        time_ms : tstamp,
-        est_sta : (uint8_t) gimbal._ekf.getStatus(),
-        est_x   : eulerEst.x,
-        est_y   : eulerEst.y,
-        est_z   : eulerEst.z,
-        rate_x  : gimbal.gimbalRateDemVec.x,
-        rate_y  : gimbal.gimbalRateDemVec.y,
-        rate_z  : gimbal.gimbalRateDemVec.z,
-        target_x: gimbal._angle_ef_target_rad.x,
-        target_y: gimbal._angle_ef_target_rad.y,
-        target_z: gimbal._angle_ef_target_rad.z
-       };
-    WriteBlock(&pkt2, sizeof(pkt2));
-}
-
-
 
 // Write a text message to the log
 void DataFlash_Class::Log_Write_Message(const char *message)

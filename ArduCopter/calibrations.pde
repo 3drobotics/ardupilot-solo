@@ -8,6 +8,7 @@ static void compass_cal_update() {
 
     static bool cal_has_run = false;
     if (compass.is_calibrating()) {
+        camera_mount.set_mode(MAV_MOUNT_MODE_RETRACT);
         cal_has_run = true;
         if(!motors.armed() && g.rc_4.control_in < -4000 && g.rc_3.control_in > 900) {
             compass.cancel_calibration_all();
@@ -28,5 +29,17 @@ static void compass_cal_update() {
         if(tnow-stick_gesture_begin > 1000*COMPASS_CAL_STICK_DELAY) {
             compass.start_calibration_all(true,true,COMPASS_CAL_DELAY);
         }
+    }
+}
+
+static void accel_cal_update() {
+    accelcal.update();
+    if (motors.armed() && accelcal.get_status() != ACCEL_CAL_NOT_STARTED) {
+        accelcal.clear();
+    }
+
+    float trim_roll, trim_pitch;
+    if(ins.get_new_trim(trim_roll, trim_pitch)) {
+        ahrs.set_trim(Vector3f(trim_roll, trim_pitch, 0));
     }
 }

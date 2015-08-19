@@ -17,14 +17,14 @@ void AP_InertialSensor_Backend::_rotate_and_correct_accel(uint8_t instance, Vect
       offsets and scaling.
      */
 
+    // apply offsets
+    accel -= _imu._accel_offset[instance];
+
     // apply scaling
     const Vector3f &accel_scale = _imu._accel_scale[instance].get();
     accel.x *= accel_scale.x;
     accel.y *= accel_scale.y;
     accel.z *= accel_scale.z;
-
-    // apply offsets
-    accel -= _imu._accel_offset[instance];
 
     // rotate to body frame
     accel.rotate(_imu._board_orientation);
@@ -63,6 +63,24 @@ void AP_InertialSensor_Backend::_publish_delta_velocity(uint8_t instance, const 
     _imu._delta_velocity[instance] = delta_velocity;
     _imu._delta_velocity_dt[instance] = dt;
     _imu._delta_velocity_valid[instance] = true;
+
+    if (_imu._accel_calibrator[instance].get_status() == ACCEL_CAL_COLLECTING_SAMPLE) {
+        Vector3f cal_sample = delta_velocity;
+
+        //remove rotation
+        cal_sample.rotate_inverse(_imu._board_orientation);
+
+        // remove scale factors
+        const Vector3f &accel_scale = _imu._accel_scale[instance].get();
+        cal_sample.x /= accel_scale.x;
+        cal_sample.y /= accel_scale.y;
+        cal_sample.z /= accel_scale.z;
+
+        //remove offsets
+        cal_sample += _imu._accel_offset[instance].get() * dt;
+
+        _imu._accel_calibrator[instance].new_sample(cal_sample, dt);
+    }
 }
 
 /*

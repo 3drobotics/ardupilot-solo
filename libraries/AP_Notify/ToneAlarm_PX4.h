@@ -47,6 +47,9 @@ private:
 
     int _tonealarm_fd;      // file descriptor for the tone alarm
 
+    uint32_t _gps_disconnected_time;
+    uint32_t _init_time;
+
     /// tonealarm_type - bitmask of states we track
     struct tonealarm_type {
         uint8_t armed                 : 1;    // 0 = disarmed, 1 = armed
@@ -56,6 +59,7 @@ private:
         uint8_t failsafe_radio        : 1;    // 1 if radio failsafe
         uint8_t vehicle_lost          : 1;    // 1 if lost copter tone requested
         uint8_t compass_cal_running   : 1;    // 1 if compass calibration is running
+        uint8_t gps_connected         : 1;
     } flags;
 
     int8_t _cont_tone_playing;

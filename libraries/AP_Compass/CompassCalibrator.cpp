@@ -1,3 +1,82 @@
+/// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
+/*
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*
+ * The intention of a magnetometer in a compass application is to measure
+ * Earth's magnetic field. Measurements other than those of Earth's magnetic
+ * field are considered errors. This algorithm computes a set of correction
+ * parameters that null out errors from various sources:
+ *
+ * - Sensor bias error
+ * - "Hard iron" error caused by materials fixed to the vehicle body that
+ *     produce static magnetic fields.
+ * - Sensor scale-factor error
+ * - Sensor cross-axis sensitivity
+ * - "Soft iron" error caused by materials fixed to the vehicle body that
+ *     distort magnetic fields.
+ *
+ * This is done by taking a set of samples that are assumed to be the product
+ * of rotation in earth's magnetic field and fitting an offset ellipsoid to
+ * them, determining the correction to be applied to adjust the samples into an
+ * origin-centered sphere.
+ *
+ * The state machine of this library is described entirely by the
+ * compass_cal_status_t enum, and all state transitions are managed by the
+ * set_status function. Normally, the library is in the NOT_STARTED state. When
+ * the start function is called, the state transitions to WAITING_TO_START,
+ * until two conditions are met: the delay as elapsed, and the memory for the
+ * sample buffer has been successfully allocated.
+ * Once these conditions are met, the state transitions to RUNNING_STEP_ONE, and
+ * samples are collected via calls to the new_sample function. These samples are
+ * accepted or rejected based on distance to the nearest sample. The samples are
+ * assumed to cover the surface of a sphere, and the radius of that sphere is
+ * initialized to a conservative value. Based on a circle-packing pattern, the
+ * minimum distance is set such that some percentage of the surface of that
+ * sphere must be covered by samples.
+ *
+ * Once the sample buffer is full, a sphere fitting algorithm is run, which
+ * computes a new sphere radius. The sample buffer is thinned of samples which
+ * no longer meet the acceptance criteria, and the state transitions to
+ * RUNNING_STEP_TWO. Samples continue to be collected until the buffer is full
+ * again, the full ellipsoid fit is run, and the state transitions to either
+ * SUCCESS or FAILED.
+ *
+ * The fitting algorithm used is Levenberg-Marquardt. See also:
+ * http://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
+ *
+ * The sample acceptance distance is determined as follows:
+ * Every point should be atleast separated by D distance:
+ *
+ *         where:
+ *             D = distance between any two sample points
+ *             (Surface Area of Sphere)/(2 * (Area of equilateral triangle)) = NUM_SAMPLES
+ *         =>  D >= (5.38709 * Radius) / (sqrt(NUM_SAMPLES) * 2)
+ *         but for the sake of leniency to the user let's halve this distance. This will ensure
+ *         atleast 1/3rd coverage of sphere. The rest will be taken care of by Gauss-Newton.
+ *             D >= (5.38709 * Radius) / (sqrt(NUM_SAMPLES) * 3)
+ *
+ * Explaination: If we are to consider a sphere and place discrete points which are uniformly
+ *               spread. The simplest possible polygon that can be created using distinct closest
+ *               points is an equilateral triangle. The number of such triangles will be NUM_SAMPLES
+ *               and will all be totally distinct. The side of such triangles also represent the
+ *               minimum distance between any two samples for 100% coverage. But since this would
+ *               be very-difficult/impossible for user to achieve, we reduce it to minimum 1/3rd coverage.
+ *
+ */
+
 #include "CompassCalibrator.h"
 #include <AP_HAL.h>
 
@@ -8,7 +87,8 @@ extern const AP_HAL::HAL& hal;
 ////////////////////////////////////////////////////////////
 
 CompassCalibrator::CompassCalibrator():
-_tolerance(COMPASS_CAL_DEFAULT_TOLERANCE)
+_tolerance(COMPASS_CAL_DEFAULT_TOLERANCE),
+_sample_buffer(NULL)
 {
     clear();
 }
@@ -293,7 +373,10 @@ bool CompassCalibrator::accept_sample(const Vector3f& sample)
         return false;
     }
 
-    float min_distance = fabsf(5.38709f * _params.radius / sqrtf((float)COMPASS_CAL_NUM_SAMPLES)) / 3.0f;
+    float faces = 2*COMPASS_CAL_NUM_SAMPLES-4;
+    float theta = acosf(cosf((4.0f*M_PI_F/(3.0f*faces)) + M_PI_F/3.0f)/(1.0f-cosf((4.0f*M_PI_F/(3.0f*faces)) + M_PI_F/3.0f)));
+    theta *= 0.5f;
+    float min_distance = _params.radius * 2*sinf(theta/2);
 
     for (uint16_t i = 0; i<_samples_collected; i++){
         float distance = (sample - _sample_buffer[i].get()).length();
@@ -352,9 +435,9 @@ void CompassCalibrator::calc_sphere_jacob(const Vector3f& sample, const param_t&
     float C =  (offdiag.y * (sample.x + offset.x)) + (offdiag.z * (sample.y + offset.y)) + (diag.z    * (sample.z + offset.z));
     float length = (softiron*(sample+offset)).length();
 
-    // 0: radius
+    // 0: partial derivative (radius wrt fitness fn) fn operated on sample
     ret[0] = 1.0f;
-    // 1-3: offsets
+    // 1-3: partial derivative (offsets wrt fitness fn) fn operated on sample
     ret[1] = -1.0f * (((diag.x    * A) + (offdiag.x * B) + (offdiag.y * C))/length);
     ret[2] = -1.0f * (((offdiag.x * A) + (diag.y    * B) + (offdiag.z * C))/length);
     ret[3] = -1.0f * (((offdiag.y * A) + (offdiag.z * B) + (diag.z    * C))/length);
@@ -401,16 +484,17 @@ void CompassCalibrator::run_sphere_fit()
 
 
     //------------------------Levenberg-part-starts-here---------------------------------//
+    //refer: http://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm#Choice_of_damping_parameter
     for(uint8_t i = 0; i < COMPASS_CAL_NUM_SPHERE_PARAMS; i++) {
         JTJ[i*COMPASS_CAL_NUM_SPHERE_PARAMS+i] += _sphere_lambda;
         JTJ2[i*COMPASS_CAL_NUM_SPHERE_PARAMS+i] += _sphere_lambda/lma_damping;
     }
 
-    if(!inverse4x4(JTJ, JTJ)) {
+    if(!inverse(JTJ, JTJ, 4)) {
         return;
     }
 
-    if(!inverse4x4(JTJ2, JTJ2)) {
+    if(!inverse(JTJ2, JTJ2, 4)) {
         return;
     }
 
@@ -458,15 +542,15 @@ void CompassCalibrator::calc_ellipsoid_jacob(const Vector3f& sample, const param
     float C =  (offdiag.y * (sample.x + offset.x)) + (offdiag.z * (sample.y + offset.y)) + (diag.z    * (sample.z + offset.z));
     float length = (softiron*(sample+offset)).length();
 
-    // 0-2: offsets
+    // 0-2: partial derivative (offset wrt fitness fn) fn operated on sample
     ret[0] = -1.0f * (((diag.x    * A) + (offdiag.x * B) + (offdiag.y * C))/length);
     ret[1] = -1.0f * (((offdiag.x * A) + (diag.y    * B) + (offdiag.z * C))/length);
     ret[2] = -1.0f * (((offdiag.y * A) + (offdiag.z * B) + (diag.z    * C))/length);
-    // 3-5: diagonals
+    // 3-5: partial derivative (diag offset wrt fitness fn) fn operated on sample
     ret[3] = -1.0f * ((sample.x + offset.x) * A)/length;
     ret[4] = -1.0f * ((sample.y + offset.y) * B)/length;
     ret[5] = -1.0f * ((sample.z + offset.z) * C)/length;
-    // 6-8: off-diagonals
+    // 6-8: partial derivative (off-diag offset wrt fitness fn) fn operated on sample
     ret[6] = -1.0f * (((sample.y + offset.y) * A) + ((sample.x + offset.x) * B))/length;
     ret[7] = -1.0f * (((sample.z + offset.z) * A) + ((sample.x + offset.x) * C))/length;
     ret[8] = -1.0f * (((sample.z + offset.z) * B) + ((sample.y + offset.y) * C))/length;
@@ -516,16 +600,17 @@ void CompassCalibrator::run_ellipsoid_fit()
 
 
     //------------------------Levenberg-part-starts-here---------------------------------//
+    //refer: http://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm#Choice_of_damping_parameter
     for(uint8_t i = 0; i < COMPASS_CAL_NUM_ELLIPSOID_PARAMS; i++) {
         JTJ[i*COMPASS_CAL_NUM_ELLIPSOID_PARAMS+i] += _ellipsoid_lambda;
         JTJ2[i*COMPASS_CAL_NUM_ELLIPSOID_PARAMS+i] += _ellipsoid_lambda/lma_damping;
     }
 
-    if(!inverse9x9(JTJ, JTJ)) {
+    if(!inverse(JTJ, JTJ, 9)) {
         return;
     }
 
-    if(!inverse9x9(JTJ2, JTJ2)) {
+    if(!inverse(JTJ2, JTJ2, 9)) {
         return;
     }
 
@@ -556,595 +641,6 @@ void CompassCalibrator::run_ellipsoid_fit()
     }
 }
 
-//////////////////////////////////////////////////////////
-////////////////////// MATH HELPERS //////////////////////
-//////////////////////////////////////////////////////////
-bool CompassCalibrator::inverse9x9(const float x[81], float y[81])
-{
-  if(fabsf(det9x9(x)) < 1.0e-20f) {
-     return false;
-  }
-  float A[81];
-  int32_t i0;
-  int8_t ipiv[9];
-  int32_t j;
-  int32_t c;
-  int32_t pipk;
-  int32_t ix;
-  float smax;
-  int32_t k;
-  float s;
-  int32_t jy;
-  int32_t ijA;
-  int8_t p[9];
-  for (i0 = 0; i0 < 81; i0++) {
-    A[i0] = x[i0];
-    y[i0] = 0.0;
-  }
-
-  for (i0 = 0; i0 < 9; i0++) {
-    ipiv[i0] = (int8_t)(1 + i0);
-  }
-
-  for (j = 0; j < 8; j++) {
-    c = j * 10;
-    pipk = 0;
-    ix = c;
-    smax = fabs(A[c]);
-    for (k = 2; k <= 9 - j; k++) {
-      ix++;
-      s = fabs(A[ix]);
-      if (s > smax) {
-        pipk = k - 1;
-        smax = s;
-      }
-    }
-
-    if (A[c + pipk] != 0.0) {
-      if (pipk != 0) {
-        ipiv[j] = (int8_t)((j + pipk) + 1);
-        ix = j;
-        pipk += j;
-        for (k = 0; k < 9; k++) {
-          smax = A[ix];
-          A[ix] = A[pipk];
-          A[pipk] = smax;
-          ix += 9;
-          pipk += 9;
-        }
-      }
-
-      i0 = (c - j) + 9;
-      for (jy = c + 1; jy + 1 <= i0; jy++) {
-        A[jy] /= A[c];
-      }
-    }
-
-    pipk = c;
-    jy = c + 9;
-    for (k = 1; k <= 8 - j; k++) {
-      smax = A[jy];
-      if (A[jy] != 0.0) {
-        ix = c + 1;
-        i0 = (pipk - j) + 18;
-        for (ijA = 10 + pipk; ijA + 1 <= i0; ijA++) {
-          A[ijA] += A[ix] * -smax;
-          ix++;
-        }
-      }
-
-      jy += 9;
-      pipk += 9;
-    }
-  }
-
-  for (i0 = 0; i0 < 9; i0++) {
-    p[i0] = (int8_t)(1 + i0);
-  }
-
-  for (k = 0; k < 8; k++) {
-    if (ipiv[k] > 1 + k) {
-      pipk = p[ipiv[k] - 1];
-      p[ipiv[k] - 1] = p[k];
-      p[k] = (int8_t)pipk;
-    }
-  }
-
-  for (k = 0; k < 9; k++) {
-    y[k + 9 * (p[k] - 1)] = 1.0;
-    for (j = k; j + 1 < 10; j++) {
-      if (y[j + 9 * (p[k] - 1)] != 0.0) {
-        for (jy = j + 1; jy + 1 < 10; jy++) {
-          y[jy + 9 * (p[k] - 1)] -= y[j + 9 * (p[k] - 1)] * A[jy + 9 * j];
-        }
-      }
-    }
-  }
-
-  for (j = 0; j < 9; j++) {
-    c = 9 * j;
-    for (k = 8; k > -1; k += -1) {
-      pipk = 9 * k;
-      if (y[k + c] != 0.0) {
-        y[k + c] /= A[k + pipk];
-        for (jy = 0; jy + 1 <= k; jy++) {
-          y[jy + c] -= y[k + c] * A[jy + pipk];
-        }
-      }
-    }
-  }
-  return true;
-}
-
-
-bool CompassCalibrator::inverse6x6(const float x[], float y[])
-{
-    if(fabsf(det6x6(x)) < 1.0e-20f) {
-        return false;
-    }
-
-    float A[36];
-    int32_t i0;
-    int32_t ipiv[6];
-    int32_t j;
-    int32_t c;
-    int32_t pipk;
-    int32_t ix;
-    float smax;
-    int32_t k;
-    float s;
-    int32_t jy;
-    int32_t ijA;
-    int32_t p[6];
-    for (i0 = 0; i0 < 36; i0++) {
-        A[i0] = x[i0];
-        y[i0] = 0.0f;
-    }
-
-    for (i0 = 0; i0 < 6; i0++) {
-        ipiv[i0] = (int32_t)(1 + i0);
-    }
-
-    for (j = 0; j < 5; j++) {
-        c = j * 7;
-        pipk = 0;
-        ix = c;
-        smax = fabsf(A[c]);
-        for (k = 2; k <= 6 - j; k++) {
-            ix++;
-            s = fabsf(A[ix]);
-            if (s > smax) {
-                pipk = k - 1;
-                smax = s;
-            }
-        }
-
-        if (A[c + pipk] != 0.0f) {
-            if (pipk != 0) {
-                ipiv[j] = (int32_t)((j + pipk) + 1);
-                ix = j;
-                pipk += j;
-                for (k = 0; k < 6; k++) {
-                    smax = A[ix];
-                    A[ix] = A[pipk];
-                    A[pipk] = smax;
-                    ix += 6;
-                    pipk += 6;
-                }
-            }
-
-            i0 = (c - j) + 6;
-            for (jy = c + 1; jy + 1 <= i0; jy++) {
-                A[jy] /= A[c];
-            }
-        }
-
-        pipk = c;
-        jy = c + 6;
-        for (k = 1; k <= 5 - j; k++) {
-            smax = A[jy];
-            if (A[jy] != 0.0f) {
-                ix = c + 1;
-                i0 = (pipk - j) + 12;
-                for (ijA = 7 + pipk; ijA + 1 <= i0; ijA++) {
-                    A[ijA] += A[ix] * -smax;
-                    ix++;
-                }
-            }
-
-            jy += 6;
-            pipk += 6;
-        }
-    }
-
-    for (i0 = 0; i0 < 6; i0++) {
-        p[i0] = (int32_t)(1 + i0);
-    }
-
-    for (k = 0; k < 5; k++) {
-        if (ipiv[k] > 1 + k) {
-            pipk = p[ipiv[k] - 1];
-            p[ipiv[k] - 1] = p[k];
-            p[k] = (int32_t)pipk;
-        }
-    }
-
-    for (k = 0; k < 6; k++) {
-        y[k + 6 * (p[k] - 1)] = 1.0;
-        for (j = k; j + 1 < 7; j++) {
-            if (y[j + 6 * (p[k] - 1)] != 0.0f) {
-                for (jy = j + 1; jy + 1 < 7; jy++) {
-                    y[jy + 6 * (p[k] - 1)] -= y[j + 6 * (p[k] - 1)] * A[jy + 6 * j];
-                }
-            }
-        }
-    }
-
-    for (j = 0; j < 6; j++) {
-        c = 6 * j;
-        for (k = 5; k > -1; k += -1) {
-            pipk = 6 * k;
-            if (y[k + c] != 0.0f) {
-                y[k + c] /= A[k + pipk];
-                for (jy = 0; jy + 1 <= k; jy++) {
-                    y[jy + c] -= y[k + c] * A[jy + pipk];
-                }
-            }
-        }
-    }
-    return true;
-}
-
-bool CompassCalibrator::inverse3x3(float m[], float invOut[])
-{
-    float inv[9];
-    // computes the inverse of a matrix m
-    float  det = m[0] * (m[4] * m[8] - m[7] * m[5]) -
-    m[1] * (m[3] * m[8] - m[5] * m[6]) +
-    m[2] * (m[3] * m[7] - m[4] * m[6]);
-    if(fabsf(det) < 1.0e-20f){
-        return false;
-    }
-
-    float invdet = 1 / det;
-
-    inv[0] = (m[4] * m[8] - m[7] * m[5]) * invdet;
-    inv[1] = (m[2] * m[7] - m[1] * m[8]) * invdet;
-    inv[2] = (m[1] * m[5] - m[2] * m[4]) * invdet;
-    inv[3] = (m[5] * m[6] - m[5] * m[8]) * invdet;
-    inv[4] = (m[0] * m[8] - m[2] * m[6]) * invdet;
-    inv[5] = (m[3] * m[2] - m[0] * m[5]) * invdet;
-    inv[6] = (m[3] * m[7] - m[6] * m[4]) * invdet;
-    inv[7] = (m[6] * m[1] - m[0] * m[7]) * invdet;
-    inv[8] = (m[0] * m[4] - m[3] * m[1]) * invdet;
-
-    for(uint8_t i = 0; i < 9; i++){
-        invOut[i] = inv[i];
-    }
-
-    return true;
-}
-
-/*
- *    matrix inverse code only for 4x4 square matrix copied from
- *    gluInvertMatrix implementation in
- *    opengl for 4x4 matrices.
- *
- *    @param     m,           input 4x4 matrix
- *    @param     invOut,      Output inverted 4x4 matrix
- *    @returns                false = matrix is Singular, true = matrix inversion successful
- *    Known Issues/ Possible Enhancements:
- *                -Will need a different implementation for more number
- *                 of parameters like in the case of addition of soft
- *                 iron calibration
- */
-bool CompassCalibrator::inverse4x4(float m[],float invOut[])
-{
-    float inv[16], det;
-    uint8_t i;
-
-    inv[0] = m[5]  * m[10] * m[15] -
-    m[5]  * m[11] * m[14] -
-    m[9]  * m[6]  * m[15] +
-    m[9]  * m[7]  * m[14] +
-    m[13] * m[6]  * m[11] -
-    m[13] * m[7]  * m[10];
-
-    inv[4] = -m[4]  * m[10] * m[15] +
-    m[4]  * m[11] * m[14] +
-    m[8]  * m[6]  * m[15] -
-    m[8]  * m[7]  * m[14] -
-    m[12] * m[6]  * m[11] +
-    m[12] * m[7]  * m[10];
-
-    inv[8] = m[4]  * m[9] * m[15] -
-    m[4]  * m[11] * m[13] -
-    m[8]  * m[5] * m[15] +
-    m[8]  * m[7] * m[13] +
-    m[12] * m[5] * m[11] -
-    m[12] * m[7] * m[9];
-
-    inv[12] = -m[4]  * m[9] * m[14] +
-    m[4]  * m[10] * m[13] +
-    m[8]  * m[5] * m[14] -
-    m[8]  * m[6] * m[13] -
-    m[12] * m[5] * m[10] +
-    m[12] * m[6] * m[9];
-
-    inv[1] = -m[1]  * m[10] * m[15] +
-    m[1]  * m[11] * m[14] +
-    m[9]  * m[2] * m[15] -
-    m[9]  * m[3] * m[14] -
-    m[13] * m[2] * m[11] +
-    m[13] * m[3] * m[10];
-
-    inv[5] = m[0]  * m[10] * m[15] -
-    m[0]  * m[11] * m[14] -
-    m[8]  * m[2] * m[15] +
-    m[8]  * m[3] * m[14] +
-    m[12] * m[2] * m[11] -
-    m[12] * m[3] * m[10];
-
-    inv[9] = -m[0]  * m[9] * m[15] +
-    m[0]  * m[11] * m[13] +
-    m[8]  * m[1] * m[15] -
-    m[8]  * m[3] * m[13] -
-    m[12] * m[1] * m[11] +
-    m[12] * m[3] * m[9];
-
-    inv[13] = m[0]  * m[9] * m[14] -
-    m[0]  * m[10] * m[13] -
-    m[8]  * m[1] * m[14] +
-    m[8]  * m[2] * m[13] +
-    m[12] * m[1] * m[10] -
-    m[12] * m[2] * m[9];
-
-    inv[2] = m[1]  * m[6] * m[15] -
-    m[1]  * m[7] * m[14] -
-    m[5]  * m[2] * m[15] +
-    m[5]  * m[3] * m[14] +
-    m[13] * m[2] * m[7] -
-    m[13] * m[3] * m[6];
-
-    inv[6] = -m[0]  * m[6] * m[15] +
-    m[0]  * m[7] * m[14] +
-    m[4]  * m[2] * m[15] -
-    m[4]  * m[3] * m[14] -
-    m[12] * m[2] * m[7] +
-    m[12] * m[3] * m[6];
-
-    inv[10] = m[0]  * m[5] * m[15] -
-    m[0]  * m[7] * m[13] -
-    m[4]  * m[1] * m[15] +
-    m[4]  * m[3] * m[13] +
-    m[12] * m[1] * m[7] -
-    m[12] * m[3] * m[5];
-
-    inv[14] = -m[0]  * m[5] * m[14] +
-    m[0]  * m[6] * m[13] +
-    m[4]  * m[1] * m[14] -
-    m[4]  * m[2] * m[13] -
-    m[12] * m[1] * m[6] +
-    m[12] * m[2] * m[5];
-
-    inv[3] = -m[1] * m[6] * m[11] +
-    m[1] * m[7] * m[10] +
-    m[5] * m[2] * m[11] -
-    m[5] * m[3] * m[10] -
-    m[9] * m[2] * m[7] +
-    m[9] * m[3] * m[6];
-
-    inv[7] = m[0] * m[6] * m[11] -
-    m[0] * m[7] * m[10] -
-    m[4] * m[2] * m[11] +
-    m[4] * m[3] * m[10] +
-    m[8] * m[2] * m[7] -
-    m[8] * m[3] * m[6];
-
-    inv[11] = -m[0] * m[5] * m[11] +
-    m[0] * m[7] * m[9] +
-    m[4] * m[1] * m[11] -
-    m[4] * m[3] * m[9] -
-    m[8] * m[1] * m[7] +
-    m[8] * m[3] * m[5];
-
-    inv[15] = m[0] * m[5] * m[10] -
-    m[0] * m[6] * m[9] -
-    m[4] * m[1] * m[10] +
-    m[4] * m[2] * m[9] +
-    m[8] * m[1] * m[6] -
-    m[8] * m[2] * m[5];
-
-    det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-
-    if(fabsf(det) < 1.0e-20f){
-        return false;
-    }
-
-    det = 1.0f / det;
-
-    for (i = 0; i < 16; i++)
-        invOut[i] = inv[i] * det;
-    return true;
-}
-
-float CompassCalibrator::det6x6(const float C[36])
-{
-    float f;
-    float A[36];
-    int8_t ipiv[6];
-    int32_t i0;
-    int32_t j;
-    int32_t c;
-    int32_t iy;
-    int32_t ix;
-    float smax;
-    int32_t jy;
-    float s;
-    int32_t b_j;
-    int32_t ijA;
-    bool isodd;
-    memcpy(&A[0], &C[0], 36U * sizeof(float));
-    for (i0 = 0; i0 < 6; i0++) {
-        ipiv[i0] = (int8_t)(1 + i0);
-    }
-
-    for (j = 0; j < 5; j++) {
-        c = j * 7;
-        iy = 0;
-        ix = c;
-        smax = fabsf(A[c]);
-        for (jy = 2; jy <= 6 - j; jy++) {
-            ix++;
-            s = fabsf(A[ix]);
-            if (s > smax) {
-                iy = jy - 1;
-                smax = s;
-            }
-        }
-
-        if (A[c + iy] != 0.0f) {
-            if (iy != 0) {
-                ipiv[j] = (int8_t)((j + iy) + 1);
-                ix = j;
-                iy += j;
-                for (jy = 0; jy < 6; jy++) {
-                    smax = A[ix];
-                    A[ix] = A[iy];
-                    A[iy] = smax;
-                    ix += 6;
-                    iy += 6;
-                }
-            }
-
-            i0 = (c - j) + 6;
-            for (iy = c + 1; iy + 1 <= i0; iy++) {
-                A[iy] /= A[c];
-            }
-        }
-
-        iy = c;
-        jy = c + 6;
-        for (b_j = 1; b_j <= 5 - j; b_j++) {
-            smax = A[jy];
-            if (A[jy] != 0.0f) {
-                ix = c + 1;
-                i0 = (iy - j) + 12;
-                for (ijA = 7 + iy; ijA + 1 <= i0; ijA++) {
-                    A[ijA] += A[ix] * -smax;
-                    ix++;
-                }
-            }
-
-            jy += 6;
-            iy += 6;
-        }
-    }
-
-    f = A[0];
-    isodd = false;
-    for (jy = 0; jy < 5; jy++) {
-        f *= A[(jy + 6 * (1 + jy)) + 1];
-        if (ipiv[jy] > 1 + jy) {
-            isodd = !isodd;
-        }
-    }
-
-    if (isodd) {
-        f = -f;
-    }
-
-    return f;
-}
-
-float CompassCalibrator::det9x9(const float C[81])
-{
-  float f;
-  float A[81];
-  int8_t ipiv[9];
-  int32_t i0;
-  int32_t j;
-  int32_t c;
-  int32_t iy;
-  int32_t ix;
-  float smax;
-  int32_t jy;
-  float s;
-  int32_t b_j;
-  int32_t ijA;
-  bool isodd;
-  memcpy(&A[0], &C[0], 81U * sizeof(float));
-  for (i0 = 0; i0 < 9; i0++) {
-    ipiv[i0] = (int8_t)(1 + i0);
-  }
-
-  for (j = 0; j < 8; j++) {
-    c = j * 10;
-    iy = 0;
-    ix = c;
-    smax = fabs(A[c]);
-    for (jy = 2; jy <= 9 - j; jy++) {
-      ix++;
-      s = fabs(A[ix]);
-      if (s > smax) {
-        iy = jy - 1;
-        smax = s;
-      }
-    }
-
-    if (A[c + iy] != 0.0) {
-      if (iy != 0) {
-        ipiv[j] = (int8_t)((j + iy) + 1);
-        ix = j;
-        iy += j;
-        for (jy = 0; jy < 9; jy++) {
-          smax = A[ix];
-          A[ix] = A[iy];
-          A[iy] = smax;
-          ix += 9;
-          iy += 9;
-        }
-      }
-
-      i0 = (c - j) + 9;
-      for (iy = c + 1; iy + 1 <= i0; iy++) {
-        A[iy] /= A[c];
-      }
-    }
-
-    iy = c;
-    jy = c + 9;
-    for (b_j = 1; b_j <= 8 - j; b_j++) {
-      smax = A[jy];
-      if (A[jy] != 0.0) {
-        ix = c + 1;
-        i0 = (iy - j) + 18;
-        for (ijA = 10 + iy; ijA + 1 <= i0; ijA++) {
-          A[ijA] += A[ix] * -smax;
-          ix++;
-        }
-      }
-
-      jy += 9;
-      iy += 9;
-    }
-  }
-
-  f = A[0];
-  isodd = false;
-  for (jy = 0; jy < 8; jy++) {
-    f *= A[(jy + 9 * (1 + jy)) + 1];
-    if (ipiv[jy] > 1 + jy) {
-      isodd = !isodd;
-    }
-  }
-
-  if (isodd) {
-    f = -f;
-  }
-
-  return f;
-}
 
 uint16_t CompassCalibrator::get_random(void)
 {
