@@ -766,7 +766,7 @@ void Compass::motor_compensation_type(const uint8_t comp_type)
     }
 }
 
-uint8_t Compass::get_use_mask()
+uint8_t Compass::get_use_mask() const
 {
     uint8_t ret = 0;
     for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
@@ -777,7 +777,7 @@ uint8_t Compass::get_use_mask()
     return ret;
 }
 
-bool Compass::consistent(uint8_t mask)
+bool Compass::consistent(uint8_t mask) const
 {
     Vector3f primary_mag_vec = get_field();
     Vector3f primary_mag_vec_norm = primary_mag_vec;
