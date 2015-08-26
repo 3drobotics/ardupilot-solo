@@ -449,7 +449,7 @@ bool NavEKF::healthy(void) const
     }
     // barometer and position innovations must be within limits when on-ground
     float horizErrSq = sq(innovVelPos[3]) + sq(innovVelPos[4]);
-    if (!vehicleArmed && (fabsf(innovVelPos[5]) > 1.0f || horizErrSq > 2.0f)) {
+    if (!vehicleArmed && (fabsf(hgtInnovFiltState) > 1.0f || horizErrSq > 2.0f)) {
         return false;
     }
 
@@ -2111,6 +2111,13 @@ void NavEKF::FuseVelPosNED()
         if (fuseHgtData) {
             // calculate height innovations
             innovVelPos[5] = statesAtHgtTime.position.z - observation[5];
+
+            // Calculate a filtered value to be used by pre-flight health checks
+            // We need to filter because wind gusts can generate singificant baro noise and we want to be able to detect bias errors in the inertial solution
+            static const float dtBaro = msecHgtAvg*1.0e-3f;
+            static const float hgtInnovFiltTC = 2.0f;
+            static const float alpha = constrain_float(dtBaro/(dtBaro+hgtInnovFiltTC),0.0f,1.0f);
+            hgtInnovFiltState += (innovVelPos[5]-hgtInnovFiltState)*alpha;
 
             varInnovVelPos[5] = P[9][9] + R_OBS_DATA_CHECKS[5];
             // calculate the innovation consistency test ratio
@@ -4680,6 +4687,7 @@ void NavEKF::InitialiseVariables()
     gpsDriftNE = 0.0f;
     gpsVertVelFilt = 0.0f;
     gpsHorizVelFilt = 0.0f;
+    hgtInnovFiltState = 0.0f;
 }
 
 // return true if we should use the airspeed sensor
