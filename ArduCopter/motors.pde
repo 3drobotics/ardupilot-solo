@@ -3,7 +3,7 @@
 #define ARM_DELAY               20  // called at 10hz so 2 seconds
 #define DISARM_DELAY            20  // called at 10hz so 2 seconds
 #define AUTO_TRIM_DELAY         100 // called at 10hz so 10 seconds
-#define AUTO_DISARMING_DELAY    15  // called at 1hz so 15 seconds
+#define AUTO_DISARMING_DELAY    5   // called at 1hz so 5 seconds
 #define LOST_VEHICLE_DELAY      10  // called at 10hz so 1 second
 
 static uint8_t auto_disarming_counter;
@@ -68,12 +68,12 @@ static void arm_motors_check()
     }
 }
 
-// auto_disarm_check - disarms the copter if it has been sitting on the ground in manual mode with throttle low for at least 15 seconds
+// auto_disarm_check - disarms the copter if it has been sitting on the ground in manual mode for at least 15 seconds
 // called at 1hz
 static void auto_disarm_check()
 {
     // exit immediately if we are already disarmed or throttle is not zero
-    if (!motors.armed() || !ap.throttle_zero) {
+    if (!motors.armed()) {
         auto_disarming_counter = 0;
         return;
     }
