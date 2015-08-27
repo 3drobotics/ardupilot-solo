@@ -335,8 +335,8 @@ public:
         k_param_autotune_aggressiveness,  // 246
         k_param_pi_vel_xy,  // 247
         k_param_fs_ekf_action, // 248
-        k_param_pi_precland,   // 249
-
+        k_param_rtl_climb_min,  // 249
+        k_param_pi_precland,   // 250
 
         // 254,255: reserved
     };
@@ -372,15 +372,16 @@ public:
     AP_Int8         compass_enabled;
     AP_Int8         super_simple;
     AP_Int16        rtl_alt_final;
+    AP_Int16        rtl_climb_min;              // rtl minimum climb in cm
 
     AP_Int8         rssi_pin;
-    AP_Float        rssi_range;                 // allows to set max voltage for rssi pin such as 5.0, 3.3 etc. 
+    AP_Float        rssi_range;                 // allows to set max voltage for rssi pin such as 5.0, 3.3 etc.
     AP_Int8         wp_yaw_behavior;            // controls how the autopilot controls yaw during missions
     AP_Int8         rc_feel_rp;                 // controls vehicle response to user input with 0 being extremely soft and 100 begin extremely crisp
 
     AP_Int16        poshold_brake_rate;         // PosHold flight mode's rotation rate during braking in deg/sec
     AP_Int16        poshold_brake_angle_max;    // PosHold flight mode's max lean angle during braking in centi-degrees
-    
+
     // Waypoints
     //
     AP_Int32        rtl_loiter_time;
@@ -573,4 +574,3 @@ public:
 extern const AP_Param::Info        var_info[];
 
 #endif // PARAMETERS_H
-

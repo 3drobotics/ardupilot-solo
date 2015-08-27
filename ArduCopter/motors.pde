@@ -1,12 +1,13 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define ARM_DELAY               20  // called at 10hz so 2 seconds
-#define DISARM_DELAY            20  // called at 10hz so 2 seconds
-#define AUTO_TRIM_DELAY         100 // called at 10hz so 10 seconds
-#define AUTO_DISARMING_DELAY    15  // called at 1hz so 15 seconds
-#define LOST_VEHICLE_DELAY      10  // called at 10hz so 1 second
+#define ARM_DELAY                 20 // called at 10hz so 2 seconds
+#define DISARM_DELAY              20 // called at 10hz so 2 seconds
+#define AUTO_TRIM_DELAY          100 // called at 10hz so 10 seconds
+#define LOST_VEHICLE_DELAY        10 // called at 10hz so 1 second
 
-static uint8_t auto_disarming_counter;
+#define AUTO_DISARMING_DELAY_SEC  10.0f
+
+static uint32_t auto_disarm_begin;
 
 // arm_motors_check - checks for pilot input to arm or disarm the copter
 // called at 10hz
@@ -42,7 +43,7 @@ static void arm_motors_check()
         if (arming_counter == AUTO_TRIM_DELAY && motors.armed() && control_mode == STABILIZE) {
             auto_trim_counter = 250;
             // ensure auto-disarm doesn't trigger immediately
-            auto_disarming_counter = 0;
+            auto_disarm_begin = millis();
         }
 
     // full left
@@ -72,22 +73,29 @@ static void arm_motors_check()
 // called at 1hz
 static void auto_disarm_check()
 {
-    // exit immediately if we are already disarmed or throttle is not zero
-    if (!motors.armed() || !ap.throttle_zero) {
-        auto_disarming_counter = 0;
+    uint32_t tnow = millis();
+    if (!motors.armed()) {
+        auto_disarm_begin = tnow;
         return;
     }
 
-    // allow auto disarm in manual flight modes or Loiter/AltHold if we're landed
-    if (mode_has_manual_throttle(control_mode) || ap.land_complete) {
-        auto_disarming_counter++;
+    bool sprung_throttle_stick = (g.throttle_behavior & THR_BEHAVE_FEEDBACK_FROM_MID_STICK) != 0;
+    bool thr_low;
+    if (mode_has_manual_throttle(control_mode) || !sprung_throttle_stick) {
+        thr_low = ap.throttle_zero;
+    } else {
+        float deadband_top = g.rc_3.get_control_mid() + g.throttle_deadzone;
+        thr_low = g.rc_3.control_in <= deadband_top;
+    }
 
-        if(auto_disarming_counter >= AUTO_DISARMING_DELAY) {
+    if (thr_low && ap.land_complete) {
+        if((tnow-auto_disarm_begin)*1.0e-3f >= AUTO_DISARMING_DELAY_SEC) {
             init_disarm_motors();
-            auto_disarming_counter = 0;
+            auto_disarm_begin = tnow;
         }
-    }else{
-        auto_disarming_counter = 0;
+    } else {
+        // reset timer
+        auto_disarm_begin = tnow;
     }
 }
 
@@ -316,44 +324,12 @@ static bool pre_arm_checks(bool display_failure)
             return false;
         }
 
-#if COMPASS_MAX_INSTANCES > 1
-        // check all compasses point in roughly same direction and apply a more stringent check in the XY plane
-        if (compass.get_count() > 1) {
-            Vector3f prime_mag_vec = compass.get_field();
-            Vector3f prime_mag_vec_norm = prime_mag_vec;
-            prime_mag_vec_norm.normalize();
-            for(uint8_t i=0; i<compass.get_count(); i++) {
-                if (!compass.use_for_yaw(i)) {
-                    continue;
-                }
-                // get next compass
-                Vector3f mag_vec = compass.get_field(i);
-                Vector3f mag_vec_norm = mag_vec;
-                mag_vec_norm.normalize();
-                Vector3f vec_diff = mag_vec_norm - prime_mag_vec_norm;
-
-                // check for gross misalignment on all axes
-                bool vector_diff_large = vec_diff.length() > COMPASS_ACCEPTABLE_VECTOR_DIFF;
-
-                // check for an unacceptable angle difference on the xy plane
-                float angDiff_XY = wrap_PI((atan2f(prime_mag_vec.y,prime_mag_vec.x) - atan2f(mag_vec.y,mag_vec.x)));
-                bool xy_angle_diff_large = fabsf(angDiff_XY) > MAX_COMPASS_XY_ANG_DIFF;
-
-                // check for an unacceptable length difference on the xy plane
-                float lengthDiff_XY = sqrtf(sq(prime_mag_vec.x - mag_vec.x) + sq(prime_mag_vec.y - mag_vec.y));
-                bool xy_length_diff_large = lengthDiff_XY > MAX_COMPASS_XY_LENGTH_DIFF;
-
-                // check for inconsistency in the XY plane
-                if (vector_diff_large || xy_angle_diff_large || xy_length_diff_large) {
-                    if (display_failure) {
-                        gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent compasses"));
-                    }
-                    return false;
-                }
+        if (!compass.consistent()) {
+            if (display_failure) {
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent compasses"));
             }
+            return false;
         }
-#endif
-
     }
 
     // check GPS

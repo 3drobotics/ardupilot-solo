@@ -653,7 +653,6 @@ bool GCS_MAVLINK::try_send_message(enum ap_message id)
         ahrs.get_NavEKF().send_status_report(chan);
 #endif
         break;
-
     case MSG_FENCE_STATUS:
     case MSG_WIND:
         // unused
@@ -963,7 +962,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_PARAM_VALUE:{
         if(msg->compid == MAV_COMP_ID_GIMBAL){
-            camera_mount._externalParameters.handle_param_value(msg);
+            camera_mount._externalParameters.handle_param_value(&DataFlash, msg);
         }
         break;
     }
@@ -1030,7 +1029,14 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         //Log_Write_Gimbal();
         break;
     }
-
+    
+    case MAVLINK_MSG_ID_GIMBAL_TORQUE_CMD_REPORT:
+    {
+#if MOUNT == ENABLED
+        handle_gimbal_torque_report(camera_mount, msg);
+#endif
+        break;
+    }
     case MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE:       // MAV ID: 70
     {
         // allow override of RC channel values for HIL
@@ -1204,18 +1210,8 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             } else if (packet.param4 == 1) {
                 result = MAV_RESULT_UNSUPPORTED;
             } else if (packet.param5 == 1) {
-                // 3d accel calibration
-                float trim_roll, trim_pitch;
-                // this blocks
-                AP_InertialSensor_UserInteract_MAVLink interact(this);
-                if(ins.calibrate_accel(&interact, trim_roll, trim_pitch)) {
-                    // reset ahrs's trim to suggested values from calibration routine
-                    ahrs.set_trim(Vector3f(trim_roll, trim_pitch, 0));
-                    hal.scheduler->delay(1000);
-                    hal.scheduler->reboot(false);
-                    result = MAV_RESULT_ACCEPTED;
-                } else {
-                    result = MAV_RESULT_FAILED;
+                if (!motors.armed()) {
+                    accelcal.start(this);
                 }
             } else if (packet.param6 == 1) {
                 // compassmot calibration
@@ -1445,6 +1441,9 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_COMMAND_ACK:        // MAV ID: 77
     {
+        if (accelcal.get_status() == ACCEL_CAL_WAITING_FOR_ORIENTATION) {
+            accelcal.collect_sample();
+        }
         command_ack_counter++;
         break;
     }
@@ -1745,6 +1744,11 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         // send message to Notify
         AP_Notify::handle_led_control(msg);
         break;
+#if defined(HAL_BOARD_REMOTE_LOG_PORT)
+    case MAVLINK_MSG_ID_REMOTE_LOG_BLOCK_STATUS:
+        handle_remote_log_status(msg, DataFlash);
+        break;
+#endif
 
     }     // end switch
 } // end handle mavlink

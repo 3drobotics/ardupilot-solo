@@ -21,8 +21,16 @@
 #include <AP_Mount.h>
 #include <AP_SmallEKF.h>
 #include <AP_NavEKF.h>
+#include <AP_AccelCal.h>
 
-class AP_Gimbal
+enum gimbal_mode_t {
+    GIMBAL_MODE_IDLE=0,
+    GIMBAL_MODE_POS_HOLD,
+    GIMBAL_MODE_POS_HOLD_FF,
+    GIMBAL_MODE_STABILIZE
+};
+
+class AP_Gimbal : AP_AccelCal_Client
 {
 public:
     //Constructor
@@ -32,16 +40,27 @@ public:
         _gimbalParams(parameters),
         vehicleYawRateFilt(0.0f),
         yawRateFiltPole(10.0f),
-        yawErrorLimit(0.1f)
+        lockedToBody(false),
+        yawErrorLimit(0.1f),
+        vehicle_delta_angles(),
+        vehicle_to_gimbal_quat(),
+        vehicle_to_gimbal_quat_filt(),
+        filtered_joint_angles(),
+        _max_torque(5000.0f)
     {
+        ahrs.get_ins().get_acal().register_client(this);
     }
 
     void    update_target(Vector3f newTarget);
     void    receive_feedback(mavlink_channel_t chan, mavlink_message_t *msg);
 
+    void update_fast();
+
+    bool present();
+
     Vector3f getGimbalEstimateEF();
 
-    struct Measurament {
+    struct {
         float delta_time;
         Vector3f delta_angles;
         Vector3f delta_velocity;
@@ -55,8 +74,10 @@ public:
     Vector3f    gimbalRateDemVec;       // degrees/s
     Vector3f    _angle_ef_target_rad;   // desired earth-frame roll, tilt and pan angles in radians
 
+    bool lockedToBody;
+
 private:
-    
+    gimbal_mode_t _mode;
 
     // filtered yaw rate from the vehicle
     float vehicleYawRateFilt;
@@ -75,16 +96,46 @@ private:
 
     void send_control(mavlink_channel_t chan);
     void update_state();
-    void decode_feedback(mavlink_message_t *msg);
+    void extract_feedback(const mavlink_gimbal_report_t& report_msg);
+    void update_joint_angle_est();
+
+    void update_mode();
 
     bool isCopterFlipped();
+    bool joints_near_limits();
 
     // Control loop functions
     Vector3f getGimbalRateDemVecYaw(const Quaternion &quatEst);
     Vector3f getGimbalRateDemVecTilt(const Quaternion &quatEst);
     Vector3f getGimbalRateDemVecForward(const Quaternion &quatEst);
     Vector3f getGimbalRateDemVecGyroBias();
+    Vector3f getGimbalRateBodyLock();
 
+    void gimbal_ang_vel_to_joint_rates(const Vector3f& ang_vel, Vector3f& joint_rates);
+    void joint_rates_to_gimbal_ang_vel(const Vector3f& joint_rates, Vector3f& ang_vel);
+
+    void readVehicleDeltaAngle(uint8_t ins_index, Vector3f &dAng);
+
+    // joint angle filter states
+    Vector3f vehicle_delta_angles;
+
+    Quaternion vehicle_to_gimbal_quat;
+    Quaternion vehicle_to_gimbal_quat_filt;
+    Vector3f filtered_joint_angles;
+
+    uint32_t _last_report_msg_ms;
+
+    float _max_torque;
+
+    float _ang_vel_mag_filt;
+
+    AccelCalibrator _calibrator;
+    void _acal_save_calibrations();
+    bool _acal_ready_to_sample();
+    bool _acal_saving();
+    AccelCalibrator* _acal_get_calibrator(uint8_t instance);
+
+    mavlink_channel_t _chan;
 };
 
 #endif // AP_AHRS_NAVEKF_AVAILABLE

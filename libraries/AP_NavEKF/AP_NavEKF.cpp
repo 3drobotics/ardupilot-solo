@@ -4290,6 +4290,9 @@ void NavEKF::readMagData()
         // read compass data and scale to improve numerical conditioning
         magData = _ahrs->get_compass()->get_field() * 0.001f;
 
+        // check for consistent data between magnetometers
+        consistentMagData = _ahrs->get_compass()->consistent();
+
         // get states stored at time closest to measurement time after allowance for measurement delay
         RecallStates(statesAtMagMeasTime, (imuSampleTime_ms - msecMagDelay));
 
@@ -4593,6 +4596,7 @@ void NavEKF::InitialiseVariables()
     lastGpsVelFail_ms = 0;
     lastGpsAidBadTime_ms = 0;
     timeAtDisarm_ms = 0;
+    magYawResetTimer_ms = imuSampleTime_ms;
 
     // initialise other variables
     gpsNoiseScaler = 1.0f;
@@ -5114,6 +5118,18 @@ bool NavEKF::calcGpsGoodToAlign(void)
         hAccFail =  false;
     }
 
+    // If we have good magnetometer consistency and bad innovations for longer than 5 seconds then we reset heading and field states
+    // This enables us to handle large changes to the external magnetic field environment that occur before arming
+    if ((magTestRatio.x <= 1.0f && magTestRatio.y <= 1.0f) || !consistentMagData) {
+        magYawResetTimer_ms = imuSampleTime_ms;
+    }
+    if (imuSampleTime_ms - magYawResetTimer_ms > 5000) {
+        // reset heading and field states
+        Vector3f eulerAngles;
+        getEulerAngles(eulerAngles);
+        state.quat = calcQuatAndFieldStates(eulerAngles.x, eulerAngles.y);
+    }
+
     // fail if magnetometer innovations are outside limits indicating bad yaw
     // with bad yaw we are unable to use GPS
     bool yawFail;
@@ -5166,10 +5182,10 @@ bool NavEKF::calcGpsGoodToAlign(void)
 
     // return healthy if we already have an origin and are inflight to prevent a race condition when checking the status on the ground after landing
     // return healthy for a few seconds after landing so that filter disturbances don't fail the GPS
-    bool disarmTimeout = ((imuSampleTime_ms - timeAtDisarm_ms) < 5000) && !vehicleArmed && gpsAccuracyGood;
-    bool usingInFlight = vehicleArmed && validOrigin && !constVelMode && !constPosMode;
+    static bool usingInFlight = false;
+    usingInFlight = (vehicleArmed && validOrigin && !constVelMode && !constPosMode) || (!vehicleArmed && usingInFlight && (imuSampleTime_ms - timeAtDisarm_ms) < 5000);
 
-    if (disarmTimeout || usingInFlight) {
+    if (usingInFlight) {
         return true;
     }
 

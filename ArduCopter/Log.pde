@@ -447,6 +447,20 @@ static void Log_Write_MotBatt()
     DataFlash.WriteBlock(&pkt_mot, sizeof(pkt_mot));
 }
 
+
+// precision landing logging
+struct PACKED log_Precland {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    uint8_t healthy;
+    float bf_angle_x;
+    float bf_angle_y;
+    float ef_angle_x;
+    float ef_angle_y;
+    float pos_x;
+    float pos_y;
+};
+
 // Write an optical flow packet
 static void Log_Write_Precland()
 {
@@ -471,6 +485,7 @@ static void Log_Write_Precland()
         pos_y           : target_pos_ofs.y
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
+
  #endif     // PRECISION_LANDING == ENABLED
 }
 
@@ -531,7 +546,7 @@ struct PACKED log_Data_UInt16t {
 };
 
 // Write an uint16_t data packet
-UNUSED_FUNCTION 
+UNUSED_FUNCTION
 static void Log_Write_Data(uint8_t id, uint16_t value)
 {
     if (should_log(MASK_LOG_ANY)) {
@@ -658,36 +673,36 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "ATDE", "Iff",          "TimeMS,Angle,Rate" },
 #endif
     { LOG_PARAMTUNE_MSG, sizeof(log_ParameterTuning),
-      "PTUN", "IBfHHH",          "TimeMS,Param,TunVal,CtrlIn,TunLo,TunHi" },  
-    { LOG_OPTFLOW_MSG, sizeof(log_Optflow),       
+      "PTUN", "IBfHHH",          "TimeMS,Param,TunVal,CtrlIn,TunLo,TunHi" },
+    { LOG_OPTFLOW_MSG, sizeof(log_Optflow),
       "OF",   "IBffff",   "TimeMS,Qual,flowX,flowY,bodyX,bodyY" },
     { LOG_PRECLAND_MSG, sizeof(log_Precland),
       "PL",   "IBffffff",   "TimeMS,Heal,bX,bY,eX,eY,pX,pY" },
-    { LOG_NAV_TUNING_MSG, sizeof(log_Nav_Tuning),       
+    { LOG_NAV_TUNING_MSG, sizeof(log_Nav_Tuning),
       "NTUN", "Iffffffffff", "TimeMS,DPosX,DPosY,PosX,PosY,DVelX,DVelY,VelX,VelY,DAccX,DAccY" },
     { LOG_CONTROL_TUNING_MSG, sizeof(log_Control_Tuning),
       "CTUN", "Ihhhffecchh", "TimeMS,ThrIn,AngBst,ThrOut,DAlt,Alt,BarAlt,DSAlt,SAlt,DCRt,CRt" },
-    { LOG_PERFORMANCE_MSG, sizeof(log_Performance), 
+    { LOG_PERFORMANCE_MSG, sizeof(log_Performance),
       "PM",  "HHIhBH",    "NLon,NLoop,MaxT,PMT,I2CErr,INSErr" },
     { LOG_RATE_MSG, sizeof(log_Rate),
       "RATE", "Iffffffffffff",  "TimeMS,RDes,R,ROut,PDes,P,POut,YDes,Y,YOut,ADes,A,AOut" },
     { LOG_MOTBATT_MSG, sizeof(log_MotBatt),
       "MOTB", "Iffff",  "TimeMS,LiftMax,BatVolt,BatRes,ThLimit" },
-    { LOG_STARTUP_MSG, sizeof(log_Startup),         
+    { LOG_STARTUP_MSG, sizeof(log_Startup),
       "STRT", "",            "" },
-    { LOG_EVENT_MSG, sizeof(log_Event),         
+    { LOG_EVENT_MSG, sizeof(log_Event),
       "EV",   "B",           "Id" },
-    { LOG_DATA_INT16_MSG, sizeof(log_Data_Int16t),         
+    { LOG_DATA_INT16_MSG, sizeof(log_Data_Int16t),
       "D16",   "Bh",         "Id,Value" },
-    { LOG_DATA_UINT16_MSG, sizeof(log_Data_UInt16t),         
+    { LOG_DATA_UINT16_MSG, sizeof(log_Data_UInt16t),
       "DU16",  "BH",         "Id,Value" },
-    { LOG_DATA_INT32_MSG, sizeof(log_Data_Int32t),         
+    { LOG_DATA_INT32_MSG, sizeof(log_Data_Int32t),
       "D32",   "Bi",         "Id,Value" },
-    { LOG_DATA_UINT32_MSG, sizeof(log_Data_UInt32t),         
+    { LOG_DATA_UINT32_MSG, sizeof(log_Data_UInt32t),
       "DU32",  "BI",         "Id,Value" },
-    { LOG_DATA_FLOAT_MSG, sizeof(log_Data_Float),         
+    { LOG_DATA_FLOAT_MSG, sizeof(log_Data_Float),
       "DFLT",  "Bf",         "Id,Value" },
-    { LOG_ERROR_MSG, sizeof(log_Error),         
+    { LOG_ERROR_MSG, sizeof(log_Error),
       "ERR",   "BB",         "Subsys,ECode" },
 };
 
@@ -702,14 +717,14 @@ static void Log_Read(uint16_t log_num, uint16_t start_page, uint16_t end_page)
 
     cliSerial->println_P(PSTR(HAL_BOARD_NAME));
 
-    DataFlash.LogReadProcess(log_num, start_page, end_page, 
+    DataFlash.LogReadProcess(log_num, start_page, end_page,
                              print_flight_mode,
                              cliSerial);
 }
 #endif // CLI_ENABLED
 
 // start a new log
-static void start_logging() 
+static void start_logging()
 {
     if (g.log_bitmask != 0) {
         if (!ap.logging_started) {

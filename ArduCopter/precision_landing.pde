@@ -6,14 +6,14 @@
 #if PRECISION_LANDING == ENABLED
 static void init_precland()
 {
-	copter.precland.init();
+	precland.init();
 }
 static void update_precland()
 {
 
 	int16_t rng_alt = read_sonar();
 	int16_t final_alt;
-	
+
 	if(rng_alt != 0){ //Use rangefinder altitude if it is valid
 
  #if SONAR_TILT_CORRECTION != 1
@@ -30,7 +30,7 @@ static void update_precland()
 	}
 
 
-	copter.precland.update(final_alt);
+	precland.update(final_alt);
 
 	// log output
 	Log_Write_Precland();
