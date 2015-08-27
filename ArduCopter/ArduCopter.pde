@@ -24,8 +24,8 @@
  *  ArduCopter Version 3.0
  *  Creator:        Jason Short
  *  Lead Developer: Randy Mackay
- *  Lead Tester:    Marco Robustini 
- *  Based on code and ideas from the Arducopter team: Leonard Hall, Andrew Tridgell, Robert Lefebvre, Pat Hickey, Michael Oborne, Jani Hirvinen, 
+ *  Lead Tester:    Marco Robustini
+ *  Based on code and ideas from the Arducopter team: Leonard Hall, Andrew Tridgell, Robert Lefebvre, Pat Hickey, Michael Oborne, Jani Hirvinen,
                                                       Olivier Adler, Kevin Hester, Arthur Benemann, Jonathan Challinger, John Arne Birkeland,
                                                       Jean-Louis Naudin, Mike Smith, and more
  *  Thanks to:	Chris Anderson, Jordi Munoz, Jason Short, Doug Weibel, Jose Julio
@@ -164,7 +164,6 @@
 #include <AP_LandingGear.h>     // Landing Gear library
 #include <AP_Terrain.h>
 #include <AC_PrecLand.h>
-#include <AP_IRLock.h>
 
 // AP_HAL to Arduino compatibility layer
 #include "compat.h"
@@ -748,7 +747,7 @@ AP_Param param_loader(var_info);
   133  = 3hz
   400  = 1hz
   4000 = 0.1hz
-  
+
  */
 static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
     { rc_loop,               4,     10 },
@@ -816,7 +815,7 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
 #endif
 };
 
-void setup() 
+void setup()
 {
     cliSerial = hal.console;
 
@@ -913,7 +912,7 @@ static void fast_loop()
 
     // run low level rate controllers that only require IMU data
     attitude_control.rate_controller_run();
-    
+
 #if FRAME_CONFIG == HELI_FRAME
     update_heli_control_dynamics();
 #endif //HELI_FRAME
@@ -1273,4 +1272,3 @@ static void update_altitude()
 }
 
 AP_HAL_MAIN();
-
