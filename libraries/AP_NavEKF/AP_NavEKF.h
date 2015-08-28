@@ -245,6 +245,8 @@ public:
 
     // send an EKF_STATUS_REPORT message to GCS
     void send_status_report(mavlink_channel_t chan);
+    // send a GPS_ACCURACY message to GCS
+    void send_gps_accuracy(mavlink_channel_t chan);
 
     // provides the height limit to be observed by the control loops
     // returns false if no height limiting is required
@@ -676,6 +678,7 @@ private:
     float gpsDriftNE;               // amount of drift detected in the GPS position during pre-flight GPs checks
     float gpsVertVelFilt;           // amount of filterred vertical GPS velocity detected durng pre-flight GPS checks
     float gpsHorizVelFilt;          // amount of filtered horizontal GPS velocity detected during pre-flight GPS checks
+    uint32_t lastGpsAccuracySendTime_ms;    //last sendtime of mavlink GPS_ACCURACY packet
 
     // Used by smoothing of state corrections
     Vector10 gpsIncrStateDelta;    // vector of corrections to attitude, velocity and position to be applied over the period between the current and next GPS measurement

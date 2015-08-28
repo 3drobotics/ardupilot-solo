@@ -4873,6 +4873,28 @@ void NavEKF::send_status_report(mavlink_channel_t chan)
 
 }
 
+void NavEKF::send_gps_accuracy(mavlink_channel_t chan)
+{
+    /* send at 1Hz after the GPS shows up */
+    if(_ahrs->get_gps().status() < AP_GPS::GPS_OK_FIX_3D) {
+        return;
+    }
+    uint32_t now = hal.scheduler->millis();
+    if(now - lastGpsAccuracySendTime_ms < 1000) {
+        return;
+    }
+    lastGpsAccuracySendTime_ms = now;
+    float hAcc = -1.0f;
+    _ahrs->get_gps().horizontal_accuracy(hAcc);
+    mavlink_msg_gps_accuracy_send(chan,
+        _ahrs->get_gps().primary_sensor(),
+        hAcc,
+        gpsSpdAccuracy,
+        gpsHorizVelFilt,
+        gpsVertVelFilt,
+        gpsDriftNE);
+}
+
 // Check arm status and perform required checks and mode changes
 void NavEKF::performArmingChecks()
 {
