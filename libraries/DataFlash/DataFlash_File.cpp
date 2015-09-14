@@ -10,7 +10,7 @@
 #include <AP_HAL.h>
 
 #if HAL_OS_POSIX_IO
-#include "DataFlash.h"
+#include "DataFlash_File.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -34,7 +34,8 @@ extern const AP_HAL::HAL& hal;
 /*
   constructor
  */
-DataFlash_File::DataFlash_File(const char *log_directory) :
+DataFlash_File::DataFlash_File(DataFlash_Class &front, const char *log_directory) :
+    DataFlash_Backend(front),
     _write_fd(-1),
     _read_fd(-1),
     _read_offset(0),
@@ -73,11 +74,20 @@ DataFlash_File::DataFlash_File(const char *log_directory) :
 #endif
 {}
 
+void DataFlash_File::periodic_tasks()
+{
+    DataFlash_Backend::WriteMorePrefaceMessages();
+}
+
+uint16_t DataFlash_File::bufferspace_available() {
+    uint16_t _head;
+    return (BUF_SPACE(_writebuf));
+}
 
 // initialisation
 void DataFlash_File::Init(const struct LogStructure *structure, uint8_t num_types)
 {
-    DataFlash_Class::Init(structure, num_types);
+    DataFlash_Backend::Init(structure, num_types);
     // create the log directory if need be
     int ret;
     struct stat st;
@@ -186,17 +196,22 @@ void DataFlash_File::EraseAll()
 }
 
 /* Write a block of data at current offset */
-void DataFlash_File::WriteBlock(const void *pBuffer, uint16_t size)
+bool DataFlash_File::WriteBlock(const void *pBuffer, uint16_t size)
 {
     if (_write_fd == -1 || !_initialised || _open_error || !_writes_enabled) {
-        return;
+        return false;
     }
+
+    if (! WriteBlockCheckPrefaceMessages()) {
+        return false;
+    }
+
     uint16_t _head;
     uint16_t space = BUF_SPACE(_writebuf);
     if (space < size) {
         // discard the whole write, to keep the log consistent
         perf_count(_perf_overruns);
-        return;
+        return false;
     }
 
     if (_writebuf_tail < _head) {
@@ -219,6 +234,8 @@ void DataFlash_File::WriteBlock(const void *pBuffer, uint16_t size)
             BUF_ADVANCETAIL(_writebuf, n);
         }
     }
+
+    return true;
 }
 
 /*
@@ -656,6 +673,10 @@ void DataFlash_File::_io_timer(void)
 #endif
     }
     perf_end(_perf_write);
+}
+
+void DataFlash_File::push_log_blocks() {
+    // diy-drones master has a flush() call which we might call here
 }
 
 #endif // HAL_OS_POSIX_IO
