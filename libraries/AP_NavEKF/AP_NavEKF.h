@@ -247,6 +247,7 @@ public:
     void send_status_report(mavlink_channel_t chan);
     // send gps accuracy debug data to GCS
     void send_gps_accuracy(mavlink_channel_t chan);
+    size_t gps_accuracy_channel_count() const;
 
     // provides the height limit to be observed by the control loops
     // returns false if no height limiting is required
@@ -682,7 +683,6 @@ private:
     bool consistentMagData;         // true when the magnetometers are passing consistency checks
     float hgtInnovFiltState;        // state used for fitering of the height innovations used for pre-flight checks
     uint32_t lastGpsAccuracySendTime_ms;    //last sendtime of gps accuracy debug data over mavlink
-    uint8_t lastGpsAccuracyIndex;   // index of the last gps accuracy debug value
 
     // Used by smoothing of state corrections
     Vector10 gpsIncrStateDelta;    // vector of corrections to attitude, velocity and position to be applied over the period between the current and next GPS measurement

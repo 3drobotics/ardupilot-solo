@@ -4885,6 +4885,7 @@ void NavEKF::send_status_report(mavlink_channel_t chan)
 
 }
 
+/* Send GPS accuracy debug values.  IMPORTANT: if you modify this function, modify gps_accuracy_channel_count */
 void NavEKF::send_gps_accuracy(mavlink_channel_t chan)
 {
     /* send at 1Hz after the GPS shows up */
@@ -4892,35 +4893,21 @@ void NavEKF::send_gps_accuracy(mavlink_channel_t chan)
         return;
     }
     uint32_t now = hal.scheduler->millis();
-    if(now - lastGpsAccuracySendTime_ms > 1000) {
-        lastGpsAccuracySendTime_ms = now;
-        lastGpsAccuracyIndex = 0;
-    } else if(lastGpsAccuracyIndex > 4) {
+    if(now - lastGpsAccuracySendTime_ms < 1000) {
         return;
     }
+    lastGpsAccuracySendTime_ms = now;
 
-    switch(lastGpsAccuracyIndex) {
-    case 0: {
-        float hAcc = -1.0f;
-        _ahrs->get_gps().horizontal_accuracy(hAcc);
-        mavlink_msg_named_value_float_send(chan, now, "gps.hAcc", hAcc);
-        break;
-            }
-    case 1:
-        mavlink_msg_named_value_float_send(chan, now, "gps.sAcc_f", gpsSpdAccuracy);
-        break;
-    case 2:
-        mavlink_msg_named_value_float_send(chan, now, "gps.hVel_f", gpsHorizVelFilt);
-        break;
-    case 3:
-        mavlink_msg_named_value_float_send(chan, now, "gps.vVel_f", gpsVertVelFilt);
-        break;
-    case 4:
-        mavlink_msg_named_value_float_send(chan, now, "gps.drift", gpsDriftNE);
-        break;
-    }
-    lastGpsAccuracyIndex++;
+    float hAcc = -1.0f;
+    _ahrs->get_gps().horizontal_accuracy(hAcc);
+    mavlink_msg_named_value_float_send(chan, now, "gps.hAcc", hAcc);
+    mavlink_msg_named_value_float_send(chan, now, "gps.sAcc_f", gpsSpdAccuracy);
+    mavlink_msg_named_value_float_send(chan, now, "gps.hVel_f", gpsHorizVelFilt);
+    mavlink_msg_named_value_float_send(chan, now, "gps.vVel_f", gpsVertVelFilt);
+    mavlink_msg_named_value_float_send(chan, now, "gps.drift", gpsDriftNE);
 }
+
+size_t NavEKF::gps_accuracy_channel_count() const { return 5; }
 
 // Check arm status and perform required checks and mode changes
 void NavEKF::performArmingChecks()

@@ -15,6 +15,7 @@ static bool	gcs_out_of_time;
 
 // check if a message will fit in the payload space available
 #define CHECK_PAYLOAD_SIZE(id) if (txspace < MAVLINK_NUM_NON_PAYLOAD_BYTES+MAVLINK_MSG_ID_ ## id ## _LEN) return false
+#define CHECK_MULTI_PAYLOAD_SIZE(id,sz) if (txspace < MAVLINK_NUM_NON_PAYLOAD_BYTES+(MAVLINK_MSG_ID_ ## id ## _LEN * sz)) return false
 
 static void gcs_send_heartbeat(void)
 {
@@ -656,8 +657,11 @@ bool GCS_MAVLINK::try_send_message(enum ap_message id)
 
     case MSG_GPS_ACCURACY:
 #if AP_AHRS_NAVEKF_AVAILABLE
-        CHECK_PAYLOAD_SIZE(NAMED_VALUE_FLOAT);
+        {
+        size_t numGpsValues = ahrs.get_NavEKF().gps_accuracy_channel_count();
+        CHECK_MULTI_PAYLOAD_SIZE(NAMED_VALUE_FLOAT, numGpsValues);
         ahrs.get_NavEKF().send_gps_accuracy(chan);
+        }
 #endif
         break;
 
