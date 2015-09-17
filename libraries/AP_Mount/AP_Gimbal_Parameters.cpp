@@ -191,7 +191,7 @@ void AP_Gimbal_Parameters::handle_param_value(DataFlash_Class *dataflash, mavlin
                     _params[i].value = packet.param_value;
                     break;
                 case GMB_PARAMSTATE_ATTEMPTING_TO_SET:
-                    if (i == GMB_PARAM_GMB_FLASH || packet.param_value == _params[i].value) {
+                    if (i == GMB_PARAM_GMB_FLASH || i == GMB_PARAM_GMB_SND_TORQUE || packet.param_value == _params[i].value) {
                         _params[i].state = GMB_PARAMSTATE_CONSISTENT;
                     }
                     break;
