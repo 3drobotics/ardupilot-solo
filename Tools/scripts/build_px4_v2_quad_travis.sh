@@ -16,7 +16,7 @@ popd
 pushd ArduCopter
 make configure
 make clean
-make px4-cleandep
+make px4-distclean
 make px4-v2
 popd
 
