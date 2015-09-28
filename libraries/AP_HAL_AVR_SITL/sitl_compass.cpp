@@ -91,7 +91,7 @@ void SITL_State::_update_compass(float rollDeg, float pitchDeg, float yawDeg)
     if ((now - last_update) < 100) {
         return;
     }
-    _compass->setHIL(new_mag_data);
+    _compass->setHIL(new_mag_data_avg);
     last_update = now; 
 }
 
