@@ -83,14 +83,9 @@ void SITL_State::_update_barometer(float altitude)
         sim_alt = buffer_baro[best_index_baro].data;
     }
 
-    //1000 sample rolling average
-    if (sim_alt_avg == 0){
-        sim_alt_avg = sim_alt;
-    }
-    else{
-        sim_alt_avg -= sim_alt_avg / 1000.0;
-        sim_alt_avg += sim_alt / 1000.0;
-    }
+    // Average last 10 samples
+    sim_alt_avg -= sim_alt_avg / 10.0;
+    sim_alt_avg += sim_alt / 10.0;
 
     // 10Hz reporting rate
     if ((now - last_update) < 100) {

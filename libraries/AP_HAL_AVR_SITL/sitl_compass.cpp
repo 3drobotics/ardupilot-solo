@@ -83,23 +83,16 @@ void SITL_State::_update_compass(float rollDeg, float pitchDeg, float yawDeg)
 
     new_mag_data -= _sitl->mag_ofs.get();
 
-    //1000 sample rolling average
-    if (new_mag_data_avg.length() == 0){
-        new_mag_data_avg = new_mag_data;
-    }
-    else{
-    	new_mag_data_avg -= new_mag_data_avg / 1000.0;
-    	new_mag_data_avg += new_mag_data / 1000.0;
-    }
+    //Average last 10 samples
+	new_mag_data_avg -= new_mag_data_avg / 10.0;
+	new_mag_data_avg += new_mag_data / 10.0;
 
     // 10Hz reporting rate
     if ((now - last_update) < 100) {
         return;
     }
     _compass->setHIL(new_mag_data);
-    last_update = now;
-
-    
+    last_update = now; 
 }
 
 #endif
