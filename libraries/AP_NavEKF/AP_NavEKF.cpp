@@ -5238,7 +5238,10 @@ bool NavEKF::calcGpsGoodToAlign(void)
     // record time of fail
     // assume  fail first time called
     if (gpsVelFail || numSatsFail || hdopFail || hAccFail || yawFail || gpsDriftFail || gpsVertVelFail || gpsHorizVelFail || lastGpsVelFail_ms == 0) {
-        lastGpsVelFail_ms = imuSampleTime_ms;
+        // Hack to bypass criteria for testing
+        if (numSatsFail) {
+            lastGpsVelFail_ms = imuSampleTime_ms;
+        }
     }
 
     // continuous period without fail required to return healthy
