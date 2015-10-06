@@ -29,6 +29,9 @@ using namespace AVR_SITL;
  */
 void SITL_State::_update_compass(float rollDeg, float pitchDeg, float yawDeg)
 {
+    static uint32_t last_update;
+    static Vector3f new_mag_data_avg;
+
     if (_compass == NULL) {
         // no compass in this sketch
         return;
@@ -40,12 +43,14 @@ void SITL_State::_update_compass(float rollDeg, float pitchDeg, float yawDeg)
     if (yawDeg < -180.0f) {
         yawDeg += 360.0f;
     }
+
     _compass->setHIL(radians(rollDeg), radians(pitchDeg), radians(yawDeg));
     Vector3f noise = _rand_vec3f() * _sitl->mag_noise;
     Vector3f motor = _sitl->mag_mot.get() * _current;
     Vector3f new_mag_data = _compass->getHIL() + noise + motor;
 
     uint32_t now = hal.scheduler->millis();
+
     // add delay
     uint32_t best_time_delta_mag = 1000; // initialise large time representing buffer entry closest to current time - delay.
     uint8_t best_index_mag = 0; // initialise number representing the index of the entry in buffer closest to delay.
@@ -78,7 +83,16 @@ void SITL_State::_update_compass(float rollDeg, float pitchDeg, float yawDeg)
 
     new_mag_data -= _sitl->mag_ofs.get();
 
-    _compass->setHIL(new_mag_data);
+    //Average last 10 samples
+	new_mag_data_avg -= new_mag_data_avg / 10.0;
+	new_mag_data_avg += new_mag_data / 10.0;
+
+    // 10Hz reporting rate
+    if ((now - last_update) < 100) {
+        return;
+    }
+    _compass->setHIL(new_mag_data_avg);
+    last_update = now; 
 }
 
 #endif
