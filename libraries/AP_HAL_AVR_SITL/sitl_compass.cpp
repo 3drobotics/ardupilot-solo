@@ -29,6 +29,10 @@ using namespace AVR_SITL;
  */
 void SITL_State::_update_compass(float rollDeg, float pitchDeg, float yawDeg)
 {
+    static uint32_t last_update;
+    static Vector3f new_mag_data_accum(0,0,0);
+    static uint32_t new_mag_data_accum_count = 0;
+
     if (_compass == NULL) {
         // no compass in this sketch
         return;
@@ -40,12 +44,14 @@ void SITL_State::_update_compass(float rollDeg, float pitchDeg, float yawDeg)
     if (yawDeg < -180.0f) {
         yawDeg += 360.0f;
     }
+
     _compass->setHIL(radians(rollDeg), radians(pitchDeg), radians(yawDeg));
     Vector3f noise = _rand_vec3f() * _sitl->mag_noise;
     Vector3f motor = _sitl->mag_mot.get() * _current;
     Vector3f new_mag_data = _compass->getHIL() + noise + motor;
 
     uint32_t now = hal.scheduler->millis();
+
     // add delay
     uint32_t best_time_delta_mag = 1000; // initialise large time representing buffer entry closest to current time - delay.
     uint8_t best_index_mag = 0; // initialise number representing the index of the entry in buffer closest to delay.
@@ -78,7 +84,20 @@ void SITL_State::_update_compass(float rollDeg, float pitchDeg, float yawDeg)
 
     new_mag_data -= _sitl->mag_ofs.get();
 
-    _compass->setHIL(new_mag_data);
+    // Accumulate measurements
+    new_mag_data_accum += new_mag_data;
+    new_mag_data_accum_count++;
+
+    // 10Hz reporting rate
+    if ((now - last_update) < 100) {
+        return;
+    }
+    _compass->setHIL(new_mag_data_accum/(float)new_mag_data_accum_count);
+    //reset accumulator and count
+    new_mag_data_accum.zero();
+    new_mag_data_accum_count = 0;
+    //reset timer
+    last_update = now;
 }
 
 #endif

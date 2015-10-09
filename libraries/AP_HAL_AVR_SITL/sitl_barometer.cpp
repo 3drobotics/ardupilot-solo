@@ -30,6 +30,8 @@ extern const AP_HAL::HAL& hal;
 void SITL_State::_update_barometer(float altitude)
 {
     static uint32_t last_update;
+    static float sim_alt_accum = 0.0;
+    static uint32_t sim_alt_accum_count = 0;
 
     float sim_alt = altitude;
 
@@ -43,12 +45,7 @@ void SITL_State::_update_barometer(float altitude)
         return;
     }
 
-    // 80Hz, to match the real APM2 barometer
     uint32_t now = hal.scheduler->millis();
-    if ((now - last_update) < 12) {
-        return;
-    }
-    last_update = now;
 
     sim_alt += _sitl->baro_drift * now / 1000;
     sim_alt += _sitl->baro_noise * _rand_float();
@@ -87,7 +84,20 @@ void SITL_State::_update_barometer(float altitude)
         sim_alt = buffer_baro[best_index_baro].data;
     }
 
-    _barometer->setHIL(sim_alt);
+    // Accumulate measurements
+    sim_alt_accum += sim_alt;
+    sim_alt_accum_count++;
+
+    // 10Hz reporting rate
+    if ((now - last_update) < 100) {
+        return;
+    }
+    _barometer->setHIL(sim_alt_accum/(float)sim_alt_accum_count);
+    //reset accumulator and count
+    sim_alt_accum = 0.0;
+    sim_alt_accum_count = 0;
+    //reset timer
+    last_update = now;
 }
 
 #endif
