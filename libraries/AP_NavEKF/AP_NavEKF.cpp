@@ -4207,29 +4207,25 @@ void NavEKF::readGpsData()
         // Monitor quality of GPS data inflight
         calcGpsGoodForFlight();
 
-        // read latitutde and longitude from GPS and convert to local NE position relative to the stored origin
-        // If we don't have an origin, then set it to the current GPS coordinates
+        // Read the GPS locaton in WGS-84 lat,long,height coordinates
         const struct Location &gpsloc = _ahrs->get_gps().location();
-        if (validOrigin && PV_AidingMode == AID_ABSOLUTE) {
-            gpsPosNE = location_diff(EKF_origin, gpsloc);
-        } else if (gpsGoodToAlign){
-            // Set the NE origin to the current GPS position if not previously set
-            if (!validOrigin) {
-                setOrigin();
-                // Set the height of the NED origin to ‘height of baro height datum relative to GPS height datum'
-                EKF_origin.alt = gpsloc.alt - hgtMea;
-                // We are by definition at the origin at the instant of alignment so set NE position to zero
-                gpsPosNE.zero();
-            }
-            // If the vehicle is in flight (use arm status to determine) and GPS useage isn't explicitly prohibited, we switch to absolute position mode
-            if (vehicleArmed && _fusionModeGPS != 3) {
-                constPosMode = false;
-                PV_AidingMode = AID_ABSOLUTE;
-                gpsNotAvailable = false;
-                // Initialise EKF position and velocity states
-                ResetPosition();
-                ResetVelocity();
-            }
+
+        // Set the EKF origin and magnetic field declination if not previously set  and GPS checks have passed
+        if (!validOrigin && gpsGoodToAlign) {
+            setOrigin();
+            // Now we know the location we have an estimate for the magnetic field declination and adjust the earth field accordingly
+            alignMagStateDeclination();
+            // Set the height of the NED origin to ‘height of baro height datum relative to GPS height datum'
+            EKF_origin.alt = gpsloc.alt - hgtMea;
+        }
+
+        // Commence GPS aiding when able to
+        if ((_fusionModeGPS != 3) && (PV_AidingMode != AID_ABSOLUTE) && vehicleArmed && gpsGoodToAlign) {
+            PV_AidingMode = AID_ABSOLUTE;
+            constPosMode = false;
+            // Initialise EKF position and velocity states to last GPS measurement
+            ResetPosition();
+            ResetVelocity();
         }
 
         // calculate a position offset which is applied to NE position and velocity wherever it is used throughout code to allow GPS position jumps to be accommodated gradually
@@ -4470,6 +4466,9 @@ Quaternion NavEKF::calcQuatAndFieldStates(float roll, float pitch)
 
         // write to earth magnetic field state vector
         state.earth_magfield = initMagNED;
+
+        // align the NE earth magnetic field states with the published declination
+        alignMagStateDeclination();
 
         // clear bad magnetometer status
         badMag = false;
@@ -5436,6 +5435,19 @@ uint32_t NavEKF::getLastYawResetAngle(float &yawAng)
 {
     yawAng = yawResetAngle;
     return lastYawReset_ms;
+}
+
+// align the NE earth magnetic field states with the published declination
+void NavEKF::alignMagStateDeclination()
+{
+    // get the magnetic declination
+    float magDecAng = use_compass() ? _ahrs->get_compass()->get_declination() : 0;
+
+    // rotate the NE values so that the declination matches the published value
+    Vector3f initMagNED = state.earth_magfield;
+    float magLengthNE = pythagorous2(initMagNED.x,initMagNED.y);
+    state.earth_magfield.x = magLengthNE * cosf(magDecAng);
+    state.earth_magfield.y = magLengthNE * sinf(magDecAng);
 }
 
 #endif // HAL_CPU_CLASS
