@@ -14,9 +14,8 @@
 class DataFlash_Block : public DataFlash_Backend
 {
 public:
-    DataFlash_Block(const struct LogStructure *structure, uint8_t num_types,
-                    DFMessageWriter *writer) :
-        DataFlash_Backend(structure, num_types, writer) { }
+    DataFlash_Block(DataFlash_Class &front) :
+        DataFlash_Backend(front) { }
 
     // initialisation
     virtual void Init(const struct LogStructure *structure, uint8_t num_types) = 0;
@@ -123,6 +122,7 @@ protected:
 #include "DataFlash_APM1.h"
 #include "DataFlash_APM2.h"
 #include "DataFlash_SITL.h"
+#include "DataFlash_Empty.h"
 
 #endif // DataFlash_block_h
 

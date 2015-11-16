@@ -12,57 +12,35 @@
 
 #include "DataFlash_File.h"
 #include "DataFlash_MAVLink.h"
+#include "DataFlash_Empty.h"
 #include "DataFlash_APM1.h"
 #include "DataFlash_APM2.h"
 
 extern const AP_HAL::HAL& hal;
 
-void DataFlash_Class::Init(const struct LogStructure *structure, uint8_t num_types, DFMessageWriter_Factory *factory)
+void DataFlash_Class::Init(const struct LogStructure *structure, uint8_t num_types)
 {
-    if (_next_backend == DATAFLASH_MAX_BACKENDS) {
-        hal.scheduler->panic(PSTR("Too many backends"));
-        return;
-    }
     _num_types = num_types;
     _structures = structure;
     _writes_enabled = true;
-    // setStartupMessageWriterFactory(logstartup_factory);
 
-    DFMessageWriter *message_writer;
     // DataFlash
 #if CONFIG_HAL_BOARD == HAL_BOARD_APM1
-    backends[_next_backend] = new DataFlash_APM1(structure, num_types, message_writer);
+    backend = new DataFlash_APM1(*this);
 #elif CONFIG_HAL_BOARD == HAL_BOARD_APM2
-    backends[_next_backend] = new DataFlash_APM2(structure, num_types, message_writer);
+    backend = new DataFlash_APM2(*this);
+#elif defined (HAL_BOARD_REMOTE_LOG_PORT)
+    backend = new DataFlash_MAVLink(*this);
 #elif defined(HAL_BOARD_LOG_DIRECTORY)
-    message_writer = factory->create();
-    if (message_writer != NULL)  {
-        backends[_next_backend] = new DataFlash_File(structure, num_types,
-                                                     message_writer,
-                                                     HAL_BOARD_LOG_DIRECTORY);
-    }
+    backend = new DataFlash_File(*this, HAL_BOARD_LOG_DIRECTORY);
+#else
+    // no dataflash driver
+    backend = new DataFlash_Empty(*this);
 #endif
-    if (backends[_next_backend] == NULL) {
+    if (backend == NULL) {
         hal.scheduler->panic(PSTR("Unable to open dataflash"));
     }
-    _next_backend++;
-
-#if defined (HAL_BOARD_REMOTE_LOG_PORT)
-    message_writer = factory->create();
-    if (message_writer != NULL)  {
-        backends[_next_backend] = new DataFlash_MAVLink(structure, num_types,
-                                                        message_writer);
-    }
-    if (backends[_next_backend] == NULL) {
-        // is this really worth panicing about?  Maybe.
-        hal.scheduler->panic(PSTR("Unable to open mavlink dataflash backend"));
-    }
-    _next_backend++;
-#endif
-
-    for (uint8_t i=0; i<_next_backend; i++) {
-        backends[i]->Init(structure, num_types);
-    }
+    backend->Init(structure, num_types);
 }
 
 // This function determines the number of whole or partial log files in the DataFlash
@@ -103,8 +81,6 @@ uint16_t DataFlash_Block::get_num_logs(void)
 // This function starts a new log file in the DataFlash
 uint16_t DataFlash_Block::start_new_log(void)
 {
-    _startup_messagewriter->reset();
-
     uint16_t last_page = find_last_page();
 
     StartRead(last_page);
@@ -605,12 +581,24 @@ void DataFlash_Block::ListAvailableLogs(AP_HAL::BetterStream *port)
 }
 #endif // DATAFLASH_NO_CLI
 
-// this function indicates to the backends that a new log has been requested
-void DataFlash_Class::StartNewLog(void)
+// This function starts a new log file in the DataFlash, and writes
+// the format of supported messages in the log
+uint16_t DataFlash_Class::StartNewLog(void)
 {
-    for (uint8_t i=0; i<_next_backend; i++) {
-        backends[i]->start_new_log();
+    uint16_t ret;
+    if (_startup_messagewriter == NULL) {
+        // we haven't been told how to write out the preface yet
+        return 0xFFFF;
     }
+    ret = start_new_log();
+    if (ret == 0xFFFF) {
+        // don't write out formats if we fail to open the log
+        return ret;
+    }
+
+    _startup_messagewriter->reset();
+
+    return ret;
 }
 
 // add new logging formats to the log. Used by libraries that want to
@@ -624,7 +612,7 @@ void DataFlash_Class::AddLogFormats(const struct LogStructure *structures, uint8
 }
 
 /*
-  write a structure format to the log
+  write a structure format to the log - should be in frontend
  */
 void DataFlash_Backend::Log_Fill_Format(const struct LogStructure *s, struct log_Format &pkt)
 {
@@ -642,7 +630,7 @@ void DataFlash_Backend::Log_Fill_Format(const struct LogStructure *s, struct log
 /*
   write a structure format to the log
  */
-bool DataFlash_Backend::Log_Write_Format(const struct LogStructure *s)
+bool DataFlash_Class::Log_Write_Format(const struct LogStructure *s)
 {
     struct log_Format pkt;
     Log_Fill_Format(s, pkt);
@@ -652,7 +640,7 @@ bool DataFlash_Backend::Log_Write_Format(const struct LogStructure *s)
 /*
   write a parameter to the log
  */
-bool DataFlash_Backend::Log_Write_Parameter(const char *name, float value)
+bool DataFlash_Class::Log_Write_Parameter(const char *name, float value)
 {
     struct log_Parameter pkt = {
         LOG_PACKET_HEADER_INIT(LOG_PARAMETER_MSG),
@@ -666,7 +654,7 @@ bool DataFlash_Backend::Log_Write_Parameter(const char *name, float value)
 /*
   write a parameter to the log
  */
-bool DataFlash_Backend::Log_Write_Parameter(const AP_Param *ap,
+bool DataFlash_Class::Log_Write_Parameter(const AP_Param *ap,
                                           const AP_Param::ParamToken &token,
                                           enum ap_var_type type)
 {
@@ -874,7 +862,7 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
 }
 
 // Write a text message to the log
-bool DataFlash_Backend::Log_Write_Message(const char *message)
+bool DataFlash_Class::Log_Write_Message(const char *message)
 {
     struct log_Message pkt = {
         LOG_PACKET_HEADER_INIT(LOG_MESSAGE_MSG),
@@ -885,7 +873,7 @@ bool DataFlash_Backend::Log_Write_Message(const char *message)
 }
 
 // Write a text message to the log
-bool DataFlash_Backend::Log_Write_Message_P(const prog_char_t *message)
+bool DataFlash_Class::Log_Write_Message_P(const prog_char_t *message)
 {
     struct log_Message pkt = {
         LOG_PACKET_HEADER_INIT(LOG_MESSAGE_MSG),
@@ -1241,7 +1229,7 @@ void DataFlash_Class::Log_Write_Compass(const Compass &compass)
 }
 
 // Write a mode packet.
-bool DataFlash_Backend::Log_Write_Mode(uint8_t mode)
+bool DataFlash_Class::Log_Write_Mode(uint8_t mode)
 {
     struct log_Mode pkt = {
         LOG_PACKET_HEADER_INIT(LOG_MODE_MSG),

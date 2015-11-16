@@ -7,7 +7,7 @@
 #define __DATAFLASH_APM1_H__
 
 #include <AP_HAL.h>
-#include "DataFlash_Block.h"
+#include "DataFlash.h"
 
 class DataFlash_APM1 : public DataFlash_Block
 {
@@ -44,9 +44,8 @@ private:
     bool		            _sem_take(uint8_t timeout);
 
 public:
-    DataFlash_APM1(const struct LogStructure *structure, uint8_t num_types,
-                   DFMessageWriter *writer) :
-        DataFlash_Block(structure, num_types, writer) { }
+    DataFlash_APM1(DataFlash_Class &front) :
+        DataFlash_Block(front) { }
     void        Init(const struct LogStructure *structure, uint8_t num_types);
     void        ReadManufacturerID();
     bool        CardInserted();
