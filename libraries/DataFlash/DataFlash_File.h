@@ -64,8 +64,6 @@ private:
     volatile bool _open_error;
     const char *_log_directory;
 
-    uint16_t _cached_oldest_log;
-
     /*
       read a block
     */
