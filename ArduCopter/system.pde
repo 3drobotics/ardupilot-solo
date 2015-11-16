@@ -148,9 +148,7 @@ static void init_ardupilot()
     mavlink_system.sysid = g.sysid_this_mav;
 
 #if LOGGING_ENABLED == ENABLED
-    DFMessageWriter_Factory_LogStartup *logstartup_factory =
-        new DFMessageWriter_Factory_LogStartup(DataFlash, FIRMWARE_STRING);
-    DataFlash.Init(log_structure, sizeof(log_structure)/sizeof(log_structure[0]), logstartup_factory);
+    DataFlash.Init(log_structure, sizeof(log_structure)/sizeof(log_structure[0]));
     if (!DataFlash.CardInserted()) {
         gcs_send_text_P(SEVERITY_HIGH, PSTR("No dataflash inserted"));
         g.log_bitmask.set(0);
