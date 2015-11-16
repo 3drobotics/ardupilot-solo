@@ -77,7 +77,7 @@ bool DataFlash_MAVLink::WriteBlock(const void *pBuffer, uint16_t size)
 
     if (_front._startup_messagewriter != NULL && !_front._startup_messagewriter->finished()) {
         // the block writer is running ATM.
-        if (!_writing_preface_messages) {
+        if (!_pushing_blocks) {
             // we didn't come from push_log_blocks, so this is some random
             // caller hoping to write blocks out
             push_log_blocks();
@@ -120,7 +120,7 @@ bool DataFlash_MAVLink::WriteBlock(const void *pBuffer, uint16_t size)
         }
     }
 
-    if (!_writing_preface_messages) {
+    if (!_pushing_blocks) {
         push_log_blocks();
     }
     return true;
@@ -362,6 +362,8 @@ void DataFlash_MAVLink::push_log_blocks()
         return;
     }
 
+    _pushing_blocks = true;
+
     DataFlash_Backend::write_more_preface_messages();
 
     // here's an argument for keeping linked lists for each state!
@@ -369,6 +371,7 @@ void DataFlash_MAVLink::push_log_blocks()
     for(uint8_t block = 0; block < _blockcount; block++){
         if (_blocks[block].state == BLOCK_STATE_SEND_RETRY) {
             if (! send_log_block(_blocks[block])) {
+                _pushing_blocks = false;
                 return;
             }
         }
@@ -379,10 +382,13 @@ void DataFlash_MAVLink::push_log_blocks()
     for(uint8_t block = 0; block < _blockcount; block++){
         if (_blocks[block].state == BLOCK_STATE_SEND_PENDING) {
             if (! send_log_block(_blocks[block])) {
+                _pushing_blocks = false;
                 return;
             }
         }
     }
+
+    _pushing_blocks = false;
 }
 
 void DataFlash_MAVLink::do_resends(uint32_t now)
@@ -403,6 +409,7 @@ void DataFlash_MAVLink::do_resends(uint32_t now)
             // only want to send blocks every now-and-then...
         } else if (! send_log_block(_blocks[_next_block_number_to_resend])) {
             // failed to send the block; try again later....
+            _pushing_blocks = false;
             break;
         }
         _next_block_number_to_resend++;
