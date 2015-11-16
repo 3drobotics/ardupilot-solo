@@ -28,13 +28,6 @@ class DataFlash_MAVLink;
 class DFMessageWriter_Factory;
 class DataFlash_Backend;
 
-enum DataFlash_Backend_Type {
-    DATAFLASH_BACKEND_NONE = 0,
-    DATAFLASH_BACKEND_FILE = 1,
-    DATAFLASH_BACKEND_MAVLINK = 2,
-    DATAFLASH_BACKEND_BOTH = 3,
-};
-
 class DataFlash_Class
 {
 
@@ -120,11 +113,6 @@ public:
                              enum ap_var_type type);
 
     DFMessageWriter_Factory *_startup_messagewriter_factory;
-
-    static const struct AP_Param::GroupInfo        var_info[];
-    struct {
-        AP_Int8 backend_types;
-    } _params;
 
 protected:
     /*
