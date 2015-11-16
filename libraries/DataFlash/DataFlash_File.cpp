@@ -15,7 +15,7 @@
 #include <AP_HAL.h>
 
 #if HAL_OS_POSIX_IO
-#include "DataFlash_File.h"
+#include "DataFlash.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -91,16 +91,6 @@ DataFlash_File::DataFlash_File(DataFlash_Class &front, const char *log_directory
     _perf_overruns(perf_alloc(PC_COUNT, "DF_overruns"))
 #endif
 {}
-
-void DataFlash_File::periodic_tasks()
-{
-    DataFlash_Backend::write_more_preface_messages();
-}
-
-uint16_t DataFlash_File::bufferspace_available() {
-    uint16_t _head;
-    return (BUF_SPACE(_writebuf));
-}
 
 // initialisation
 void DataFlash_File::Init(const struct LogStructure *structure, uint8_t num_types)
@@ -215,17 +205,17 @@ void DataFlash_File::EraseAll()
 }
 
 /* Write a block of data at current offset */
-bool DataFlash_File::WriteBlock(const void *pBuffer, uint16_t size)
+void DataFlash_File::WriteBlock(const void *pBuffer, uint16_t size)
 {
     if (_write_fd == -1 || !_initialised || _open_error || !_writes_enabled) {
-        return false;
+        return;
     }
     uint16_t _head;
     uint16_t space = BUF_SPACE(_writebuf);
     if (space < size) {
         // discard the whole write, to keep the log consistent
         perf_count(_perf_overruns);
-        return false;
+        return;
     }
 
     if (_writebuf_tail < _head) {
@@ -248,8 +238,6 @@ bool DataFlash_File::WriteBlock(const void *pBuffer, uint16_t size)
             BUF_ADVANCETAIL(_writebuf, n);
         }
     }
-
-    return true;
 }
 
 /*

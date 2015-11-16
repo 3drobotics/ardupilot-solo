@@ -36,11 +36,11 @@ void DataFlash_Backend::internal_error() {
 
 void DataFlash_Backend::write_more_preface_messages()
 {
-    if (_front._startup_messagewriter == NULL) {
-        internal_error();
+    if (! _front._blockwriter_running) {
         return;
     }
-    if (_front._startup_messagewriter->finished()) {
+    if (_front._blockwriter == NULL) {
+        internal_error();
         return;
     }
 
@@ -55,12 +55,11 @@ void DataFlash_Backend::write_more_preface_messages()
     while (bufferspace_available() > 300) {
         if (i++ >= limit) {
             internal_error();
-            _front._startup_messagewriter->abort();
+            _front._blockwriter_running = false;
             break;
         }
-        _front._startup_messagewriter->process();
-        if (_front._startup_messagewriter->finished()) {
-            _front._startup_messagewriter->abort();
+        if (_front._blockwriter(_front._blockwriter_state)) {
+            _front._blockwriter_running = false;
             break;
         }
     }
