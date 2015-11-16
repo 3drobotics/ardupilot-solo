@@ -40,11 +40,6 @@ bool DataFlash_Block::WriteBlock(const void *pBuffer, uint16_t size)
     if (!CardInserted() || !_logging_started || !_writes_enabled) {
         return false;
     }
-
-    if (! WriteBlockCheckPrefaceMessages()) {
-        return false;
-    }
-
     while (size > 0) {
         uint16_t n = df_PageSize - df_BufferIdx;
         if (n > size) {

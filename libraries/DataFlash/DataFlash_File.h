@@ -58,8 +58,6 @@ public:
 
     void periodic_tasks();
 
-protected:
-    void push_log_blocks();
 private:
     int _write_fd;
     int _read_fd;
