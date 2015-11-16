@@ -1854,10 +1854,12 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         // send message to Notify
         AP_Notify::handle_led_control(msg);
         break;
-
+#if defined(HAL_BOARD_REMOTE_LOG_PORT)
     case MAVLINK_MSG_ID_REMOTE_LOG_BLOCK_STATUS:
-        DataFlash.remote_log_block_status_msg(msg);
+        handle_remote_log_status(msg, DataFlash);
         break;
+#endif
+
     }     // end switch
 
     if (send_heartbeat_immediately) {
