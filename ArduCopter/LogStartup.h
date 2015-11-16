@@ -6,13 +6,15 @@
 class DFMessageWriter_LogStartup : public DFMessageWriter {
 public: // TODO: fix scopes
     DFMessageWriter_LogStartup(DataFlash_Class &DataFlashx, const prog_char_t *_firmware_string) :
-        DFMessageWriter(DataFlashx)
+        DFMessageWriter(DataFlashx),
+        _finished(false)
         {
             _dflogstart = new DFMessageWriter_DFLogStart(DataFlashx);
             _writesysinfo = new DFMessageWriter_WriteSysInfo(DataFlashx, _firmware_string);
         }
 
-    void process();
+    void process(); // returns "false" for "call me again", "true" for "done"
+    bool finished();
     void reset();
 
 private:
@@ -26,8 +28,9 @@ private:
     };
 
     logging_start_blockwriter_stage stage;
-
     // state for writing out log_start messages from DataFlash (FMT,PARM):
+
+    bool _finished;
     DFMessageWriter_DFLogStart *_dflogstart;
     DFMessageWriter_WriteSysInfo *_writesysinfo;
 };
