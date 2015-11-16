@@ -7,16 +7,11 @@
 #ifndef DataFlash_block_h
 #define DataFlash_block_h
 
-#include <DataFlash_Backend.h>
-
 #include <stdint.h>
 
-class DataFlash_Block : public DataFlash_Backend
+class DataFlash_Block : public DataFlash_Class
 {
 public:
-    DataFlash_Block(DataFlash_Class &front) :
-        DataFlash_Backend(front) { }
-
     // initialisation
     virtual void Init(const struct LogStructure *structure, uint8_t num_types) = 0;
     virtual bool CardInserted(void) = 0;

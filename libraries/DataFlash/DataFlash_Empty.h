@@ -7,7 +7,7 @@
 #define __DATAFLASH_EMPTY_H__
 
 #include <AP_HAL.h>
-#include "DataFlash_Block.h"
+#include "DataFlash.h"
 
 class DataFlash_Empty : public DataFlash_Block
 {
@@ -30,8 +30,6 @@ private:
     bool BlockRead(uint8_t BufferNum, uint16_t IntPageAdr, void *pBuffer, uint16_t size);
 
 public:
-    DataFlash_Empty(DataFlash_Class &front) :
-        DataFlash_Block(front) { }
     void        Init(const struct LogStructure *structure, uint8_t num_types);
     void        ReadManufacturerID();
     bool        CardInserted();
