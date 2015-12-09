@@ -1856,8 +1856,10 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         gcs[chan-MAVLINK_COMM_0].send_autopilot_version();
         break;
 
-    case MAVLINK_MSG_ID_LED_CONTROL:
-        // send message to Notify
+    case MAVLINK_MSG_ID_LED_CONTROL_PATTERN:
+    case MAVLINK_MSG_ID_LED_CONTROL_PATTERN_PARAM:
+    case MAVLINK_MSG_ID_LED_CONTROL_MACRO:
+        // send message to AP_Notify
         AP_Notify::handle_led_control(msg);
         break;
 
