@@ -45,11 +45,14 @@ OreoLED_PX4::OreoLED_PX4() : NotifyDevice(),
     _oreoled_fd(-1),
     _send_required(false),
     _state_desired_semaphore(false),
-    _pattern_override(0)
+    _mavlink_override(false)
 {
     // initialise desired and sent state
     memset(_state_desired,0,sizeof(_state_desired));
     memset(_state_sent,0,sizeof(_state_sent));
+
+    memset(_desired_pattern, 0, sizeof(_desired_pattern));
+    memset(_desired_param_update, 0, sizeof(_desired_param_update));
 }
 
 // init - initialised the device
@@ -91,14 +94,7 @@ void OreoLED_PX4::update()
     if (AP_Notify::flags.firmware_update) {
         // Force a syncronisation before setting the free-running colour cycle macro
         send_sync();
-        set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_COLOUR_CYCLE);
-        return;
-    }
-
-    // return immediately if custom pattern has been sent
-    if (OreoLED_PX4::_pattern_override != 0) {
-        // reset stage so patterns will be resent once override clears
-        last_stage = 0;
+        set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_FWUPDATE);
         return;
     }
 
@@ -108,6 +104,13 @@ void OreoLED_PX4::update()
         return;
     }
     counter = 0;
+
+    // return immediately if custom pattern has been sent
+    if (_mavlink_override) {
+        // reset stage so patterns will be resent once override clears
+        last_stage = 0;
+        return;
+    }
 
     // move forward one step
     step++;
@@ -207,7 +210,7 @@ void OreoLED_PX4::update()
             if (AP_Notify::flags.autopilot_mode) {
                 // autopilot flight modes start breathing macro
                 set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_AUTOMOBILE);
-                set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_BREATH);
+                set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_BREATHE);
             } else {
                 // manual flight modes stop breathing -- solid color
                 set_macro(OREOLED_INSTANCE_ALL, OREOLED_PARAM_MACRO_AUTOMOBILE);
@@ -218,6 +221,76 @@ void OreoLED_PX4::update()
         }
         last_stage = 11;
     }
+}
+
+// set_pattern - set a pattern with all parameters
+void OreoLED_PX4::set_pattern(oreoled_patternset_t *pattern_args)
+{
+    // return immediately if no healty leds
+    if (!_overall_health) {
+        return;
+    }
+
+    // get semaphore
+    _state_desired_semaphore = true;
+
+    // check for all instances
+    if (pattern_args->instance == OREOLED_INSTANCE_ALL) {
+        // store desired pattern for all LEDs
+        for (uint8_t i = 0; i < OREOLED_NUM_LEDS; i++) {
+            if (_state_desired[i].mode != OREOLED_MODE_PATTERN) {
+                _state_desired[i].mode = OREOLED_MODE_PATTERN;
+                memcpy(&_desired_pattern[i], pattern_args, sizeof(_desired_pattern[0]));
+                _desired_pattern[i].instance = i;
+            }
+        }
+        _send_required = true;
+    } else if (pattern_args->instance < OREOLED_NUM_LEDS) {
+        // store desired pattern for one LED
+        if (_state_desired[pattern_args->instance].mode != OREOLED_MODE_PATTERN) {
+            _state_desired[pattern_args->instance].mode = OREOLED_MODE_PATTERN;
+            memcpy(&_desired_pattern[pattern_args->instance], pattern_args, sizeof(_desired_pattern[0]));
+        }
+        _send_required = true;
+    }
+
+    // release semaphore
+    _state_desired_semaphore = false;
+}
+
+// set_pattern_param - set an individual pattern parameter
+void OreoLED_PX4::set_pattern_param(oreoled_paramupdate_t *paramupdate_args)
+{
+    // return immediately if no healty leds
+    if (!_overall_health) {
+        return;
+    }
+
+    // get semaphore
+    _state_desired_semaphore = true;
+
+    // check for all instances
+    if (paramupdate_args->instance == OREOLED_INSTANCE_ALL) {
+        // store desired pattern for all LEDs
+        for (uint8_t i = 0; i < OREOLED_NUM_LEDS; i++) {
+            if (_state_desired[i].mode != OREOLED_MODE_PATTERN_PARAM) {
+                _state_desired[i].mode = OREOLED_MODE_PATTERN_PARAM;
+                memcpy(&_desired_param_update[i], paramupdate_args, sizeof(_desired_param_update[0]));
+                _desired_param_update[i].instance = i;
+            }
+        }
+        _send_required = true;
+    } else if (paramupdate_args->instance < OREOLED_NUM_LEDS) {
+        // store desired pattern for one LED
+        if (_state_desired[paramupdate_args->instance].mode != OREOLED_MODE_PATTERN_PARAM) {
+            _state_desired[paramupdate_args->instance].mode = OREOLED_MODE_PATTERN_PARAM;
+            memcpy(&_desired_param_update[paramupdate_args->instance], paramupdate_args, sizeof(_desired_param_update[0]));
+        }
+        _send_required = true;
+    }
+
+    // release semaphore
+    _state_desired_semaphore = false;
 }
 
 // set_rgb - set color as a combination of red, green and blue values for one or all LEDs
@@ -334,7 +407,10 @@ void OreoLED_PX4::update_timer(void)
         if (!(_state_desired[i] == _state_sent[i])) {
             switch (_state_desired[i].mode) {
                 case OREOLED_MODE_PATTERN:
-                    // not yet supported
+                    ioctl(_oreoled_fd, OREOLED_SET_PATTERN, (unsigned long)&_desired_pattern[i]);
+                    break;
+                case OREOLED_MODE_PATTERN_PARAM:
+                    ioctl(_oreoled_fd, OREOLED_UPDATE_PARAM, (unsigned long)&_desired_param_update[i]);
                     break;
                 case OREOLED_MODE_MACRO:
                     {
@@ -349,10 +425,13 @@ void OreoLED_PX4::update_timer(void)
                     }
                     break;
                 case OREOLED_MODE_SYNC:
-                    {
                     ioctl(_oreoled_fd, OREOLED_FORCE_SYNC, 0);
-                    }
                     break;
+                default:
+                    break;
+            }
+            if (_mavlink_override) {
+                _state_desired[i].mode = OREOLED_MODE_OVERRIDE;
             }
             // save state change
             _state_sent[i] = _state_desired[i];
@@ -371,29 +450,83 @@ void OreoLED_PX4::handle_led_control(mavlink_message_t *msg)
         return;
     }
 
-    // decode mavlink message
-    mavlink_led_control_t packet;
-    mavlink_msg_led_control_decode(msg, &packet);
+    _mavlink_override = true;
 
-    // exit immediately if instance is invalid
-    if (packet.instance >= OREOLED_NUM_LEDS && packet.instance != OREOLED_INSTANCE_ALL) {
-        return;
+    switch (msg->msgid) {
+        case MAVLINK_MSG_ID_LED_CONTROL_PATTERN: {
+            // decode mavlink message
+            mavlink_led_control_pattern_t packet;
+            mavlink_msg_led_control_pattern_decode(msg, &packet);
+
+            // exit immediately if instance is invalid
+            if (packet.instance >= OREOLED_NUM_LEDS && packet.instance != OREOLED_INSTANCE_ALL) {
+                return;
+            }
+
+            // handle the special "stop" pattern which returns LED control to AP_Notify
+            if (packet.pattern == LED_CONTROL_PATTERN_STOP) {
+                _mavlink_override = false;
+                return;
+            }
+
+            // build the set pattern struct from the mavlink packet
+            oreoled_patternset_t setpattern;
+            setpattern.instance = packet.instance;
+            setpattern.pattern = (oreoled_pattern)packet.pattern;
+            setpattern.bias_red = packet.bias_red;
+            setpattern.bias_green = packet.bias_green;
+            setpattern.bias_blue = packet.bias_blue;
+            setpattern.amplitude_red = packet.amplitude_red;
+            setpattern.amplitude_green = packet.amplitude_green;
+            setpattern.amplitude_blue = packet.amplitude_blue;
+            setpattern.period = packet.period;
+            setpattern.repeat = packet.repeat;
+            setpattern.phase_offset = packet.phase_offset;
+
+            set_pattern(&setpattern);
+            _mavlink_override = true;
+        }
+        break;
+
+        case MAVLINK_MSG_ID_LED_CONTROL_PATTERN_PARAM: {
+            // decode mavlink message
+            mavlink_led_control_pattern_param_t packet;
+            mavlink_msg_led_control_pattern_param_decode(msg, &packet);
+
+            // exit immediately if instance is invalid
+            if (packet.instance >= OREOLED_NUM_LEDS && packet.instance != OREOLED_INSTANCE_ALL) {
+                return;
+            }
+
+            // build the param update struct from the mavlink packet
+            oreoled_paramupdate_t paramupdate;
+            paramupdate.instance = packet.instance;
+            paramupdate.param = (oreoled_param)packet.param_type;
+            paramupdate.value = packet.param_value;
+
+            set_pattern_param(&paramupdate);
+            _mavlink_override = true;
+        }
+        break;
+
+        case MAVLINK_MSG_ID_LED_CONTROL_MACRO: {
+            // decode mavlink message
+            mavlink_led_control_macro_t packet;
+            mavlink_msg_led_control_macro_decode(msg, &packet);
+
+            // exit immediately if instance is invalid
+            if (packet.instance >= OREOLED_NUM_LEDS && packet.instance != OREOLED_INSTANCE_ALL) {
+                return;
+            }
+
+            set_macro(packet.instance, (oreoled_macro)packet.macro);
+            _mavlink_override = true;
+        }
+        break;
+
+        default:
+        break;
     }
-
-    // if pattern is OFF, we clear pattern override so normal lighting should resume
-    if (packet.pattern == LED_CONTROL_PATTERN_OFF) {
-        _pattern_override = 0;
-        return;
-    }
-
-    // custom patterns not implemented
-    if (packet.pattern == LED_CONTROL_PATTERN_CUSTOM) {
-        return;
-    }
-
-    // other patterns sent as macro
-    set_macro(packet.instance, (oreoled_macro)packet.pattern);
-    _pattern_override = packet.pattern;
 }
 
 #endif // CONFIG_HAL_BOARD == HAL_BOARD_PX4
