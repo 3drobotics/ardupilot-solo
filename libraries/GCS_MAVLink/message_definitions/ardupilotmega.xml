@@ -710,11 +710,70 @@
       </entry>
     </enum>
 
-    <!-- led control pattern enums (enumeration of specific patterns) -->
-    <enum name="LED_CONTROL_PATTERN">
-        <entry name="LED_CONTROL_PATTERN_OFF" value="0"> <description>LED patterns off (return control to regular vehicle control)</description></entry>
-        <entry name="LED_CONTROL_PATTERN_FIRMWAREUPDATE" value="1"> <description>LEDs show pattern during firmware update</description></entry>
-        <entry name="LED_CONTROL_PATTERN_CUSTOM" value="255"> <description>Custom Pattern using custom bytes fields</description></entry>
+    <!-- led position enums -->
+    <enum name="LED_POSITIONS">
+        <entry name="LED_POSITION_BACK_LEFT" value="0"></entry>
+        <entry name="LED_POSITION_BACK_RIGHT" value="1"></entry>
+        <entry name="LED_POSITION_FRONT_RIGHT" value="2"></entry>
+        <entry name="LED_POSITION_FRONT_LEFT" value="3"></entry>
+        <entry name="LED_POSITION_ALL" value="255"></entry>
+    </enum>
+
+    <!-- led control pattern enums (patterns control LED brightness amplitude or modulation) -->
+    <enum name="LED_CONTROL_PATTERNS">
+        <entry name="LED_CONTROL_PATTERN_OFF" value="0"></entry>
+        <entry name="LED_CONTROL_PATTERN_BREATHE" value="1"></entry>
+        <entry name="LED_CONTROL_PATTERN_SOLID" value="2"></entry>
+        <entry name="LED_CONTROL_PATTERN_SIREN" value="3"></entry>
+        <entry name="LED_CONTROL_PATTERN_STROBE" value="4"></entry>
+        <entry name="LED_CONTROL_PATTERN_AVIATION_STROBE" value="5"></entry>
+        <entry name="LED_CONTROL_PATTERN_FADEIN" value="6"></entry>
+        <entry name="LED_CONTROL_PATTERN_FADEOUT" value="7"></entry>
+        <entry name="LED_CONTROL_PATTERN_STOP" value="255">
+          <description>LED patterns off (return control to regular vehicle control)</description>
+        </entry>
+    </enum>
+
+    <!-- led control param enums (individual pattern parameters) -->
+    <enum name="LED_CONTROL_PARAMS">
+        <entry name="LED_CONTROL_PARAM_BIAS_RED" value="0">
+          <description>Bias of the red LED brightness</description>
+        </entry>
+        <entry name="LED_CONTROL_PARAM_BIAS_GREEN" value="1">
+          <description>Bias of the green LED brightness</description>
+        </entry>
+        <entry name="LED_CONTROL_PARAM_BIAS_BLUE" value="2">
+          <description>Bias of the blue LED brightness</description>
+        </entry>
+        <entry name="LED_CONTROL_PARAM_AMPLITUDE_RED" value="3">
+          <description>Amplitude of the red LED brightness</description>
+        </entry>
+        <entry name="LED_CONTROL_PARAM_AMPLITUDE_GREEN" value="4">
+          <description>Amplitude of the green LED brightness</description>
+        </entry>
+        <entry name="LED_CONTROL_PARAM_AMPLITUDE_BLUE" value="5">
+          <description>Amplitude of the blue LED brightness</description>
+        </entry>
+        <entry name="LED_CONTROL_PARAM_PERIOD" value="6">
+          <description>Pattern period (milliseconds)</description>
+        </entry>
+        <entry name="LED_CONTROL_PARAM_REPEAT" value="7">
+          <description>Numer of pattern cycles to run</description>
+        </entry>
+        <entry name="LED_CONTROL_PARAM_PHASEOFFSET" value="8">
+          <description>Pattern phase-offset (degrees)</description>
+        </entry>
+    </enum>
+
+    <!-- led control macro enums (macros are predefined color animations) -->
+    <enum name="LED_CONTROL_MACROS">
+        <entry name="LED_CONTROL_MACRO_FWUPDATE" value="1"></entry>
+        <entry name="LED_CONTROL_MACRO_BREATHE" value="2"></entry>
+        <entry name="LED_CONTROL_MACRO_FADE_OUT" value="3"></entry>
+        <entry name="LED_CONTROL_MACRO_AMBER" value="4"></entry>
+        <entry name="LED_CONTROL_MACRO_WHITE" value="5"></entry>
+        <entry name="LED_CONTROL_MACRO_AUTOMOBILE" value="6"></entry>
+        <entry name="LED_CONTROL_MACRO_AVIATION" value="7"></entry>
     </enum>
 
 	<!-- EKF_STATUS_FLAGS - these values should be bit-and with the messages flags field to know if flag has been set -->
@@ -1152,14 +1211,38 @@
       <field type="uint8_t" name="status" enum="MAV_REMOTE_LOG_DATA_BLOCK_STATUSES">log data block status</field>
     </message>
 
-    <message name="LED_CONTROL" id="186">
-        <description>Control vehicle LEDs</description>
+    <message name="LED_CONTROL_PATTERN" id="186">
+        <description>Control vehicle LED brightness pattern</description>
         <field type="uint8_t" name="target_system">System ID</field>
         <field type="uint8_t" name="target_component">Component ID</field>
-        <field type="uint8_t" name="instance">Instance (LED instance to control or 255 for all LEDs)</field>
-        <field type="uint8_t" name="pattern">Pattern (see LED_PATTERN_ENUM)</field>
-        <field type="uint8_t" name="custom_len">Custom Byte Length</field>
-        <field type="uint8_t[24]" name="custom_bytes">Custom Bytes</field>
+        <field type="uint8_t" name="instance">Instance (see LED_POSITIONS)</field>
+        <field type="uint8_t" name="pattern">Pattern (see LED_CONTROL_PATTERNS)</field>
+        <field type="uint8_t" name="bias_red">Bias of the red LED brightness</field>
+        <field type="uint8_t" name="bias_green">Bias of the green LED brightness</field>
+        <field type="uint8_t" name="bias_blue">Bias of the blue LED brightness</field>
+        <field type="uint8_t" name="amplitude_red">Amplitude of the red LED brightness</field>
+        <field type="uint8_t" name="amplitude_green">Amplitude of the green LED brightness</field>
+        <field type="uint8_t" name="amplitude_blue">Amplitude of the blue LED brightness</field>
+        <field type="uint16_t" name="period">Pattern period (milliseconds)</field>
+        <field type="int8_t" name="repeat">Numer of pattern cycles to run</field>
+        <field type="uint16_t" name="phase_offset">Pattern phase-offset (degrees)</field>
+    </message>
+
+    <message name="LED_CONTROL_PATTERN_PARAM" id="187">
+        <description>Control vehicle LED pattern parameters</description>
+        <field type="uint8_t" name="target_system">System ID</field>
+        <field type="uint8_t" name="target_component">Component ID</field>
+        <field type="uint8_t" name="instance">Instance (see LED_POSITIONS)</field>
+        <field type="uint8_t" name="param_type">Parameter type (see LED_CONTROL_PARAMS)</field>
+        <field type="uint16_t" name="param_value">Parameter value</field>
+    </message>
+
+    <message name="LED_CONTROL_MACRO" id="188">
+        <description>Control vehicle LED predefined macros</description>
+        <field type="uint8_t" name="target_system">System ID</field>
+        <field type="uint8_t" name="target_component">Component ID</field>
+        <field type="uint8_t" name="instance">Instance (see LED_POSITIONS)</field>
+        <field type="uint8_t" name="macro">Pattern (see LED_CONTROL_MACROS)</field>
     </message>
 
     <message name="MAG_CAL_PROGRESS" id="191">
