@@ -29,11 +29,11 @@ bool AP_Gimbal::aligned()
 
 gimbal_mode_t AP_Gimbal::get_mode()
 {
-    if ((_gimbalParams.initialized() && _gimbalParams.get_K_rate()==0.0f) || (_ahrs.get_dcm_matrix().c.z < 0 && !(lockedToBody || _calibrator.running()))) {
+    if ((_gimbalParams.initialized() && _gimbalParams.get_K_rate()==0.0f) || (_ahrs.get_dcm_matrix().c.z < 0 && !(_lockedToBody || _calibrator.running()))) {
         return GIMBAL_MODE_IDLE;
     } else if (!_ekf.getStatus()) {
         return GIMBAL_MODE_POS_HOLD;
-    } else if (_calibrator.running() || lockedToBody) {
+    } else if (_calibrator.running() || _lockedToBody) {
         return GIMBAL_MODE_POS_HOLD_FF;
     } else {
         return GIMBAL_MODE_STABILIZE;
@@ -67,8 +67,8 @@ void AP_Gimbal::receive_feedback(mavlink_channel_t chan, mavlink_message_t *msg)
                 // parameters done initializing, finalize initialization and transition to aligning
                 extract_feedback(report_msg);
                 _ang_vel_mag_filt = 20;
-                filtered_joint_angles = _measurement.joint_angles;
-                vehicle_to_gimbal_quat_filt.from_vector312(filtered_joint_angles.x,filtered_joint_angles.y,filtered_joint_angles.z);
+                _filtered_joint_angles = _measurement.joint_angles;
+                _vehicle_to_gimbal_quat_filt.from_vector312(_filtered_joint_angles.x,_filtered_joint_angles.y,_filtered_joint_angles.z);
                 _ekf.reset();
                 _state = GIMBAL_STATE_PRESENT_ALIGNING;
             }
@@ -102,30 +102,30 @@ void AP_Gimbal::send_controls(mavlink_channel_t chan)
         _ekf.getQuat(quatEst);
 
         // run rate controller
-        gimbalRateDemVec.zero();
+        _ang_vel_dem_rads.zero();
         switch(get_mode()) {
             case GIMBAL_MODE_POS_HOLD_FF: {
-                gimbalRateDemVec += getGimbalRateBodyLock();
-                gimbalRateDemVec += getGimbalRateDemVecGyroBias();
-                float gimbalRateDemVecLen = gimbalRateDemVec.length();
-                if (gimbalRateDemVecLen > radians(400)) {
-                    gimbalRateDemVec *= radians(400)/gimbalRateDemVecLen;
+                _ang_vel_dem_rads += get_ang_vel_dem_body_lock();
+                _ang_vel_dem_rads += get_ang_vel_dem_gyro_bias();
+                float _ang_vel_dem_radsLen = _ang_vel_dem_rads.length();
+                if (_ang_vel_dem_radsLen > radians(400)) {
+                    _ang_vel_dem_rads *= radians(400)/_ang_vel_dem_radsLen;
                 }
                 mavlink_msg_gimbal_control_send(chan, mavlink_system.sysid, _compid,
-                                                gimbalRateDemVec.x, gimbalRateDemVec.y, gimbalRateDemVec.z);
+                                                _ang_vel_dem_rads.x, _ang_vel_dem_rads.y, _ang_vel_dem_rads.z);
                 break;
             }
             case GIMBAL_MODE_STABILIZE: {
-                gimbalRateDemVec += getGimbalRateDemVecYaw(quatEst);
-                gimbalRateDemVec += getGimbalRateDemVecTilt(quatEst);
-                gimbalRateDemVec += getGimbalRateDemVecForward(quatEst);
-                gimbalRateDemVec += getGimbalRateDemVecGyroBias();
-                float gimbalRateDemVecLen = gimbalRateDemVec.length();
-                if (gimbalRateDemVecLen > radians(400)) {
-                    gimbalRateDemVec *= radians(400)/gimbalRateDemVecLen;
+                _ang_vel_dem_rads += get_ang_vel_dem_yaw(quatEst);
+                _ang_vel_dem_rads += get_ang_vel_dem_tilt(quatEst);
+                _ang_vel_dem_rads += get_ang_vel_dem_feedforward(quatEst);
+                _ang_vel_dem_rads += get_ang_vel_dem_gyro_bias();
+                float ang_vel_dem_norm = _ang_vel_dem_rads.length();
+                if (ang_vel_dem_norm > radians(400)) {
+                    _ang_vel_dem_rads *= radians(400)/ang_vel_dem_norm;
                 }
                 mavlink_msg_gimbal_control_send(chan, mavlink_system.sysid, _compid,
-                                                gimbalRateDemVec.x, gimbalRateDemVec.y, gimbalRateDemVec.z);
+                                                _ang_vel_dem_rads.x, _ang_vel_dem_rads.y, _ang_vel_dem_rads.z);
                 break;
             }
             default:
@@ -191,7 +191,12 @@ void AP_Gimbal::extract_feedback(const mavlink_gimbal_report_t& report_msg)
     _ang_vel_mag_filt = min(_ang_vel_mag_filt,20.0f);
 
     // get complementary filter inputs
-    vehicle_to_gimbal_quat.from_vector312(_measurement.joint_angles.x,_measurement.joint_angles.y,_measurement.joint_angles.z);
+    _vehicle_to_gimbal_quat.from_vector312(_measurement.joint_angles.x,_measurement.joint_angles.y,_measurement.joint_angles.z);
+
+    // update log deltas
+    _log_dt += _measurement.delta_time;
+    _log_del_ang += _measurement.delta_angles;
+    _log_del_vel += _measurement.delta_velocity;
 }
 
 void AP_Gimbal::update_estimators()
@@ -222,15 +227,15 @@ void AP_Gimbal::update_fast() {
         // dual gyro mode - average first two gyros
         Vector3f dAng;
         readVehicleDeltaAngle(0, dAng);
-        vehicle_delta_angles += dAng*0.5f;
+        _vehicle_delta_angles += dAng*0.5f;
         readVehicleDeltaAngle(1, dAng);
-        vehicle_delta_angles += dAng*0.5f;
+        _vehicle_delta_angles += dAng*0.5f;
     } else {
         // single gyro mode - one of the first two gyros are unhealthy or don't exist
         // just read primary gyro
         Vector3f dAng;
         readVehicleDeltaAngle(ins.get_primary_gyro(), dAng);
-        vehicle_delta_angles += dAng;
+        _vehicle_delta_angles += dAng;
     }
 }
 
@@ -241,24 +246,24 @@ void AP_Gimbal::update_joint_angle_est()
     float alpha = constrain_float(dt/(dt+tc),0.0f,1.0f);
 
     Matrix3f Tvg; // vehicle frame to gimbal frame
-    vehicle_to_gimbal_quat.inverse().rotation_matrix(Tvg);
+    _vehicle_to_gimbal_quat.inverse().rotation_matrix(Tvg);
 
     Vector3f delta_angle_bias;
     _ekf.getGyroBias(delta_angle_bias);
     delta_angle_bias *= dt;
 
     Vector3f joint_del_ang;
-    gimbal_ang_vel_to_joint_rates((_measurement.delta_angles-delta_angle_bias) - Tvg*vehicle_delta_angles, joint_del_ang);
+    gimbal_ang_vel_to_joint_rates((_measurement.delta_angles-delta_angle_bias) - Tvg*_vehicle_delta_angles, joint_del_ang);
 
-    filtered_joint_angles += joint_del_ang;
-    filtered_joint_angles += (_measurement.joint_angles-filtered_joint_angles)*alpha;
+    _filtered_joint_angles += joint_del_ang;
+    _filtered_joint_angles += (_measurement.joint_angles-_filtered_joint_angles)*alpha;
 
-    vehicle_to_gimbal_quat_filt.from_vector312(filtered_joint_angles.x,filtered_joint_angles.y,filtered_joint_angles.z);
+    _vehicle_to_gimbal_quat_filt.from_vector312(_filtered_joint_angles.x,_filtered_joint_angles.y,_filtered_joint_angles.z);
 
-    vehicle_delta_angles.zero();
+    _vehicle_delta_angles.zero();
 }
 
-Vector3f AP_Gimbal::getGimbalRateDemVecYaw(const Quaternion &quatEst)
+Vector3f AP_Gimbal::get_ang_vel_dem_yaw(const Quaternion &quatEst)
 {
     static const float tc = 0.1f;
     static const float yawErrorLimit = radians(5.7f);
@@ -288,7 +293,7 @@ Vector3f AP_Gimbal::getGimbalRateDemVecYaw(const Quaternion &quatEst)
     //_yaw_rate_ff_ef_filt += (yaw_rate_ff - _yaw_rate_ff_ef_filt) * alpha;
 
     Vector3f gimbalRateDemVecYaw;
-    gimbalRateDemVecYaw.z = yaw_rate_ff - _gimbalParams.get_K_rate() * filtered_joint_angles.z / constrain_float(Tve.c.z,0.5f,1.0f);
+    gimbalRateDemVecYaw.z = yaw_rate_ff - _gimbalParams.get_K_rate() * _filtered_joint_angles.z / constrain_float(Tve.c.z,0.5f,1.0f);
     gimbalRateDemVecYaw.z /= constrain_float(Tve.c.z,0.5f,1.0f);
 
     // rotate the rate demand into gimbal frame
@@ -297,7 +302,7 @@ Vector3f AP_Gimbal::getGimbalRateDemVecYaw(const Quaternion &quatEst)
     return gimbalRateDemVecYaw;
 }
 
-Vector3f AP_Gimbal::getGimbalRateDemVecTilt(const Quaternion &quatEst)
+Vector3f AP_Gimbal::get_ang_vel_dem_tilt(const Quaternion &quatEst)
 {
         // Calculate the gimbal 321 Euler angle estimates relative to earth frame
         Vector3f eulerEst;
@@ -305,8 +310,8 @@ Vector3f AP_Gimbal::getGimbalRateDemVecTilt(const Quaternion &quatEst)
 
         // Calculate a demanded quaternion using the demanded roll and pitch and estimated yaw (yaw is slaved to the vehicle)
         Quaternion quatDem;
-        quatDem.from_vector312( _angle_ef_target_rad.x,
-                                _angle_ef_target_rad.y,
+        quatDem.from_vector312( _att_target_euler_rad.x,
+                                _att_target_euler_rad.y,
                                 eulerEst.z);
 
         //divide the demanded quaternion by the estimated to get the error
@@ -322,36 +327,36 @@ Vector3f AP_Gimbal::getGimbalRateDemVecTilt(const Quaternion &quatEst)
         return gimbalRateDemVecTilt;
 }
 
-Vector3f AP_Gimbal::getGimbalRateDemVecForward(const Quaternion &quatEst)
+Vector3f AP_Gimbal::get_ang_vel_dem_feedforward(const Quaternion &quatEst)
 {
         // quaternion demanded at the previous time step
         static float lastDem;
 
         // calculate the delta rotation from the last to the current demand where the demand does not incorporate the copters yaw rotation
-        float delta = _angle_ef_target_rad.y - lastDem;
-        lastDem = _angle_ef_target_rad.y;
+        float delta = _att_target_euler_rad.y - lastDem;
+        lastDem = _att_target_euler_rad.y;
 
         Vector3f gimbalRateDemVecForward;
         gimbalRateDemVecForward.y = delta / _measurement.delta_time;
         return gimbalRateDemVecForward;
 }
 
-Vector3f AP_Gimbal::getGimbalRateDemVecGyroBias()
+Vector3f AP_Gimbal::get_ang_vel_dem_gyro_bias()
 {
     Vector3f gyroBias;
     _ekf.getGyroBias(gyroBias);
     return gyroBias + _gimbalParams.get_gyro_bias();
 }
 
-Vector3f AP_Gimbal::getGimbalRateBodyLock()
+Vector3f AP_Gimbal::get_ang_vel_dem_body_lock()
 {
         // Define rotation from vehicle to gimbal using a 312 rotation sequence
         Matrix3f Tvg;
-        vehicle_to_gimbal_quat_filt.inverse().rotation_matrix(Tvg);
+        _vehicle_to_gimbal_quat_filt.inverse().rotation_matrix(Tvg);
 
         // multiply the joint angles by a gain to calculate a rate vector required to keep the joints centred
         Vector3f gimbalRateDemVecBodyLock;
-        gimbalRateDemVecBodyLock = filtered_joint_angles * -_gimbalParams.get_K_rate();
+        gimbalRateDemVecBodyLock = _filtered_joint_angles * -_gimbalParams.get_K_rate();
 
         joint_rates_to_gimbal_ang_vel(gimbalRateDemVecBodyLock, gimbalRateDemVecBodyLock);
 
@@ -364,18 +369,57 @@ Vector3f AP_Gimbal::getGimbalRateBodyLock()
 void AP_Gimbal::update_target(Vector3f newTarget)
 {
     // Low-pass filter
-    _angle_ef_target_rad.y = _angle_ef_target_rad.y + 0.02f*(newTarget.y - _angle_ef_target_rad.y);
+    _att_target_euler_rad.y = _att_target_euler_rad.y + 0.02f*(newTarget.y - _att_target_euler_rad.y);
     // Update tilt
-    _angle_ef_target_rad.y = constrain_float(_angle_ef_target_rad.y,radians(-90),radians(0));
+    _att_target_euler_rad.y = constrain_float(_att_target_euler_rad.y,radians(-90),radians(0));
 }
 
-Vector3f AP_Gimbal::getGimbalEstimateEF()
+void AP_Gimbal::write_logs(DataFlash_Class* dataflash)
 {
+    if (dataflash == NULL) return;
+
+    uint32_t tstamp = hal.scheduler->millis();
+    Vector3f eulerEst;
+
     Quaternion quatEst;
     _ekf.getQuat(quatEst);
-    Vector3f eulerEst;
-    quatEst.to_vector312(eulerEst.x, eulerEst.y, eulerEst.z);
-    return eulerEst;
+    quatEst.to_euler(eulerEst.x, eulerEst.y, eulerEst.z);
+
+    struct log_Gimbal1 pkt1 = {
+        LOG_PACKET_HEADER_INIT(LOG_GIMBAL1_MSG),
+        time_ms : tstamp,
+        delta_time      : _log_dt,
+        delta_angles_x  : _log_del_ang.x,
+        delta_angles_y  : _log_del_ang.y,
+        delta_angles_z  : _log_del_ang.z,
+        delta_velocity_x : _log_del_vel.x,
+        delta_velocity_y : _log_del_vel.y,
+        delta_velocity_z : _log_del_vel.z,
+        joint_angles_x  : _measurement.joint_angles.x,
+        joint_angles_y  : _measurement.joint_angles.y,
+        joint_angles_z  : _measurement.joint_angles.z
+    };
+    dataflash->WriteBlock(&pkt1, sizeof(pkt1));
+
+    struct log_Gimbal2 pkt2 = {
+        LOG_PACKET_HEADER_INIT(LOG_GIMBAL2_MSG),
+        time_ms : tstamp,
+        est_sta : (uint8_t) _ekf.getStatus(),
+        est_x   : eulerEst.x,
+        est_y   : eulerEst.y,
+        est_z   : eulerEst.z,
+        rate_x  : _ang_vel_dem_rads.x,
+        rate_y  : _ang_vel_dem_rads.y,
+        rate_z  : _ang_vel_dem_rads.z,
+        target_x: _att_target_euler_rad.x,
+        target_y: _att_target_euler_rad.y,
+        target_z: _att_target_euler_rad.z
+    };
+    dataflash->WriteBlock(&pkt2, sizeof(pkt2));
+
+    _log_dt = 0;
+    _log_del_ang.zero();
+    _log_del_vel.zero();
 }
 
 bool AP_Gimbal::joints_near_limits()

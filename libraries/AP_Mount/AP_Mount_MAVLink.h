@@ -44,6 +44,7 @@ public:
     // handle a GIMBAL_REPORT message
     virtual void handle_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg);
     virtual void handle_gimbal_torque_report(mavlink_channel_t chan, mavlink_message_t *msg);
+    virtual void handle_param_value(mavlink_message_t *msg);
 
     // send a GIMBAL_REPORT message to the GCS
     virtual void send_gimbal_report(mavlink_channel_t chan);
@@ -56,10 +57,6 @@ private:
 
     // Write a gimbal measurament and estimation data packet
     void Log_Write_Gimbal(AP_Gimbal &gimbal);
-
-    float _log_dt;
-    Vector3f _log_del_ang;
-    Vector3f _log_del_vel;
 
     bool _params_saved;
 

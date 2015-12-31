@@ -169,7 +169,9 @@ void AP_Gimbal_Parameters::handle_param_value(DataFlash_Class *dataflash, mavlin
     mavlink_param_value_t packet;
     mavlink_msg_param_value_decode(msg, &packet);
 
-    dataflash->Log_Write_Parameter(packet.param_id, packet.param_value);
+    if (dataflash != NULL) {
+        dataflash->Log_Write_Parameter(packet.param_id, packet.param_value);
+    }
 
     for(uint8_t i=0; i<MAVLINK_GIMBAL_NUM_TRACKED_PARAMS; i++) {
         if (!strcmp(packet.param_id, get_param_name((gmb_param_t)i))) {

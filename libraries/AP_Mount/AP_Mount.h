@@ -118,6 +118,7 @@ public:
     // handle a GIMBAL_REPORT message
     void handle_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg);
     void handle_gimbal_torque_report(mavlink_channel_t chan, mavlink_message_t *msg);
+    void handle_param_value(mavlink_message_t *msg);
 
     // send a GIMBAL_REPORT message to GCS
     void send_gimbal_report(mavlink_channel_t chan);
@@ -127,8 +128,6 @@ public:
 
     // parameter var table
     static const struct AP_Param::GroupInfo        var_info[];
-
-    AP_Gimbal_Parameters _externalParameters;
 
 protected:
 
