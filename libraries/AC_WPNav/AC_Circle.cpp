@@ -117,6 +117,11 @@ void AC_Circle::update()
             }
         }
 
+        // if speed in the pos controller is set minimum, then pause the orbit controller
+        if (_pos_control.get_speed_xy() == 200.0f){
+            _angular_vel = 0;
+        }
+
         // update the target angle and total angle traveled
         float angle_change = _angular_vel * dt;
         _angle += angle_change;
