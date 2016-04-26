@@ -1704,38 +1704,45 @@ static void mavlink_test_remote_log_block_status(uint8_t system_id, uint8_t comp
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
 
-static void mavlink_test_led_control(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
+static void mavlink_test_led_control_pattern(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
 {
 	mavlink_message_t msg;
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
-	mavlink_led_control_t packet_in = {
-		5,72,139,206,17,{ 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107 }
+	mavlink_led_control_pattern_t packet_in = {
+		17235,17339,17,84,151,218,29,96,163,230,41,108,175
     };
-	mavlink_led_control_t packet1, packet2;
+	mavlink_led_control_pattern_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
+        	packet1.period = packet_in.period;
+        	packet1.phase_offset = packet_in.phase_offset;
         	packet1.target_system = packet_in.target_system;
         	packet1.target_component = packet_in.target_component;
         	packet1.instance = packet_in.instance;
         	packet1.pattern = packet_in.pattern;
-        	packet1.custom_len = packet_in.custom_len;
+        	packet1.bias_red = packet_in.bias_red;
+        	packet1.bias_green = packet_in.bias_green;
+        	packet1.bias_blue = packet_in.bias_blue;
+        	packet1.amplitude_red = packet_in.amplitude_red;
+        	packet1.amplitude_green = packet_in.amplitude_green;
+        	packet1.amplitude_blue = packet_in.amplitude_blue;
+        	packet1.repeat = packet_in.repeat;
         
-        	mav_array_memcpy(packet1.custom_bytes, packet_in.custom_bytes, sizeof(uint8_t)*24);
         
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_led_control_encode(system_id, component_id, &msg, &packet1);
-	mavlink_msg_led_control_decode(&msg, &packet2);
+	mavlink_msg_led_control_pattern_encode(system_id, component_id, &msg, &packet1);
+	mavlink_msg_led_control_pattern_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_led_control_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.instance , packet1.pattern , packet1.custom_len , packet1.custom_bytes );
-	mavlink_msg_led_control_decode(&msg, &packet2);
+	mavlink_msg_led_control_pattern_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.instance , packet1.pattern , packet1.bias_red , packet1.bias_green , packet1.bias_blue , packet1.amplitude_red , packet1.amplitude_green , packet1.amplitude_blue , packet1.period , packet1.repeat , packet1.phase_offset );
+	mavlink_msg_led_control_pattern_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_led_control_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.instance , packet1.pattern , packet1.custom_len , packet1.custom_bytes );
-	mavlink_msg_led_control_decode(&msg, &packet2);
+	mavlink_msg_led_control_pattern_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.instance , packet1.pattern , packet1.bias_red , packet1.bias_green , packet1.bias_blue , packet1.amplitude_red , packet1.amplitude_green , packet1.amplitude_blue , packet1.period , packet1.repeat , packet1.phase_offset );
+	mavlink_msg_led_control_pattern_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
@@ -1743,12 +1750,105 @@ static void mavlink_test_led_control(uint8_t system_id, uint8_t component_id, ma
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_led_control_decode(last_msg, &packet2);
+	mavlink_msg_led_control_pattern_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_led_control_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.instance , packet1.pattern , packet1.custom_len , packet1.custom_bytes );
-	mavlink_msg_led_control_decode(last_msg, &packet2);
+	mavlink_msg_led_control_pattern_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.instance , packet1.pattern , packet1.bias_red , packet1.bias_green , packet1.bias_blue , packet1.amplitude_red , packet1.amplitude_green , packet1.amplitude_blue , packet1.period , packet1.repeat , packet1.phase_offset );
+	mavlink_msg_led_control_pattern_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+}
+
+static void mavlink_test_led_control_pattern_param(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
+{
+	mavlink_message_t msg;
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        uint16_t i;
+	mavlink_led_control_pattern_param_t packet_in = {
+		17235,139,206,17,84
+    };
+	mavlink_led_control_pattern_param_t packet1, packet2;
+        memset(&packet1, 0, sizeof(packet1));
+        	packet1.param_value = packet_in.param_value;
+        	packet1.target_system = packet_in.target_system;
+        	packet1.target_component = packet_in.target_component;
+        	packet1.instance = packet_in.instance;
+        	packet1.param_type = packet_in.param_type;
+        
+        
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_led_control_pattern_param_encode(system_id, component_id, &msg, &packet1);
+	mavlink_msg_led_control_pattern_param_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_led_control_pattern_param_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.instance , packet1.param_type , packet1.param_value );
+	mavlink_msg_led_control_pattern_param_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_led_control_pattern_param_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.instance , packet1.param_type , packet1.param_value );
+	mavlink_msg_led_control_pattern_param_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+        mavlink_msg_to_send_buffer(buffer, &msg);
+        for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
+        	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
+        }
+	mavlink_msg_led_control_pattern_param_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+        
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_led_control_pattern_param_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.instance , packet1.param_type , packet1.param_value );
+	mavlink_msg_led_control_pattern_param_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+}
+
+static void mavlink_test_led_control_macro(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
+{
+	mavlink_message_t msg;
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        uint16_t i;
+	mavlink_led_control_macro_t packet_in = {
+		5,72,139,206
+    };
+	mavlink_led_control_macro_t packet1, packet2;
+        memset(&packet1, 0, sizeof(packet1));
+        	packet1.target_system = packet_in.target_system;
+        	packet1.target_component = packet_in.target_component;
+        	packet1.instance = packet_in.instance;
+        	packet1.macro = packet_in.macro;
+        
+        
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_led_control_macro_encode(system_id, component_id, &msg, &packet1);
+	mavlink_msg_led_control_macro_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_led_control_macro_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.instance , packet1.macro );
+	mavlink_msg_led_control_macro_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_led_control_macro_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.instance , packet1.macro );
+	mavlink_msg_led_control_macro_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+        mavlink_msg_to_send_buffer(buffer, &msg);
+        for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
+        	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
+        }
+	mavlink_msg_led_control_macro_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+        
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_led_control_macro_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.instance , packet1.macro );
+	mavlink_msg_led_control_macro_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
 
@@ -2909,7 +3009,9 @@ static void mavlink_test_ardupilotmega(uint8_t system_id, uint8_t component_id, 
 	mavlink_test_autopilot_version_request(system_id, component_id, last_msg);
 	mavlink_test_remote_log_data_block(system_id, component_id, last_msg);
 	mavlink_test_remote_log_block_status(system_id, component_id, last_msg);
-	mavlink_test_led_control(system_id, component_id, last_msg);
+	mavlink_test_led_control_pattern(system_id, component_id, last_msg);
+	mavlink_test_led_control_pattern_param(system_id, component_id, last_msg);
+	mavlink_test_led_control_macro(system_id, component_id, last_msg);
 	mavlink_test_mag_cal_progress(system_id, component_id, last_msg);
 	mavlink_test_mag_cal_report(system_id, component_id, last_msg);
 	mavlink_test_ekf_status_report(system_id, component_id, last_msg);

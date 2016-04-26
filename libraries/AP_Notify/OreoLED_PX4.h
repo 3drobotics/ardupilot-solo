@@ -43,12 +43,18 @@ public:
     // healthy - return true if at least one LED is responding
     bool healthy() const { return _overall_health; }
 
-    // handle a LED_CONTROL message, by default device ignore message
+    // handle a LED_CONTROL messages
     void handle_led_control(mavlink_message_t *msg);
 
 private:
     // update_timer - called by scheduler and updates PX4 driver with commands
     void update_timer(void);
+
+    // set_pattern - set a pattern with all parameters
+    void set_pattern(oreoled_patternset_t *pattern_args);
+
+    // set_pattern_param - set an individual pattern parameter
+    void set_pattern_param(oreoled_paramupdate_t *paramupdate_args);
 
     // set_rgb - set color as a combination of red, green and blue values for one or all LEDs
     void set_rgb(uint8_t instance, uint8_t red, uint8_t green, uint8_t blue);
@@ -59,9 +65,11 @@ private:
     // send_sync - force a syncronisation of the LEDs
     void send_sync(void);
 
-    // oreo led modes (pattern, macro or rgb)
+    // oreo led modes
     enum oreoled_mode {
+        OREOLED_MODE_OVERRIDE,
         OREOLED_MODE_PATTERN,
+        OREOLED_MODE_PATTERN_PARAM,
         OREOLED_MODE_MACRO,
         OREOLED_MODE_RGB,
         OREOLED_MODE_SYNC
@@ -78,7 +86,8 @@ private:
 
         // operator==
         inline bool operator==(const oreo_state &os) {
-           return ((os.mode==mode) && (os.pattern==pattern) && (os.macro==macro) && (os.red==red) && (os.green==green) && (os.blue==blue));
+           return ((os.mode==mode) && (os.pattern==pattern) && (os.macro==macro) &&
+                    (os.red==red) && (os.green==green) && (os.blue==blue));
         }
     };
 
@@ -89,7 +98,9 @@ private:
     volatile bool _state_desired_semaphore;         // true when we are updating the state desired values to ensure they are not sent prematurely
     oreo_state _state_desired[OREOLED_NUM_LEDS];    // desired state
     oreo_state _state_sent[OREOLED_NUM_LEDS];       // last state sent to led
-    uint8_t _pattern_override;                      // holds last processed pattern override, 0 if we are not overriding a pattern
+    oreoled_patternset_t _desired_pattern[OREOLED_NUM_LEDS];
+    oreoled_paramupdate_t _desired_param_update[OREOLED_NUM_LEDS];
+    bool _mavlink_override;                         // flag indicating if the LED is being overridden by mavlink
 };
 
 #endif // CONFIG_HAL_BOARD == HAL_BOARD_PX4
