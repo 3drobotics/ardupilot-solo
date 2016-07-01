@@ -5,6 +5,13 @@ static bool land_with_gps;
 static uint32_t land_start_time;
 static bool land_pause;
 
+static float land_ramp_a;
+static float land_ramp_xi;
+static float land_ramp_xf;
+static float land_ramp_vi;
+static float land_ramp_vf;
+static bool land_ramp;
+
 // land_init - initialise land controller
 static bool land_init(bool ignore_checks)
 {
@@ -27,6 +34,21 @@ static bool land_init(bool ignore_checks)
     land_start_time = millis();
 
     land_pause = false;
+
+    // pre-calculate land ramp constants
+    land_ramp_a = pos_control.get_accel_z();
+    land_ramp_vf = g.land_speed;
+    land_ramp_vi = fabsf(pos_control.get_speed_down());
+    land_ramp_xf = pv_alt_above_origin(LAND_START_ALT);
+
+    // protect against div/0 from bad parameters
+    if (land_ramp_a > 0 && land_ramp_vi > g.land_speed){ //protect against floating point exception
+        land_ramp_xi = land_ramp_xf - (pow(land_ramp_vf,2) - pow(land_ramp_vi,2))/(2*land_ramp_a);
+        land_ramp = true;
+    }else{
+        land_ramp_xi = 0;
+        land_ramp = false;
+    }
 
     return true;
 }
@@ -204,7 +226,13 @@ static float get_land_descent_speed()
 #endif
     // if we are above 10m and the sonar does not sense anything perform regular alt hold descent
     if (pos_control.get_pos_target().z >= pv_alt_above_origin(LAND_START_ALT) && !(sonar_ok && sonar_alt_health >= SONAR_ALT_HEALTH_MAX)) {
-        return pos_control.get_speed_down();
+        // if we are within the land ramp profile
+        if (land_ramp && pos_control.get_pos_target().z <= land_ramp_xi){
+            return -fabsf(land_ramp_vi + (land_ramp_vf-land_ramp_vi)*(pos_control.get_pos_target().z-land_ramp_xi)/(land_ramp_xf-land_ramp_xi));
+        }else{
+            return pos_control.get_speed_down();
+        }
+    // if we're below LAND_START_ALT, use land_speed
     }else{
         return -abs(g.land_speed);
     }
