@@ -1,33 +1,51 @@
 language: cpp
-sudo: required
-
-env:
-- secure: y81XpWA0pgw18ZszT93q/1RRhsOdYfgVNAfntrNNQHxb4bFmUgxNdumxDWJrW3M4JvZLLlSQtaiszB1Q5gIHYd9dBXMmn9fs7r0X924ivLUt9gtRcPuYISBphYMda1mkZtum3BRSMPZthy7h9QCaIIZEoLzwBezg3XlKb+LaUfs=
-
+sudo: false
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - george-edison55-precise-backports
+    packages:
+    - build-essential
+    - gawk
+    - ccache
+    - genromfs
+    - libc6-i386
+    - python-pip
+    - python-dev
+    - zlib1g-dev
+    - gcc-4.9
+    - g++-4.9
+    - cmake
+    - cmake-data
+cache:
+  ccache: true
+  directories:
+  - $HOME/opt
 before_install:
-  -  APMDIR=$(pwd) && pushd .. && $APMDIR/Tools/scripts/install-travis-env.sh -y && . ~/.profile && popd
-
+- Tools/scripts/configure-ci.sh
 script:
-  - Tools/scripts/build_px4_v2_quad_travis.sh
-
-before_deploy:
-  - mkdir deploy_files
-  - cp ArduCopter/ArduCopter-v2.px4 deploy_files
-  - cp ../PX4Firmware/Build/px4fmu-v2_APM.build/firmware.elf deploy_files/fmu.elf
-  - cp ../PX4Firmware/Build/px4io-v2_default.build/firmware.elf deploy_files/io.elf
-
+- pushd ..
+- git clone https://github.com/3drobotics/PX4Firmware-solo.git
+- mv ./PX4Firmware-solo ./PX4Firmware
+- git clone https://github.com/3drobotics/PX4NuttX.git
+- popd
+- . ~/.profile
+- pushd ArduCopter
+- make configure
+- make px4-v2
+before_cache:
+- ccache -z
+compiler:
+- gcc
 deploy:
   provider: releases
   api_key:
-    secure: dPbOB5fE6nRAc3nQvVqBWCDYdRfSQ0659uLs0BOOhsqkHYEEHOqbdMExiIEmRGGBOnXmf52yHTYjPIKd3x77OMYYVRjolJ917RT+hf17ZbYjkXWyRaPcliTeAIZEdwPxFac4awJEmoLLs6Qmg+pT1eb69KlUpHWu8eeIQYb+fpTtWvuC19Mt2xz+3BzkJ8Ah2gY09GKur0TSeSho13VBe/Hd+VlIofygWwvxqp41Sft6zjofUPRSijYfhdckG+Fg2MbrCnaRrbVr8toszhNkk8CTz9X9rRg6HgXVvtDLWNNpgj/r7LWVDcKTKQxmva9g4WvWx6drhr3x0gbjuSyZZ+BscXXfGO2aiPZqDmzker+ahATGkEzozYcJG6LZTvy9eeGayNcvk1zsw+YY4Aw8k71ifi2Pioos5xAObfJr7iJQHx7NZ/q+KlDAq9AGnGEZhWxjQ/0J7Xd/tajo/dV/zSZ3L16/i6rY5PR+nYfUOtY3/ekBFLvNlunhccy9PAwZxFgTtzGbRkoxbQi76t1Z1UMkbiQgkPr+kew4tLLE6pPGVsKmnq5suXtp875oW8HgoVT0qYO4b8PquKDVxc0pJ4BpiLNVRHGOORvRnOPo6QTRG2mw+DurGbAyRNXca4htJSPztFWmzrrf/vguQSSrg+CbroMxcUmsu07TeDvmeT0=
-  file:
-  - "deploy_files/ArduCopter-v2.px4"
-  - "deploy_files/fmu.elf"
-  - "deploy_files/io.elf"
+    secure: TqITVpWzb7gT82fgub0v4J8RTwMPoFP/Nsk0a/C2O1q2YJ8M15Nm4O/LNA6grCScc5UqLV4E3M3SqVPV2BsMXOQT/BiJGkbVEHPawPThpaNRFA1hrBVMGJxvpT09EcnlJ+wE3EAnngvsOOGtBPKaURku1CU/JI8tRI4qqnQOdLayUJmOedvsE/JKXpI/kk1LXe9wrIAZwtRfD95O77rRNM11eCZS333ovkwBb0/ft8/zWsAPtSq7hdqllSE+PkWuHKr1o9K34VOum6atNK0GCZi6oVuLr2rKEfDT1HmqVUqEgFMS7B55++gXY/nawhkLa1Sjej+MZBHVNGVeUZzeBjTpuud7Mj4V5hzeJDF6o5x66SmQl9HI8KjaXe2OBsk1EPJfY4xAX2pGB/LOAkjsEIezgeYWA4+kuQO1uhRWFoURZOnyXHGoAIg9b5PLkuDAQ4mggbe1kzqLL/0nlOtxP3InnoHq+cE+Eg+mh2R+wn4EqJfmZCpJmLGjIfPIem3Zxm3ZLGlLPJcyVSkjt4HQo+a7egQ5qVGHypzDawp4po/ZBE8Rx5D8PJEq+Zsrkdyj7CFirszQojpW18qJqOvwzDPmT7k8Djv/0z6EqC814GDDb02l30UYU37GTEpBzpru0iJy6sVeWEiDZXTm+WLshTqHnawa0luvneV6Cubjizg=
+  file: ArduCopter/ArduCopter-v2.px4
   skip_cleanup: true
   on:
     tags: true
     all_branches: true
-
 notifications:
-  slack: 3dr:DnBFaUDTVtQa5k18ODuAZRKL
+  slack: 3dr:tT1PqGCjL6mimPYss3XRrVL7
