@@ -48,4 +48,6 @@ deploy:
     tags: true
     all_branches: true
 notifications:
+  on_success: change
+  on_failure: change
   slack: 3dr:tT1PqGCjL6mimPYss3XRrVL7
