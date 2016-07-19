@@ -48,4 +48,9 @@ deploy:
     tags: true
     all_branches: true
 notifications:
-  slack: 3dr:tT1PqGCjL6mimPYss3XRrVL7
+  slack:
+    rooms:
+      - 3dr:tT1PqGCjL6mimPYss3XRrVL7
+    on_failure: change
+    on_success: change
+ 
