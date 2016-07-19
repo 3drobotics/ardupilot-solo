@@ -1293,6 +1293,20 @@ bool DataFlash_Backend::Log_Write_Mode(uint8_t mode)
     return WriteBlock(&pkt, sizeof(pkt));
 }
 
+void DataFlash_Class::Log_Write_R10CGimbal(float pref, float rout, float pout, uint32_t rpwm, uint32_t ppwm)
+{
+    struct log_R10CGimbal pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_R10CGIMBAL_MSG),
+        time_ms : hal.scheduler->millis(),
+        pitch_ref  : pref,
+        roll_out  : rout,
+        pitch_out : pout,
+        roll_pwm  : rpwm,
+        pitch_pwm : ppwm
+    };
+    WriteBlock(&pkt, sizeof(pkt));
+}
+
 // Write ESC status messages
 void DataFlash_Class::Log_Write_ESC(void)
 {

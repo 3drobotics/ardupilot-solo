@@ -1060,6 +1060,21 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 #endif
         break;
     }
+
+    case MAVLINK_MSG_ID_R10C_GIMBAL_REPORT:
+    {
+        static int32_t last_received;
+#if MOUNT==ENABLED
+        mavlink_r10c_gimbal_report_t r10c_report;
+        mavlink_msg_r10c_gimbal_report_decode(msg, &r10c_report);
+        float pitch_ref = (float)r10c_report.pitch_ref/(1<<22);
+        float roll_out = (float)r10c_report.roll_out/(1<<22);
+        float pitch_out = (float)r10c_report.pitch_out/(1<<22);
+        DataFlash.Log_Write_R10CGimbal(pitch_ref, roll_out, pitch_out, r10c_report.roll_pwm, r10c_report.pitch_pwm);
+#endif
+        break;
+    }
+    
     case MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE:       // MAV ID: 70
     {
         // allow override of RC channel values for HIL

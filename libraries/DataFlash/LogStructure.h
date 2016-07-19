@@ -127,6 +127,16 @@ struct PACKED log_Gimbal3 {
     int16_t az_torque_cmd;
 };
 
+struct PACKED log_R10CGimbal {
+  LOG_PACKET_HEADER;
+  uint32_t time_ms;
+  float pitch_ref;
+  float roll_out;
+  float pitch_out;
+  uint32_t roll_pwm;
+  uint32_t pitch_pwm;
+};
+  
 struct PACKED log_RCIN {
     LOG_PACKET_HEADER;
     uint32_t timestamp;
@@ -601,7 +611,9 @@ Format characters in the format string for binary log messages
       "GMB2", "IBfffffffff", "TimeMS,es,ex,ey,ez,rx,ry,rz,tx,ty,tz" }, \
     { LOG_GIMBAL3_MSG, sizeof(log_Gimbal3), \
       "GMB3", "Ihhh", "TimeMS,rl_torque_cmd,el_torque_cmd,az_torque_cmd" }, \
-    { LOG_ACC1_MSG, sizeof(log_ACCEL), \
+    { LOG_R10CGIMBAL_MSG, sizeof(log_R10CGimbal), \
+      "R10C", "IffII", "TimMS,pitch_ref,roll_out,pitch_out,roll_pwm,pitch_pwm" }, \
+    { LOG_ACC1_MSG, sizeof(log_ACCEL),					\
       "ACC1", "IIfff",        "TimeMS,TimeUS,AccX,AccY,AccZ" }, \
     { LOG_ACC2_MSG, sizeof(log_ACCEL), \
       "ACC2", "IIfff",        "TimeMS,TimeUS,AccX,AccY,AccZ" }, \
@@ -683,6 +695,7 @@ Format characters in the format string for binary log messages
 #define LOG_USTG_MSG      183
 #define LOG_DF_MAV_STATS  184
 #define LOG_EKF6_MSG      185
+#define LOG_R10CGIMBAL_MSG 186
 
 // message types 200 to 210 reversed for GPS driver use
 // message types 211 to 220 reversed for autotune use

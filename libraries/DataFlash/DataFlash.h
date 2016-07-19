@@ -104,7 +104,7 @@ public:
 	void Log_Write_Current(const AP_BattMonitor &battery, int16_t throttle);
     void Log_Write_Compass(const Compass &compass);
     void Log_Write_Mode(uint8_t mode);
-
+    void Log_Write_R10CGimbal(float pref, float rout, float pout, uint32_t rpwm, uint32_t ppwm);
     bool logging_started(void);
 
     // for DataFlash_MAVLink:
