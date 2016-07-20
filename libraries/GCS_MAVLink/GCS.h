@@ -141,7 +141,8 @@ public:
 #endif
     void send_autopilot_version(void) const;
     void send_local_position(const AP_AHRS &ahrs) const;
-
+    void send_home(const Location &home) const;
+    
     // return a bitmap of active channels. Used by libraries to loop
     // over active channels to send to all active channels    
     static uint8_t active_channel_mask(void) { return mavlink_active; }
