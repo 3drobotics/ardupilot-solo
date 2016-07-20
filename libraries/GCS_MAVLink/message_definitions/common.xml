@@ -2634,7 +2634,44 @@
             <field type="uint64_t" name="uid">UID if provided by hardware</field>
         </message>
         <!-- MESSAGE IDs 180 - 240: Space for custom messages in individual projectname_messages.xml files -->
-        <message id="248" name="V2_EXTENSION">
+        <message id="241" name="VIBRATION">
+            <description>Vibration levels and accelerometer clipping</description>
+            <field type="uint64_t" name="time_usec">Timestamp (micros since boot or Unix epoch)</field>
+            <field type="float" name="vibration_x">Vibration levels on X-axis</field>
+            <field type="float" name="vibration_y">Vibration levels on Y-axis</field>
+            <field type="float" name="vibration_z">Vibration levels on Z-axis</field>
+            <field type="uint32_t" name="clipping_0">first accelerometer clipping count</field>
+            <field type="uint32_t" name="clipping_1">second accelerometer clipping count</field>
+            <field type="uint32_t" name="clipping_2">third accelerometer clipping count</field>
+        </message>
+        <message id="242" name="HOME_POSITION">
+               <description>This message can be requested by sending the MAV_CMD_GET_HOME_POSITION command. The position the system will return to and land on. The position is set automatically by the system during the takeoff in case it was not explicitely set by the operator before or after. The position the system will return to and land on. The global and local positions encode the position in the respective coordinate frames, while the q parameter encodes the orientation of the surface. Under normal conditions it describes the heading and terrain slope, which can be used by the aircraft to adjust the approach. The approach 3D vector describes the point to which the system should fly in normal flight mode and then perform a landing sequence along the vector.</description>
+               <field type="int32_t" name="latitude">Latitude (WGS84), in degrees * 1E7</field>
+               <field type="int32_t" name="longitude">Longitude (WGS84, in degrees * 1E7</field>
+               <field type="int32_t" name="altitude">Altitude (AMSL), in meters * 1000 (positive for up)</field>
+               <field type="float" name="x">Local X position of this position in the local coordinate frame</field>
+               <field type="float" name="y">Local Y position of this position in the local coordinate frame</field>
+               <field type="float" name="z">Local Z position of this position in the local coordinate frame</field>
+               <field type="float[4]" name="q">World to surface normal and heading transformation of the takeoff position. Used to indicate the heading and slope of the ground</field>
+               <field type="float" name="approach_x">Local X position of the end of the approach vector. Multicopters should set this position based on their takeoff path. Grass-landing fixed wing aircraft should set it the same way as multicopters. Runway-landing fixed wing aircraft should set it to the opposite direction of the takeoff, assuming the takeoff happened from the threshold / touchdown zone.</field>
+               <field type="float" name="approach_y">Local Y position of the end of the approach vector. Multicopters should set this position based on their takeoff path. Grass-landing fixed wing aircraft should set it the same way as multicopters. Runway-landing fixed wing aircraft should set it to the opposite direction of the takeoff, assuming the takeoff happened from the threshold / touchdown zone.</field>
+               <field type="float" name="approach_z">Local Z position of the end of the approach vector. Multicopters should set this position based on their takeoff path. Grass-landing fixed wing aircraft should set it the same way as multicopters. Runway-landing fixed wing aircraft should set it to the opposite direction of the takeoff, assuming the takeoff happened from the threshold / touchdown zone.</field>
+        </message>
+        <message id="243" name="SET_HOME_POSITION">
+               <description>The position the system will return to and land on. The position is set automatically by the system during the takeoff in case it was not explicitely set by the operator before or after. The global and local positions encode the position in the respective coordinate frames, while the q parameter encodes the orientation of the surface. Under normal conditions it describes the heading and terrain slope, which can be used by the aircraft to adjust the approach. The approach 3D vector describes the point to which the system should fly in normal flight mode and then perform a landing sequence along the vector.</description>
+               <field type="uint8_t" name="target_system">System ID.</field>
+               <field type="int32_t" name="latitude">Latitude (WGS84), in degrees * 1E7</field>
+               <field type="int32_t" name="longitude">Longitude (WGS84, in degrees * 1E7</field>
+               <field type="int32_t" name="altitude">Altitude (AMSL), in meters * 1000 (positive for up)</field>
+               <field type="float" name="x">Local X position of this position in the local coordinate frame</field>
+               <field type="float" name="y">Local Y position of this position in the local coordinate frame</field>
+               <field type="float" name="z">Local Z position of this position in the local coordinate frame</field>
+               <field type="float[4]" name="q">World to surface normal and heading transformation of the takeoff position. Used to indicate the heading and slope of the ground</field>
+               <field type="float" name="approach_x">Local X position of the end of the approach vector. Multicopters should set this position based on their takeoff path. Grass-landing fixed wing aircraft should set it the same way as multicopters. Runway-landing fixed wing aircraft should set it to the opposite direction of the takeoff, assuming the takeoff happened from the threshold / touchdown zone.</field>
+               <field type="float" name="approach_y">Local Y position of the end of the approach vector. Multicopters should set this position based on their takeoff path. Grass-landing fixed wing aircraft should set it the same way as multicopters. Runway-landing fixed wing aircraft should set it to the opposite direction of the takeoff, assuming the takeoff happened from the threshold / touchdown zone.</field>
+               <field type="float" name="approach_z">Local Z position of the end of the approach vector. Multicopters should set this position based on their takeoff path. Grass-landing fixed wing aircraft should set it the same way as multicopters. Runway-landing fixed wing aircraft should set it to the opposite direction of the takeoff, assuming the takeoff happened from the threshold / touchdown zone.</field>
+        </message>
+	<message id="248" name="V2_EXTENSION">
             <description>Message implementing parts of the V2 payload specs in V1 frames for transitional support.</description>
             <field type="uint8_t" name="target_network">Network ID (0 for broadcast)</field>
             <field type="uint8_t" name="target_system">System ID (0 for broadcast)</field>
