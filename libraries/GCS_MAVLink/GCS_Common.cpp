@@ -1343,3 +1343,18 @@ void GCS_MAVLINK::send_local_position(const AP_AHRS &ahrs) const
         velocity.y,
         velocity.z);
 }
+
+void GCS_MAVLINK::send_home(const Location &home) const
+{
+    if (comm_get_txspace(chan) >= MAVLINK_NUM_NON_PAYLOAD_BYTES + MAVLINK_MSG_ID_HOME_POSITION_LEN) {
+        const float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};
+        mavlink_msg_home_position_send(
+                                       chan,
+                                       home.lat,
+                                       home.lng,
+                                       home.alt * 10,
+                                       0.0f, 0.0f, 0.0f,
+                                       q,
+                                       0.0f, 0.0f, 0.0f);
+    }
+}
