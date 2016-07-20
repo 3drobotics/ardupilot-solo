@@ -4,9 +4,9 @@
 
 typedef struct __mavlink_gopro_heartbeat_t
 {
- uint8_t status; /*< Status*/
- uint8_t capture_mode; /*< Current capture mode*/
- uint8_t flags; /*< additional status bits*/
+ uint8_t status; ///< Status
+ uint8_t capture_mode; ///< Current capture mode
+ uint8_t flags; ///< additional status bits
 } mavlink_gopro_heartbeat_t;
 
 #define MAVLINK_MSG_ID_GOPRO_HEARTBEAT_LEN 3

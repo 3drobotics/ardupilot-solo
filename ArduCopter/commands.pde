@@ -100,6 +100,10 @@ static bool set_home(const Location& loc)
         }
     }
 
+    for (int k = 0; k < MAVLINK_COMM_NUM_BUFFERS; k++) {
+        gcs[k].send_home(loc);
+    }
+    
     // return success
     return true;
 }
