@@ -1096,6 +1096,22 @@ void DataFlash_Class::Log_Write_EKF(AP_AHRS_NavEKF &ahrs, bool optFlowEnabled)
          };
         WriteBlock(&pkt5, sizeof(pkt5));
     }
+
+    // Write Sixth EKF packet
+    uint16_t gpsCheckStatus;
+    float vertVelDiff, saccFilt, posDriftRate, vertVelFilt, horizVelFilt;
+    ahrs.get_NavEKF().getFilterGpsStatus(gpsCheckStatus, vertVelDiff, saccFilt, posDriftRate, vertVelFilt, horizVelFilt);
+    struct log_EKF6 pkt6 = {
+        LOG_PACKET_HEADER_INIT(LOG_EKF6_MSG),
+        time_ms : hal.scheduler->millis(),
+        gpsChecks : (int16_t)(gpsCheckStatus),
+        vertVelDiff : (float)(vertVelDiff),
+        saccFilt : (float)(saccFilt),
+        posDriftRate : (float)(posDriftRate),
+        vertVelFilt : (float)(vertVelFilt),
+        horizVelFilt : (float)(horizVelFilt)
+    };
+    WriteBlock(&pkt6, sizeof(pkt6));
 }
 #endif
 

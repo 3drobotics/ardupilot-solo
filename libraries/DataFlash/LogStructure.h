@@ -262,6 +262,17 @@ struct PACKED log_EKF5 {
     uint16_t errHAGL;
 };
 
+struct PACKED log_EKF6 {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    int16_t gpsChecks;
+    float vertVelDiff;
+    float saccFilt;
+    float posDriftRate;
+    float vertVelFilt;
+    float horizVelFilt;
+};
+
 struct PACKED log_Cmd {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
@@ -601,7 +612,9 @@ Format characters in the format string for binary log messages
     { LOG_GYR2_MSG, sizeof(log_GYRO), \
       "GYR2", "IIfff",        "TimeMS,TimeUS,GyrX,GyrY,GyrZ" }, \
     { LOG_GYR3_MSG, sizeof(log_GYRO), \
-      "GYR3", "IIfff",        "TimeMS,TimeUS,GyrX,GyrY,GyrZ" }
+      "GYR3", "IIfff",        "TimeMS,TimeUS,GyrX,GyrY,GyrZ" }, \
+    { LOG_EKF6_MSG, sizeof(log_EKF6), \
+      "EKF6","IHfffff","TimeMS,GCS,VVD,GSE,PDR,VVF,HVF" }
 
 #if HAL_CPU_CLASS >= HAL_CPU_CLASS_75
 #define LOG_COMMON_STRUCTURES LOG_BASE_STRUCTURES, LOG_EXTRA_STRUCTURES
@@ -669,6 +682,7 @@ Format characters in the format string for binary log messages
 #define LOG_UNAK_MSG      182
 #define LOG_USTG_MSG      183
 #define LOG_DF_MAV_STATS  184
+#define LOG_EKF6_MSG      185
 
 // message types 200 to 210 reversed for GPS driver use
 // message types 211 to 220 reversed for autotune use
