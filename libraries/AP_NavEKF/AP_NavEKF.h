@@ -39,6 +39,15 @@
 #include <systemlib/perf_counter.h>
 #endif
 
+// GPS pre-flight check bit locations
+#define MASK_GPS_NSATS      (1<<0)
+#define MASK_GPS_HDOP       (1<<1)
+#define MASK_GPS_SPD_ERR    (1<<2)
+#define MASK_GPS_POS_ERR    (1<<3)
+#define MASK_GPS_YAW_ERR 	(1<<4)
+#define MASK_GPS_POS_DRIFT  (1<<5)
+#define MASK_GPS_VERT_SPD   (1<<6)
+#define MASK_GPS_HORIZ_SPD  (1<<7)
 
 class AP_AHRS;
 
@@ -243,8 +252,14 @@ public:
     */
     void  getFilterStatus(nav_filter_status &status) const;
 
+    /*
+    return filter gps quality check status
+    */
+    void  getFilterGpsStatus(uint16_t &gpsFails, float &vertVelDiff, float &saccFilt, float &posDriftRate, float &vertVelFilt, float &horizVelFilt) const;
+
     // send an EKF_STATUS_REPORT message to GCS
     void send_status_report(mavlink_channel_t chan);
+
     // send a GPS_ACCURACY message to GCS
     void send_gps_accuracy(mavlink_channel_t chan);
 
@@ -501,6 +516,14 @@ private:
     AP_Float _maxFlowRate;          // Maximum flow rate magnitude that will be accepted by the filter
     AP_Int8 _fallback;              // EKF-to-DCM fallback strictness. 0 = trust EKF more, 1 = fallback more conservatively.
     AP_Int8 _altSource;             // Primary alt source during optical flow navigation. 0 = use Baro, 1 = use range finder.
+    AP_Int8 _gpsCheck;              // Bitmask controlling which preflight GPS checks are bypassed
+    AP_Int8 _gpsSatsLim;            // Minimum number of GPS satellites allowed druing pre-flight checks
+    AP_Int16 _gpsHdopLim;           // Maximum reported GPS HDoP percentage allowed during pre-flight checks
+    AP_Float _gpsSpdErrLim;         // Maximum reported GPS speed error allowed during pre-flight checks (m/s)
+    AP_Float _gpsPosErrLim;         // Maximum reported GPS horizontal position error allowed during pre-flight checks (m)
+    AP_Float _gpsPosDriftLim;       // Maximum measured GPS horizontal position drift rate allowed during pre-flight checks (m/s)
+    AP_Float _gpsVertSpdLim;        // Maximum measured GPS vertical speed allowed during pre-flight checks (m/s)
+    AP_Float _gpsHorizSpdLim;       // Maximum measured GPS horizontal speed allowed during pre-flight checks (m/s)
 
     // Tuning parameters
     const float gpsNEVelVarAccScale;    // Scale factor applied to NE velocity measurement variance due to manoeuvre acceleration
@@ -670,7 +693,6 @@ private:
     bool prevVehicleArmed;          // vehicleArmed from previous frame
     struct Location EKF_origin;     // LLH origin of the NED axis system - do not change unless filter is reset
     bool validOrigin;               // true when the EKF origin is valid
-    float gpsSpdAccuracy;           // estimated speed accuracy in m/s returned by the UBlox GPS receiver
     uint32_t lastGpsVelFail_ms;     // time of last GPS vertical velocity consistency check fail
     Vector3f lastMagOffsets;        // magnetometer offsets returned by compass object from previous update
     bool gpsAidingBad;              // true when GPS position measurements have been consistently rejected by the filter
@@ -681,9 +703,6 @@ private:
     bool gpsGoodToAlign;            // true when GPS quality is good enough to set an EKF origin and commence GPS navigation
     bool gpsAccuracyGood;           // true when the GPS accuracy is considered to be good enough for safe flight.
     uint32_t timeAtDisarm_ms;       // time of last disarm event in msec
-    float gpsDriftNE;               // amount of drift detected in the GPS position during pre-flight GPs checks
-    float gpsVertVelFilt;           // amount of filterred vertical GPS velocity detected durng pre-flight GPS checks
-    float gpsHorizVelFilt;          // amount of filtered horizontal GPS velocity detected during pre-flight GPS checks
     uint32_t magYawResetTimer_ms;   // timer in msec used to track how long good magnetometer data is failing innovation consistency checks
     bool consistentMagData;         // true when the magnetometers are passing consistency checks
     float hgtInnovFiltState;        // state used for fitering of the height innovations used for pre-flight checks
@@ -775,6 +794,14 @@ private:
     bool gndOffsetValid;            // true when the ground offset state can still be considered valid
     bool flowXfailed;               // true when the X optical flow measurement has failed the innovation consistency check
 
+    // GPS checks
+    float velDiffAbs;               // Absolute difference between EKF and GPS vertical velocity (m/s)
+    float gpsSpdAccuracy;           // GPS receiver reported speed accuracy after filtering (m/s)
+    float driftRate;                // GPS horizontal position drift rate (m/s)
+    float gpsDriftNE;               // amount of drift detected in the GPS position during pre-flight GPs checks (m)
+    float gpsVertVelFilt;           // amount of filtered vertical GPS velocity detected durng pre-flight GPS checks (m/s)
+    float gpsHorizVelFilt;          // amount of filtered horizontal GPS velocity detected during pre-flight GPS checks (m/s)
+
     // Range finder
     float baroHgtOffset;            // offset applied when baro height used as a backup height reference if range-finder fails
     float rngOnGnd;                 // Expected range finder reading in metres when vehicle is on ground
@@ -843,6 +870,8 @@ private:
         Vector9 SH_MAG;
 	} mag_state;
 
+    // status recorded fail status of GPS pre-flight checks last time any check failed preventing GPS use or the pass timer passed enabling GPS use
+    nav_gps_status gpsCheckStatusLastChange;
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     // performance counters

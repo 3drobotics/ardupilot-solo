@@ -375,8 +375,65 @@ const AP_Param::GroupInfo NavEKF::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("ALT_SOURCE",    32, NavEKF, _altSource, 1),
 
+    // @Param: GPS_CHECK
+    // @DisplayName: GPS preflight check
+    // @Description: 1 byte bitmap of GPS preflight checks to perform. Set to 0 to bypass all checks. Set to 255 perform all checks. Set to 3 to check just the number of satellites and HDoP. Set to 31 for the most rigorous checks that will still allow checks to pass when the copter is moving, eg launch from a boat.
+    // @Bitmask: 0:NSats,1:HDoP,2:speed error,3:horiz pos error,4:yaw error,5:pos drift,6:vert speed,7:horiz speed
+    // @User: Advanced
+    AP_GROUPINFO("GPS_CHECK",    33, NavEKF, _gpsCheck, 255),
+
+    // @Param: GPS_LIM_NSAT
+    // @DisplayName: Minimum allowed GPS sat count
+    // @Description: Minimum number of GPS satellites allowed druing pre-flight checks
+    // @Range: 4 - 10
+    // @User: Advanced
+    AP_GROUPINFO("GPS_LIM_NSAT", 34, NavEKF, _gpsSatsLim, 6),
+
+    // @Param: GPS_LIM_HDOP
+    // @DisplayName: Maximum allowed GPS HDoP
+    // @Description: Maximum reported GPS HDoP percentage allowed during pre-flight checks
+    // @Range: 100 - 250
+    // @User: Advanced
+    AP_GROUPINFO("GPS_LIM_HDOP", 35, NavEKF, _gpsHdopLim, 170),
+
+    // @Param: GPS_LIM_SERR
+    // @DisplayName: Maximum allowed GPS speed error
+    // @Description: Maximum reported GPS speed error allowed during pre-flight checks (m/s)
+    // @Range: 0.5 - 1.5
+    // @User: Advanced
+    AP_GROUPINFO("GPS_LIM_SERR", 36, NavEKF, _gpsSpdErrLim, 1.0f),
+
+    // @Param: GPS_LIM_HERR
+    // @DisplayName: Maximum allowed GPS horizontal position error
+    // @Description: Maximum reported GPS horizontal position error allowed during pre-flight checks (m)
+    // @Range: 1.0 - 5.0
+    // @User: Advanced
+    AP_GROUPINFO("GPS_LIM_HERR", 37, NavEKF, _gpsPosErrLim, 5.0f),
+
+    // @Param: GPS_LIM_HDFT
+    // @DisplayName: Maximum allowed horizontal position drift rate
+    // @Description: Maximum measured GPS horizontal position drift rate allowed during pre-flight checks (m/s). This check can only be used if the vehicle is stationary.
+    // @Range: 0.1 - 1.0
+    // @User: Advanced
+    AP_GROUPINFO("GPS_LIM_HDFT", 38, NavEKF, _gpsPosDriftLim, 0.3f),
+
+    // @Param: GPS_LIM_VSPD
+    // @DisplayName: Maximum allowed vertical speed
+    // @Description: Maximum measured GPS vertical speed allowed during pre-flight checks (m/s). This check can only be used if the vehicle is stationary.
+    // @Range: 0.1 - 1.0
+    // @User: Advanced
+    AP_GROUPINFO("GPS_LIM_VSPD", 39, NavEKF, _gpsVertSpdLim, 0.3f),
+
+    // @Param: GPS_LIM_HSPD
+    // @DisplayName: Maximum allowed horizontal speed
+    // @Description: Maximum measured GPS horizontal speed allowed during pre-flight checks (m/s). This check can only be used if the vehicle is stationary.
+    // @Range: 0.1 - 1.0
+    // @User: Advanced
+    AP_GROUPINFO("GPS_LIM_HSPD", 40, NavEKF, _gpsHorizSpdLim, 0.3f),
+
     AP_GROUPEND
 };
+AP_Float _gpsHorizSpdLim;       // Maximum measured GPS horizontal speed allowed during pre-flight checks (m/s)
 
 // constructor
 NavEKF::NavEKF(const AP_AHRS *ahrs, AP_Baro &baro, const RangeFinder &rng) :
@@ -4238,7 +4295,7 @@ void NavEKF::readGpsData()
     }
 
     // If no previous GPS lock or told not to use it, or EKF origin not set, we declare the  GPS unavailable for use
-    if ((_ahrs->get_gps().status() < AP_GPS::GPS_OK_FIX_3D) || _fusionModeGPS == 3 || !validOrigin) {
+    if ((_ahrs->get_gps().status() < AP_GPS::GPS_OK_FIX_3D) || (_fusionModeGPS == 3) || !validOrigin) {
         gpsNotAvailable = true;
     } else {
         gpsNotAvailable = false;
@@ -4741,6 +4798,7 @@ void NavEKF::InitialiseVariables()
     lastTime_ms = 0;
     lastInnovPassTime_ms = 0;
     lastInnovFailTime_ms = 0;
+    gpsCheckStatusLastChange.value = 0;
 }
 
 // return true if we should use the airspeed sensor
@@ -4902,6 +4960,20 @@ void  NavEKF::getFilterStatus(nav_filter_status &status) const
     status.flags.gps_glitching = !gpsAccuracyGood; // The GPS is glitching
 }
 
+/*
+return filter gps quality check status
+*/
+void  NavEKF::getFilterGpsStatus(uint16_t &gpsFails, float &vertVelDiff, float &saccFilt, float &posDriftRate, float &vertVelFilt, float &horizVelFilt) const
+{
+    // init return value
+    gpsFails = gpsCheckStatusLastChange.value;
+    vertVelDiff = velDiffAbs;
+    saccFilt = gpsSpdAccuracy;
+    posDriftRate = driftRate;
+    vertVelFilt = gpsVertVelFilt;
+    horizVelFilt = gpsHorizVelFilt;
+}
+
 // send an EKF_STATUS message to GCS
 void NavEKF::send_status_report(mavlink_channel_t chan)
 {
@@ -4909,19 +4981,19 @@ void NavEKF::send_status_report(mavlink_channel_t chan)
     nav_filter_status filt_state;
     getFilterStatus(filt_state);
 
-    // prepare flags
-    uint16_t flags = 0;
-    if (filt_state.flags.attitude) { flags |= EKF_ATTITUDE; }
-    if (filt_state.flags.horiz_vel) { flags |= EKF_VELOCITY_HORIZ; }
-    if (filt_state.flags.vert_vel) { flags |= EKF_VELOCITY_VERT; }
-    if (filt_state.flags.horiz_pos_rel) { flags |= EKF_POS_HORIZ_REL; }
-    if (filt_state.flags.horiz_pos_abs) { flags |= EKF_POS_HORIZ_ABS; }
-    if (filt_state.flags.vert_pos) { flags |= EKF_POS_VERT_ABS; }
-    if (filt_state.flags.terrain_alt) { flags |= EKF_POS_VERT_AGL; }
-    if (filt_state.flags.const_pos_mode) { flags |= EKF_CONST_POS_MODE; }
-    if (filt_state.flags.pred_horiz_pos_rel) { flags |= EKF_PRED_POS_HORIZ_REL; }
-    if (filt_state.flags.pred_horiz_pos_abs) { flags |= EKF_PRED_POS_HORIZ_ABS; }
-    if (filt_state.flags.gps_glitching) { flags |= (1<<15); }
+    // prepare ekf solution status flags
+    uint16_t ekfFlags = 0;
+    if (filt_state.flags.attitude) { ekfFlags |= EKF_ATTITUDE; }
+    if (filt_state.flags.horiz_vel) { ekfFlags |= EKF_VELOCITY_HORIZ; }
+    if (filt_state.flags.vert_vel) { ekfFlags |= EKF_VELOCITY_VERT; }
+    if (filt_state.flags.horiz_pos_rel) { ekfFlags |= EKF_POS_HORIZ_REL; }
+    if (filt_state.flags.horiz_pos_abs) { ekfFlags |= EKF_POS_HORIZ_ABS; }
+    if (filt_state.flags.vert_pos) { ekfFlags |= EKF_POS_VERT_ABS; }
+    if (filt_state.flags.terrain_alt) { ekfFlags |= EKF_POS_VERT_AGL; }
+    if (filt_state.flags.const_pos_mode) { ekfFlags |= EKF_CONST_POS_MODE; }
+    if (filt_state.flags.pred_horiz_pos_rel) { ekfFlags |= EKF_PRED_POS_HORIZ_REL; }
+    if (filt_state.flags.pred_horiz_pos_abs) { ekfFlags |= EKF_PRED_POS_HORIZ_ABS; }
+    if (filt_state.flags.gps_glitching) { ekfFlags |= (1<<15); }
 
     // get variances
     float velVar, posVar, hgtVar, tasVar;
@@ -4930,7 +5002,7 @@ void NavEKF::send_status_report(mavlink_channel_t chan)
     getVariances(velVar, posVar, hgtVar, magVar, tasVar, offset);
 
     // send message
-    mavlink_msg_ekf_status_report_send(chan, flags, velVar, posVar, hgtVar, magVar.length(), tasVar);
+    mavlink_msg_ekf_status_report_send(chan, ekfFlags, velVar, posVar, hgtVar, magVar.length(), tasVar);
 
 }
 
@@ -4945,15 +5017,16 @@ void NavEKF::send_gps_accuracy(mavlink_channel_t chan)
         return;
     }
     lastGpsAccuracySendTime_ms = now;
+
     float hAcc = -1.0f;
     _ahrs->get_gps().horizontal_accuracy(hAcc);
 
     uint8_t checkMask =
-        ((hAcc <= 5.0f) ? 0x1 : 0) |
-        ((gpsSpdAccuracy <= 1.0f) ? 0x2 : 0) |
-        ((gpsHorizVelFilt <= 0.3f) ? 0x4 : 0) |
-        ((gpsVertVelFilt <= 0.3f) ? 0x8 : 0) |
-        ((gpsDriftNE <= 3.0f) ? 0x10 : 0);
+        (!gpsCheckStatusLastChange.flags.bad_hAcc ? 0x1 : 0) |
+        (!gpsCheckStatusLastChange.flags.bad_sAcc ? 0x2 : 0) |
+        (!gpsCheckStatusLastChange.flags.bad_horiz_vel ? 0x4 : 0) |
+        (!gpsCheckStatusLastChange.flags.bad_vert_vel ? 0x8 : 0) |
+        (!gpsCheckStatusLastChange.flags.bad_horiz_drift ? 0x10 : 0);
 
     mavlink_msg_gps_accuracy_send(chan,
         _ahrs->get_gps().primary_sensor(),
@@ -5155,16 +5228,24 @@ void NavEKF::setTouchdownExpected(bool val)
     expectGndEffectTouchdown = val;
 }
 
-// Monitor GPS data to see if quality is good enough to initialise the EKF
-// Monitor magnetometer innovations to to see if the heading is good enough to use GPS
-// Return true if all criteria pass for 10 seconds
-// Once we have set the origin and are operating in GPS mode the status is set to true to avoid a race conditon with remote useage
-// If we have landed with good GPS, then the status is assumed good for 5 seconds to allow transients to settle
+/*
+   Monitor GPS data to see if quality is good enough to initialise the EKF
+   Monitor magnetometer innovations to to see if the heading is good enough to use GPS
+   Return true if all criteria pass for 10 seconds
+
+   We also record the failure reason so that prearm_failure_reason()
+   can give a good report to the user on why arming is failing
+*/
 bool NavEKF::calcGpsGoodToAlign(void)
 {
+    // variable used to capture current GPS check status
+    nav_gps_status gpsCheckStatus;
+    gpsCheckStatus.value = 0;
+
+    // 3D lock required
+    gpsCheckStatus.flags.bad_fix = _ahrs->get_gps().status() < AP_GPS::GPS_OK_FIX_3D;
 
     // calculate absolute difference between GPS vert vel and inertial vert vel
-    float velDiffAbs;
     if (_ahrs->get_gps().have_vertical_velocity()) {
         velDiffAbs = fabsf(velNED.z - state.velocity.z);
     } else {
@@ -5172,21 +5253,38 @@ bool NavEKF::calcGpsGoodToAlign(void)
     }
 
     // fail if velocity difference or reported speed accuracy greater than threshold
-    bool gpsVelFail = (velDiffAbs > 1.0f) || (gpsSpdAccuracy > 1.0f);
+    bool gpsVelFail = ((velDiffAbs > _gpsSpdErrLim) || (gpsSpdAccuracy > _gpsSpdErrLim)) && (_gpsCheck & MASK_GPS_SPD_ERR);
+
+    if (velDiffAbs > _gpsSpdErrLim) {
+        gpsCheckStatus.flags.bad_VZ = true;
+    }
+
+    if (gpsSpdAccuracy > _gpsSpdErrLim) {
+        gpsCheckStatus.flags.bad_sAcc = true;
+    }
 
     // fail if not enough sats
-    bool numSatsFail = _ahrs->get_gps().num_sats() < 6;
+    bool numSatsFail = (_ahrs->get_gps().num_sats() < _gpsSatsLim) && (_gpsCheck & MASK_GPS_NSATS);
+    if (numSatsFail) {
+        gpsCheckStatus.flags.bad_sats = true;
+    }
 
     // fail if satellite geometry is poor
-    bool hdopFail = _ahrs->get_gps().get_hdop() > 250;
+    bool hdopFail = (_ahrs->get_gps().get_hdop() > _gpsHdopLim)  && (_gpsCheck & MASK_GPS_HDOP);
+    if (hdopFail) {
+        gpsCheckStatus.flags.bad_hdop = true;
+    }
 
     // fail if horiziontal position accuracy not sufficient
     float hAcc = 0.0f;
     bool hAccFail;
     if (_ahrs->get_gps().horizontal_accuracy(hAcc)) {
-        hAccFail = hAcc > 5.0f;
+        hAccFail = (hAcc > _gpsPosErrLim)  && (_gpsCheck & MASK_GPS_POS_ERR);
     } else {
         hAccFail =  false;
+    }
+    if (hAccFail) {
+        gpsCheckStatus.flags.bad_hAcc = true;
     }
 
     // If we have good magnetometer consistency and bad innovations for longer than 5 seconds then we reset heading and field states
@@ -5206,13 +5304,14 @@ bool NavEKF::calcGpsGoodToAlign(void)
     // fail if magnetometer innovations are outside limits indicating bad yaw
     // with bad yaw we are unable to use GPS
     bool yawFail;
-    if (magTestRatio.x > 1.0f || magTestRatio.y > 1.0f) {
+    if ((magTestRatio.x > 1.0f || magTestRatio.y > 1.0f) && (_gpsCheck & MASK_GPS_YAW_ERR)) {
         yawFail = true;
+        gpsCheckStatus.flags.bad_yaw = true;
     } else {
         yawFail = false;
     }
 
-    // Check for significant change in GPS posiiton if disarmed which indicates bad GPS
+    // Check for significant change in GPS position if disarmed which indicates bad GPS
     // Note: this assumes we are not flying from a moving vehicle, eg boat
     const struct Location &gpsloc = _ahrs->get_gps().location(); // Current location
     const float posFiltTimeConst = 10.0f; // time constant used to decay position drift
@@ -5224,10 +5323,13 @@ bool NavEKF::calcGpsGoodToAlign(void)
     // Decay distance moved exponentially to zero
     gpsDriftNE *= (1.0f - deltaTime/posFiltTimeConst);
     // Clamp the fiter state to prevent excessive persistence of large transients
-    gpsDriftNE = min(gpsDriftNE,10.0f);
-    // Fail if more than 3 metres drift after filtering whilst pre-armed when the vehicle is supposed to be stationary
-    // This corresponds to a maximum acceptable average drift rate of 0.3 m/s or single glitch event of 3m
-    bool gpsDriftFail = gpsDriftNE > 3.0f && !vehicleArmed;
+    gpsDriftNE = fminf(gpsDriftNE,10.0f);
+    // Fail if position is not stable
+    driftRate = gpsDriftNE/posFiltTimeConst;
+    bool gpsDriftFail = (driftRate > _gpsPosDriftLim) && !vehicleArmed && (_gpsCheck & MASK_GPS_POS_DRIFT);
+    if (gpsDriftFail) {
+        gpsCheckStatus.flags.bad_horiz_drift = true;
+    }
 
     // Check that the vertical GPS vertical velocity is reasonable after noise filtering
     bool gpsVertVelFail;
@@ -5235,10 +5337,11 @@ bool NavEKF::calcGpsGoodToAlign(void)
         // check that the average vertical GPS velocity is close to zero
         gpsVertVelFilt = 0.1f * velNED.z + 0.9f * gpsVertVelFilt;
         gpsVertVelFilt = constrain_float(gpsVertVelFilt,-10.0f,10.0f);
-        gpsVertVelFail = (fabsf(gpsVertVelFilt) > 0.3f);
+        gpsVertVelFail = (fabsf(gpsVertVelFilt) > _gpsVertSpdLim) && (_gpsCheck & MASK_GPS_VERT_SPD);
     } else if ((_fusionModeGPS == 0) && !_ahrs->get_gps().have_vertical_velocity()) {
         // If the EKF settings require vertical GPS velocity and the receiver is not outputting it, then fail
         gpsVertVelFail = true;
+        gpsCheckStatus.flags.bad_vert_vel = true;
     } else {
         gpsVertVelFail = false;
     }
@@ -5248,9 +5351,12 @@ bool NavEKF::calcGpsGoodToAlign(void)
     if (!vehicleArmed) {
         gpsHorizVelFilt = 0.1f * pythagorous2(velNED.x,velNED.y) + 0.9f * gpsHorizVelFilt;
         gpsHorizVelFilt = constrain_float(gpsHorizVelFilt,-10.0f,10.0f);
-        gpsHorizVelFail = (fabsf(gpsHorizVelFilt) > 0.3f);
+        gpsHorizVelFail = (fabsf(gpsHorizVelFilt) > _gpsHorizSpdLim) && (_gpsCheck & MASK_GPS_HORIZ_SPD);
     } else {
         gpsHorizVelFail = false;
+    }
+    if (gpsHorizVelFail) {
+        gpsCheckStatus.flags.bad_horiz_vel = true;
     }
 
     // return healthy if we already have an origin and are inflight to prevent a race condition when checking the status on the ground after landing
@@ -5261,18 +5367,24 @@ bool NavEKF::calcGpsGoodToAlign(void)
         return true;
     }
 
-    // record time of fail
-    // assume  fail first time called
+    if (lastGpsVelFail_ms == 0) {
+        // first time through, start with a failure
+        lastGpsVelFail_ms = imuSampleTime_ms;
+    }
+
+    // record fail
     if (gpsVelFail || numSatsFail || hdopFail || hAccFail || yawFail || gpsDriftFail || gpsVertVelFail || gpsHorizVelFail || lastGpsVelFail_ms == 0) {
         lastGpsVelFail_ms = imuSampleTime_ms;
+        gpsCheckStatusLastChange.value = gpsCheckStatus.value;
+        return false;
     }
 
     // continuous period without fail required to return healthy
     if (imuSampleTime_ms - lastGpsVelFail_ms > 10000) {
+        gpsCheckStatusLastChange.value = gpsCheckStatus.value;
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 // Read the range finder and take new measurements if available
