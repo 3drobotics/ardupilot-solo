@@ -521,6 +521,16 @@ void AP_Mount::update(uint8_t mount_compid,  AP_SerialManager& serial_manager)
     }
 }
 
+void AP_Mount::gmb_att_update()
+{
+    //update each instance
+    for (uint8_t instance=0; instance < AP_MOUNT_MAX_INSTANCES; instance++) {
+        if (_backends[instance] != NULL) {
+            _backends[instance]->gmb_att_update();
+        }
+    }
+}
+
 // get_mount_type - returns the type of mount
 AP_Mount::MountType AP_Mount::get_mount_type(uint8_t instance) const
 {
