@@ -985,6 +985,14 @@ static void update_mount()
 #endif
 }
 
+static void gmb_att_update()
+{
+#if MOUNT == ENABLED
+    // update camera mount's position
+    camera_mount.gmb_att_update();
+#endif
+}
+
 // update_batt_compass - read battery and compass
 // should be called at 10hz
 static void update_batt_compass(void)
