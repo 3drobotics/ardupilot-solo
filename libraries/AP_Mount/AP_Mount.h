@@ -35,6 +35,9 @@
 // maximum number of mounts
 #define AP_MOUNT_MAX_INSTANCES          1
 
+// maximum retries for MAVLink detection
+#define MAX_RETRIES             5
+
 // declare backend classes
 class AP_Mount_Backend;
 class AP_Mount_Servo;
@@ -54,7 +57,7 @@ class AP_Mount
     friend class AP_Mount_MAVLink;
     friend class AP_Mount_Alexmos;
     friend class AP_Mount_SToRM32;
-
+    friend class AP_Mount_R10C;
 public:
 
     // Enums
@@ -73,7 +76,7 @@ public:
     void init(DataFlash_Class *dataflash ,const AP_SerialManager& serial_manager);
 
     // update - give mount opportunity to update servos.  should be called at 10hz or higher
-    void update();
+    void update(uint8_t mount_sysid, AP_SerialManager& serial_manager);;
 
     // get_mount_type - returns the type of mount
     AP_Mount::MountType get_mount_type() const { return get_mount_type(_primary); }
@@ -145,6 +148,13 @@ protected:
     AP_Mount_Backend    *_backends[AP_MOUNT_MAX_INSTANCES];         // pointers to instantiated mounts
 
     DataFlash_Class *_dataflash;
+
+    // mavlink detect vars
+    uint8_t             _retries;
+    bool                _mav_gimbal_found;
+    bool                primary_set = false;
+    uint32_t            _last_time;
+    bool                _timeout;
 
     // backend state including parameters
     struct mount_state {

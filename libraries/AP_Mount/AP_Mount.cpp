@@ -9,6 +9,9 @@
 #include <AP_Mount_MAVLink.h>
 #include <AP_Mount_Alexmos.h>
 #include <AP_Mount_SToRM32.h>
+#include <AP_Mount_R10C.h>
+
+extern const AP_HAL::HAL& hal;
 
 const AP_Param::GroupInfo AP_Mount::var_info[] PROGMEM = {
     // @Param: _DEFLT_MODE
@@ -411,9 +414,6 @@ void AP_Mount::init(DataFlash_Class *dataflash, const AP_SerialManager& serial_m
 
     _dataflash = dataflash;
     
-    // primary is reset to the first instantiated mount
-    bool primary_set = false;
-
     // create each instance
     for (uint8_t instance=0; instance<AP_MOUNT_MAX_INSTANCES; instance++) {
         MountType mount_type = get_mount_type(instance);
@@ -422,13 +422,6 @@ void AP_Mount::init(DataFlash_Class *dataflash, const AP_SerialManager& serial_m
         if (mount_type == Mount_Type_Servo) {
             _backends[instance] = new AP_Mount_Servo(*this, state[instance], instance);
             _num_instances++;
-
-#if AP_AHRS_NAVEKF_AVAILABLE
-        // check for MAVLink mounts
-        } else if (mount_type == Mount_Type_MAVLink) {
-            _backends[instance] = new AP_Mount_MAVLink(*this, state[instance], instance);
-            _num_instances++;
-#endif
 
         // check for Alexmos mounts
         } else if (mount_type == Mount_Type_Alexmos) {
@@ -453,8 +446,73 @@ void AP_Mount::init(DataFlash_Class *dataflash, const AP_SerialManager& serial_m
 }
 
 // update - give mount opportunity to update servos.  should be called at 10hz or higher
-void AP_Mount::update()
+// update - give mount opportunity to update servos.  should be called at 10hz or higher
+void AP_Mount::update(uint8_t mount_compid,  AP_SerialManager& serial_manager)
 {
+#if AP_AHRS_NAVEKF_AVAILABLE
+    static AP_HAL::UARTDriver *uart = serial_manager.find_serial(AP_SerialManager::SerialProtocol_MAVLink,1);
+    static bool begin_gmb_uart;
+    static uint32_t baud = serial_manager.find_baudrate(AP_SerialManager::SerialProtocol_MAVLink,1);
+    for (uint8_t instance=0; instance<AP_MOUNT_MAX_INSTANCES; instance++) {
+
+        if(_retries > MAX_RETRIES) { //no mavlink gimbal found
+            break;
+        }
+
+        MountType mount_type = get_mount_type(instance);
+        // check for MAVLink mounts
+        if (mount_type == Mount_Type_MAVLink && !_mav_gimbal_found) {
+            if(mount_compid == MAV_COMP_ID_GIMBAL) {    
+                _backends[instance] = new AP_Mount_MAVLink(*this, state[instance], instance);
+                _num_instances++;
+                _mav_gimbal_found = true;
+            }
+            if (mount_compid == MAV_COMP_ID_R10C_GIMBAL) {
+                _backends[instance] = new AP_Mount_R10C(*this, state[instance], instance);
+                _num_instances++;
+                _mav_gimbal_found = true;
+            }
+            // init new instance
+            if (_backends[instance] != NULL && _mav_gimbal_found) {
+                _backends[instance]->init(serial_manager);
+                if (!primary_set) {
+                    _primary = instance;
+                    primary_set = true;
+                }
+            } else if(_timeout) {
+                //change baud rate of gimbal port and retry
+                if(baud == 921600) {
+                    hal.console->printf("Looking for R10C Gimbal!!\n");
+                    uart->end();
+                    baud = 230400;
+                } else if(baud == 230400) {
+                    hal.console->printf("Looking for Solo Gimbal!!\n");
+                    uart->end();
+                    baud = 921600;
+                } else {
+                    hal.console->printf("Setting Back to Default Baud: %d!!\n", 921600);
+                    uart->end();
+                    baud = 921600;
+                }
+
+                _timeout = false;
+                begin_gmb_uart = true;
+                _last_time = hal.scheduler->millis();
+                _retries++;
+                if(_retries == MAX_RETRIES) {
+                    hal.console->printf("No MavLink Gimbal Found!!\n");
+                }
+            } else {
+                if(begin_gmb_uart && ((hal.scheduler->millis() - _last_time)>=1000)) {
+                    uart->begin(baud);
+                    hal.console->printf("Setting Gimbal port baud to %d\n", baud);
+                    begin_gmb_uart = false;
+                }
+                _timeout = ((hal.scheduler->millis() - _last_time)>=5000) ? true : false;
+            }
+        }
+    }
+#endif
     // update each instance
     for (uint8_t instance=0; instance<AP_MOUNT_MAX_INSTANCES; instance++) {
         if (_backends[instance] != NULL) {
