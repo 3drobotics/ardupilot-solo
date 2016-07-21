@@ -78,6 +78,9 @@ public:
     // update - give mount opportunity to update servos.  should be called at 10hz or higher
     void update(uint8_t mount_sysid, AP_SerialManager& serial_manager);;
 
+    // used for gimbals that need to read INS data at configurable rate
+    void gmb_att_update();
+    
     // get_mount_type - returns the type of mount
     AP_Mount::MountType get_mount_type() const { return get_mount_type(_primary); }
     AP_Mount::MountType get_mount_type(uint8_t instance) const;

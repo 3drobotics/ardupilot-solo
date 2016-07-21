@@ -47,6 +47,9 @@ public:
     // update mount position - should be called periodically
     virtual void update() = 0;
 
+    // used for gimbals that need to read INS data at configurable rate
+    virtual void gmb_att_update() {}
+    
     // has_pan_control - returns true if this mount can control it's pan (required for multicopters)
     virtual bool has_pan_control() const = 0;
 
