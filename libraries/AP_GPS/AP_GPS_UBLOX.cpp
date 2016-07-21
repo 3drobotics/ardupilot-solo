@@ -105,23 +105,26 @@ AP_GPS_UBLOX::send_next_rate_update(void)
         _configure_message_rate(CLASS_NAV, MSG_STATUS, 1); // 16+8 bytes
         break;
     case 3:
-        _configure_message_rate(CLASS_NAV, MSG_SOL, 1);    // 52+8 bytes
+        _configure_message_rate(CLASS_NAV, MSG_DOP, 1);
         break;
     case 4:
+        _configure_message_rate(CLASS_NAV, MSG_SOL, 1);    // 52+8 bytes
+        break;
+    case 5:
         _configure_message_rate(CLASS_NAV, MSG_VELNED, 1); // 36+8 bytes
         break;
 #if UBLOX_HW_LOGGING
-    case 5:
+    case 6:
         // gather MON_HW at 0.5Hz
         _configure_message_rate(CLASS_MON, MSG_MON_HW, 2); // 64+8 bytes
         break;
-    case 6:
+    case 7:
         // gather MON_HW2 at 0.5Hz
         _configure_message_rate(CLASS_MON, MSG_MON_HW2, 2); // 24+8 bytes
         break;
 #endif
 #if UBLOX_VERSION_AUTODETECTION 
-    case 7:
+    case 8:
         _request_version();
         break;
 #endif
@@ -516,6 +519,12 @@ AP_GPS_UBLOX::_parse_gps(void)
         next_fix = state.status;
 #endif
         break;
+    case MSG_DOP:
+        state.hdop        = _buffer.dop.hDOP;
+#if UBLOX_FAKE_3DLOCK
+        state.hdop = 130;
+#endif
+        break;
     case MSG_SOL:
         Debug("MSG_SOL fix_status=%u fix_type=%u",
               _buffer.solution.fix_status,
@@ -534,7 +543,6 @@ AP_GPS_UBLOX::_parse_gps(void)
             state.status = AP_GPS::NO_FIX;
         }
         state.num_sats    = _buffer.solution.satellites;
-        state.hdop        = _buffer.solution.position_DOP;
         if (next_fix >= AP_GPS::GPS_OK_FIX_2D) {
             state.last_gps_time_ms = hal.scheduler->millis();
             if (state.time_week == _buffer.solution.week &&
@@ -550,7 +558,6 @@ AP_GPS_UBLOX::_parse_gps(void)
 #if UBLOX_FAKE_3DLOCK
         next_fix = state.status;
         state.num_sats = 10;
-        state.hdop = 200;
         state.time_week = 1721;
         state.time_week_ms = hal.scheduler->millis() + 3*60*60*1000 + 37000;
         state.last_gps_time_ms = hal.scheduler->millis();
