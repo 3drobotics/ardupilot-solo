@@ -42,7 +42,7 @@ deploy:
   provider: releases
   api_key:
     secure: TqITVpWzb7gT82fgub0v4J8RTwMPoFP/Nsk0a/C2O1q2YJ8M15Nm4O/LNA6grCScc5UqLV4E3M3SqVPV2BsMXOQT/BiJGkbVEHPawPThpaNRFA1hrBVMGJxvpT09EcnlJ+wE3EAnngvsOOGtBPKaURku1CU/JI8tRI4qqnQOdLayUJmOedvsE/JKXpI/kk1LXe9wrIAZwtRfD95O77rRNM11eCZS333ovkwBb0/ft8/zWsAPtSq7hdqllSE+PkWuHKr1o9K34VOum6atNK0GCZi6oVuLr2rKEfDT1HmqVUqEgFMS7B55++gXY/nawhkLa1Sjej+MZBHVNGVeUZzeBjTpuud7Mj4V5hzeJDF6o5x66SmQl9HI8KjaXe2OBsk1EPJfY4xAX2pGB/LOAkjsEIezgeYWA4+kuQO1uhRWFoURZOnyXHGoAIg9b5PLkuDAQ4mggbe1kzqLL/0nlOtxP3InnoHq+cE+Eg+mh2R+wn4EqJfmZCpJmLGjIfPIem3Zxm3ZLGlLPJcyVSkjt4HQo+a7egQ5qVGHypzDawp4po/ZBE8Rx5D8PJEq+Zsrkdyj7CFirszQojpW18qJqOvwzDPmT7k8Djv/0z6EqC814GDDb02l30UYU37GTEpBzpru0iJy6sVeWEiDZXTm+WLshTqHnawa0luvneV6Cubjizg=
-  file: ArduCopter/ArduCopter-v2.px4
+  file: 'ArduCopter/ArduCopter-v2.px4'
   skip_cleanup: true
   on:
     tags: true
