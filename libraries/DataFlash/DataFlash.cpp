@@ -176,6 +176,12 @@ void DataFlash_Class::Log_Write_Parameter(const char *name, float value)
     FOR_EACH_BACKEND(Log_Write_Parameter(name, value));
 }
 
+bool DataFlash_Class::Log_Write_Parameter(const AP_Param *ap, const AP_Param::ParamToken &token, 
+                             enum ap_var_type type)
+{
+    FOR_EACH_BACKEND(Log_Write_Parameter(ap, token, type));
+}
+
 // end functions pass straight through to backend
 
 #undef FOR_EACH_BACKEND
