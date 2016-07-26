@@ -12,7 +12,8 @@
 
 static Vector3f posvel_pos_target_cm;
 static Vector3f posvel_vel_target_cms;
-static uint32_t posvel_update_time_ms;
+static uint32_t posvel_update_time_ms;      // system time of last target update to posvel controller
+static uint32_t vel_update_time_ms;         // system time of last target update to velocity controller
 
 struct Guided_Limit {
     uint32_t timeout_ms;  // timeout (in seconds) from the time that guided is invoked
@@ -140,7 +141,9 @@ static void guided_set_velocity(const Vector3f& velocity)
         guided_vel_control_start();
     }
 
-    // set position controller velocity target
+    vel_update_time_ms = millis();
+
+    // set position controller velocity target    
     pos_control.set_desired_velocity(velocity);
 }
 
@@ -162,6 +165,10 @@ static void guided_set_destination_posvel(const Vector3f& destination, const Vec
 // should be called at 100hz or more
 static void guided_run()
 {
+    
+    // reset the guided mode exit flag
+    failsafe.guided_sp_expired = false;
+  
     // if not auto armed set throttle to zero and exit immediately
     if(!ap.auto_armed) {
         // To-Do: reset waypoint controller?
@@ -193,6 +200,11 @@ static void guided_run()
         guided_posvel_control_run();
         break;
     }
+    
+    if (failsafe.guided_sp_expired && failsafe.radio) {
+        failsafe_radio_on_event();
+    }
+    
  }
 
 // guided_takeoff_run - takeoff in guided mode
@@ -270,6 +282,12 @@ static void guided_vel_control_run()
             set_auto_yaw_mode(AUTO_YAW_HOLD);
         }
     }
+    
+    // exit guided if no updates received for 3 seconds
+    uint32_t tnow = millis();
+    if (tnow - vel_update_time_ms > GUIDED_POSVEL_TIMEOUT_MS) {
+        failsafe.guided_sp_expired = true;
+    }
 
     // calculate dt
     float dt = pos_control.time_since_last_xy_update();
@@ -310,10 +328,10 @@ static void guided_posvel_control_run()
         }
     }
 
-    // set velocity to zero if no updates received for 3 seconds
+    // exit guided if no updates received for 3 seconds
     uint32_t tnow = millis();
     if (tnow - posvel_update_time_ms > GUIDED_POSVEL_TIMEOUT_MS && !posvel_vel_target_cms.is_zero()) {
-        posvel_vel_target_cms.zero();
+        failsafe.guided_sp_expired = true;
     }
 
     // calculate dt

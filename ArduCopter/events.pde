@@ -14,34 +14,16 @@ static void failsafe_radio_on_event()
     if (should_disarm_on_failsafe()) {
         init_disarm_motors();
     } else {
-        // This is how to handle a failsafe.
-        switch(control_mode) {
-            case AUTO:
-                if(g.failsafe_throttle == FS_THR_ENABLED_ALWAYS_LAND) {
-                    // if failsafe_throttle is FS_THR_ENABLED_ALWAYS_LAND then land immediately
-                    set_mode_land_with_pause();
-                } else if (g.failsafe_throttle == FS_THR_ENABLED_ALWAYS_RTL) {
-                    // if failsafe_throttle is FS_THR_ENABLED_ALWAYS_RTL do RTL
-                    set_mode_RTL_or_land_with_pause();
-                }
-                // failsafe_throttle must be FS_THR_ENABLED_CONTINUE_MISSION so no need to do anything
-                break;
-
-            case LAND:
-                // continue to land if battery failsafe is also active otherwise fall through to default handling
-                if (g.failsafe_battery_enabled == FS_BATT_LAND && failsafe.battery) {
-                    break;
-                }
-                // no break
-            default:
-                if(g.failsafe_throttle == FS_THR_ENABLED_ALWAYS_LAND) {
-                    // if failsafe_throttle is FS_THR_ENABLED_ALWAYS_LAND then land immediately
-                    set_mode_land_with_pause();
-                } else {
-                    // otherwise RTL or land if that fails
-                    set_mode_RTL_or_land_with_pause();
-                }
-                break;
+        if ((control_mode == AUTO || (control_mode == GUIDED && !failsafe.guided_sp_expired)) && g.failsafe_throttle == FS_THR_ENABLED_CONTINUE_MISSION) {
+            // continue mission or guided mode
+        } else if (control_mode == LAND && g.failsafe_battery_enabled == FS_BATT_LAND && failsafe.battery) {
+            // continue landing
+        } else {
+            if (g.failsafe_throttle == FS_THR_ENABLED_ALWAYS_LAND) {
+                set_mode_land_with_pause();
+            } else {
+                set_mode_RTL_or_land_with_pause();
+            }
         }
     }
 
