@@ -39,7 +39,8 @@ static void set_home_to_current_location_inflight() {
 static bool set_home_to_current_location() {
     // get current location from EKF
     Location temp_loc;
-    if (inertial_nav.get_location(temp_loc)) {
+    nav_filter_status filt_status = inertial_nav.get_filter_status();
+    if (inertial_nav.get_location(temp_loc) && filt_status.flags.pred_horiz_pos_abs) {
         return set_home(temp_loc);
     }
     return false;
