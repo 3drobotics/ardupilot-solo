@@ -111,15 +111,27 @@ void AP_Mount_R10C::gmb_att_update()
     //    return;
     //}
 
-    mavlink_msg_attitude_send(
-        chan,
-        hal.scheduler->millis(),
-        euler312.x,            //these will be normalised again on gimbal
-        euler312.y,
-        euler312.z,
-        gyro.x,
-        gyro.y,
-        gyro.z);
+    if (get_mode() != MAV_MOUNT_MODE_NEUTRAL) {
+        mavlink_msg_attitude_send(
+                                  chan,
+                                  hal.scheduler->millis(),
+                                  euler312.x,            //these will be normalised again on gimbal
+                                  euler312.y,
+                                  euler312.z,
+                                  gyro.x,
+                                  gyro.y,
+                                  gyro.z);
+    } else {
+        mavlink_msg_attitude_send(
+                                  chan,
+                                  hal.scheduler->millis(),
+                                  0,
+                                  0,
+                                  0,
+                                  gyro.x,
+                                  gyro.y,
+                                  gyro.z);
+    }
 }
 // set_mode - sets mount's mode
 void AP_Mount_R10C::set_mode(enum MAV_MOUNT_MODE mode)
