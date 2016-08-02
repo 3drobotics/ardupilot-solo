@@ -81,19 +81,6 @@ void AP_Mount_R10C::update()
             //do nothing
             break;
     }
-
-    /*   
-    // move mount to a "retracted position" into the fuselage with a fourth servo
-    bool mount_open_new = (get_mode() == MAV_MOUNT_MODE_RETRACT) ? 0 : 1;
-    if (mount_open != mount_open_new) {
-        mount_open = mount_open_new;
-        move_servo(_open_idx, mount_open_new, 0, 1);
-    }
-    // write the results to the servos
-    move_servo(_roll_idx, _angle_bf_output_deg.x*10, _state._roll_angle_min*0.1f, _state._roll_angle_max*0.1f);
-    move_servo(_tilt_idx, _angle_bf_output_deg.y*10, _state._tilt_angle_min*0.1f, _state._tilt_angle_max*0.1f);
-    move_servo(_pan_idx,  _angle_bf_output_deg.z*10, _state._pan_angle_min*0.1f, _state._pan_angle_max*0.1f);
-    */
 }
 
 void AP_Mount_R10C::gmb_att_update()
@@ -116,7 +103,6 @@ void AP_Mount_R10C::gmb_att_update()
     if (get_mode() != MAV_MOUNT_MODE_NEUTRAL) {
         mavlink_msg_r10c_gimbal_update_send(
                                   chan,
-                                  hal.scheduler->millis(),
                                   euler312.x,            //these will be normalised again on gimbal
                                   euler312.y,
                                   euler312.z,
@@ -124,7 +110,6 @@ void AP_Mount_R10C::gmb_att_update()
     } else {
         mavlink_msg_r10c_gimbal_update_send(
                                   chan,
-                                  hal.scheduler->millis(),
                                   0,
                                   0,
                                   0,
