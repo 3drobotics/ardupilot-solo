@@ -1390,8 +1390,14 @@
       <field name="cmd_id" type="uint8_t" enum="GOPRO_COMMAND">Command ID</field>
       <field name="status" type="uint8_t" enum="GOPRO_REQUEST_STATUS">Status</field>
     </message>
-    <!-- 219 to 224 RESERVED for more GOPRO-->
-
+    <!-- 219 to 222 RESERVED for more GOPRO-->
+    <message name="R10C_GIMBAL_UPDATE" id="223">
+      <description>R10C Gimbal combined attitude and pitch reference from copter</description>
+      <field name="roll" type="float">copter roll (rad)</field>
+      <field name="pitch" type="float">copter pitch (rad)</field>
+      <field name="yaw" type="float">copter yaw (rad)</field>
+      <field name="pitch_ref" type="float">body-frame pitch reference (cd)</field>
+    </message>
     <message name="R10C_GIMBAL_REPORT" id="224">
       <description>2 axis gimbal measurements</description>
       <field name="target_system" type="uint8_t">System ID</field>
