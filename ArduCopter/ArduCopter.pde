@@ -777,7 +777,7 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
     { update_copter_leds,   40,      5 },
 #endif
     { update_mount,          8,     45 },
-    { gmb_att_update,        4,    100 },
+    { gmb_att_update,        1,     50 },
     { ten_hz_logging_loop,  40,     30 },
     { fifty_hz_logging_loop, 8,     22 },
     { full_rate_logging_loop,1,     22 },
