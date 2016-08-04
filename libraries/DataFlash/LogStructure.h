@@ -612,7 +612,7 @@ Format characters in the format string for binary log messages
     { LOG_GIMBAL3_MSG, sizeof(log_Gimbal3), \
       "GMB3", "Ihhh", "TimeMS,rl_torque_cmd,el_torque_cmd,az_torque_cmd" }, \
     { LOG_R10CGIMBAL_MSG, sizeof(log_R10CGimbal), \
-      "R10C", "IfffII", "TimeMS,pitch_ref,roll_out,pitch_out,roll_pwm,pitch_pwm" }, \
+      "R10C", "IffII", "TimMS,pitch_ref,roll_out,pitch_out,roll_pwm,pitch_pwm" }, \
     { LOG_ACC1_MSG, sizeof(log_ACCEL),					\
       "ACC1", "IIfff",        "TimeMS,TimeUS,AccX,AccY,AccZ" }, \
     { LOG_ACC2_MSG, sizeof(log_ACCEL), \
