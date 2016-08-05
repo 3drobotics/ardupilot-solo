@@ -162,6 +162,10 @@ public:
     bool healthy(void) const { return healthy(get_primary()); }
     uint8_t get_healthy_mask() const;
 
+    /// Return if compass saturated
+    bool saturated(uint8_t i) const { return _state[i].saturated; }
+    bool saturated(void) const { return saturated(get_primary()); }
+
     /// Returns the current offset values
     ///
     /// @returns                    The current compass offsets.
@@ -382,6 +386,7 @@ private:
         bool        has_unfiltered_field;
         bool        updated_raw_field;
         bool        updated_unfiltered_field;
+        bool        saturated;
         Vector3f    raw_field;
         Vector3f    unfiltered_field;
     } _state[COMPASS_MAX_INSTANCES];

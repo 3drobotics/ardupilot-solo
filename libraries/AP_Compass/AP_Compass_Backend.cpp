@@ -113,6 +113,15 @@ void AP_Compass_Backend::publish_filtered_field(const Vector3f &mag, uint8_t ins
 }
 
 /*
+  set state.saturated
+*/
+void AP_Compass_Backend::update_saturated(const bool is_saturated, uint8_t instance)
+{
+    Compass::mag_state &state = _compass._state[instance];
+    state.saturated = is_saturated;
+}
+
+/*
   register a new backend with frontend, returning instance which
   should be used in publish_field()
  */
@@ -120,7 +129,6 @@ uint8_t AP_Compass_Backend::register_compass(void) const
 { 
     return _compass.register_compass(); 
 }
-
 
 /*
   set dev_id for an instance
