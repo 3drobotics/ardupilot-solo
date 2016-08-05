@@ -265,6 +265,22 @@ static bool mode_requires_GPS(uint8_t mode) {
     return false;
 }
 
+// returns true or false whether mode requires RC (should match notify_flight_mode)
+static bool mode_requires_RC(uint8_t mode) {
+    switch(mode) {
+        case AUTO:
+        case GUIDED:
+        case RTL:
+        case CIRCLE:
+        case LAND:
+            return false;
+        default:
+            return true;
+    }
+    
+    return true;
+}
+
 static bool mode_disarms_on_land(uint8_t mode) {
     return mode_allows_arming(mode, false) && !mode_has_manual_throttle(mode);
 }
