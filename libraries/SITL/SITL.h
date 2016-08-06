@@ -98,6 +98,8 @@ public:
     AP_Int16  mag_delay; // magnetometer data delay in ms
     AP_Int16  wind_delay; // windspeed data delay in ms
 
+    AP_Int16 gps_spd_err; // reported GPS speed accuracy in cm/s
+
 	void simstate_send(mavlink_channel_t chan);
 
     void Log_Write_SIMSTATE(DataFlash_Class &dataflash);

@@ -70,6 +70,7 @@ const AP_Param::GroupInfo SITL::var_info[] PROGMEM = {
     AP_GROUPINFO("MAG_DELAY",     39, SITL,  mag_delay, 0),
     AP_GROUPINFO("WIND_DELAY",    40, SITL,  wind_delay, 0),
     AP_GROUPINFO("MAG_OFS",       41, SITL,  mag_ofs, 0),
+    AP_GROUPINFO("GPS_SPD_ERR",   42, SITL,  gps_spd_err, 40),
     AP_GROUPEND
 };
 
