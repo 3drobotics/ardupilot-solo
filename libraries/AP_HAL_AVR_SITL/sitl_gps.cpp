@@ -245,7 +245,7 @@ void SITL_State::_update_gps_ubx(const struct gps_data *d)
 	if (velned.heading_2d < 0.0f) {
 		velned.heading_2d += 360.0f * 100000.0f;
 	}
-	velned.speed_accuracy = 40;
+    velned.speed_accuracy = _sitl->gps_spd_err;
 	velned.heading_accuracy = 4;
 
 	memset(&sol, 0, sizeof(sol));
