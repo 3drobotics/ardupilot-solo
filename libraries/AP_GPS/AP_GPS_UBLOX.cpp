@@ -573,7 +573,12 @@ AP_GPS_UBLOX::_parse_gps(void)
         state.velocity.y = _buffer.velned.ned_east * 0.01f;
         state.velocity.z = _buffer.velned.ned_down * 0.01f;
         state.have_speed_accuracy = true;
-        state.speed_accuracy = _buffer.velned.speed_accuracy*0.01f;
+        // Allow overwrite of reported speed accuracy to assist with testing GPS glitch logic
+        if (gps._spd_err_ow == 0) {
+            state.speed_accuracy = _buffer.velned.speed_accuracy*0.01f;
+        } else {
+            state.speed_accuracy = gps._spd_err_ow*0.01f;
+        }
         _new_speed = true;
         break;
 #if UBLOX_VERSION_AUTODETECTION

@@ -98,6 +98,12 @@ const AP_Param::GroupInfo AP_GPS::var_info[] PROGMEM = {
     AP_GROUPINFO("SBP_LOGMASK", 8, AP_GPS, _sbp_logmask, 0xFF00),
 #endif
 
+    // @Param: SPD_ERR_OW
+    // @DisplayName: Speed error reporting override
+    // @Description: Set to a non-zero value to override the GPS receivers reported speed accuracy in cm/s
+    // @User: Advanced
+    AP_GROUPINFO("SPD_ERR_OW", 9, AP_GPS, _spd_err_ow, 0),
+
     AP_GROUPEND
 };
 
