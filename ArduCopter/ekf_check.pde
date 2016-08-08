@@ -24,6 +24,8 @@ static struct {
     uint32_t last_warn_time;    // system time of last warning in milliseconds.  Used to throttle text warnings sent to GCS
 } ekf_check_state;
 
+int8_t ekf_check_mode_before_fs_on = control_mode;
+
 // ekf_check - detects if ekf variance are out of tolerance and triggers failsafe
 // should be called at 10hz
 void ekf_check()
@@ -130,20 +132,25 @@ static void failsafe_ekf_event()
     }
 
     // EKF failsafe event has occurred
+    ekf_check_mode_before_fs_on = control_mode;
     failsafe.ekf = true;
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_EKFINAV, ERROR_CODE_FAILSAFE_OCCURRED);
 
-    // take action based on fs_ekf_action parameter
-    switch (g.fs_ekf_action) {
-        case FS_EKF_ACTION_ALTHOLD:
-            // AltHold
-            if (failsafe.radio || !set_mode(ALT_HOLD)) {
+    if (mode_requires_GPS(control_mode) && !mode_requires_RC(control_mode)) {
+        set_mode_land_with_pause();
+    } else {
+        // take action based on fs_ekf_action parameter
+        switch (g.fs_ekf_action) {
+            case FS_EKF_ACTION_ALTHOLD:
+                // AltHold
+                if (failsafe.radio || !set_mode(ALT_HOLD)) {
+                    set_mode_land_with_pause();
+                }
+                break;
+            default:
                 set_mode_land_with_pause();
-            }
-            break;
-        default:
-            set_mode_land_with_pause();
-            break;
+                break;
+        }
     }
 
     // if flight mode is already LAND ensure it's not the GPS controlled LAND
