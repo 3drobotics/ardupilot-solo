@@ -170,4 +170,10 @@ static void failsafe_ekf_off_event(void)
     // clear flag and log recovery
     failsafe.ekf = false;
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_EKFINAV, ERROR_CODE_FAILSAFE_RESOLVED);
+    
+    if (!mode_requires_RC(ekf_check_mode_before_fs_on)) {
+        set_mode_RTL_or_land_with_pause();
+    } else if (mode_requires_GPS(ekf_check_mode_before_fs_on)) {
+        set_mode(LOITER);
+    }
 }
