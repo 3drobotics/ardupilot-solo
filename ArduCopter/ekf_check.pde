@@ -24,7 +24,7 @@ static struct {
     uint32_t last_warn_time;    // system time of last warning in milliseconds.  Used to throttle text warnings sent to GCS
 } ekf_check_state;
 
-int8_t ekf_check_mode_before_fs_on = control_mode;
+static int8_t ekf_check_mode_before_fs_on = control_mode;
 
 // ekf_check - detects if ekf variance are out of tolerance and triggers failsafe
 // should be called at 10hz
@@ -133,6 +133,7 @@ static void failsafe_ekf_event()
 
     // EKF failsafe event has occurred
     ekf_check_mode_before_fs_on = control_mode;
+    ekf_check_switch_mode_on_resolve = true;
     failsafe.ekf = true;
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_EKFINAV, ERROR_CODE_FAILSAFE_OCCURRED);
 
@@ -173,7 +174,7 @@ static void failsafe_ekf_off_event(void)
     
     if (!mode_requires_RC(ekf_check_mode_before_fs_on)) {
         set_mode_RTL_or_land_with_pause();
-    } else if (mode_requires_GPS(ekf_check_mode_before_fs_on)) {
+    } else if (mode_requires_GPS(ekf_check_mode_before_fs_on) && ekf_check_switch_mode_on_resolve) {
         set_mode(LOITER);
     }
 }

@@ -419,6 +419,8 @@ static struct {
     uint32_t last_heartbeat_ms;             // the time when the last HEARTBEAT message arrived from a GCS - used for triggering gcs failsafe
 } failsafe;
 
+static bool ekf_check_switch_mode_on_resolve = false;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Motor Output
 ////////////////////////////////////////////////////////////////////////////////
