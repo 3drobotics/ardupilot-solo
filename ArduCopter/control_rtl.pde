@@ -19,9 +19,6 @@ struct rtl_path_t {
 // rtl_init - initialise rtl controller
 static bool rtl_init(bool ignore_checks)
 {
-    if (!ignore_checks && failsafe.gps_glitch) {
-        return false;
-    }
 
     if (position_ok() || ignore_checks) {
         rtl_build_path();
