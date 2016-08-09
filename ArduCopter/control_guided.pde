@@ -159,6 +159,7 @@ static void guided_set_destination_posvel(const Vector3f& destination, const Vec
     posvel_vel_target_cms = velocity;
 
     pos_control.set_pos_target(posvel_pos_target_cm);
+    pos_control.set_desired_velocity_xy(posvel_vel_target_cms.x, posvel_vel_target_cms.y);
 }
 
 // guided_run - runs the guided controller
@@ -343,13 +344,6 @@ static void guided_posvel_control_run()
         if (dt >= 0.2f) {
             dt = 0.0f;
         }
-
-        // advance position target using velocity target
-        posvel_pos_target_cm += posvel_vel_target_cms * dt;
-
-        // send position and velocity targets to position controller
-        pos_control.set_pos_target(posvel_pos_target_cm);
-        pos_control.set_desired_velocity_xy(posvel_vel_target_cms.x, posvel_vel_target_cms.y);
 
         // run position controller
         pos_control.update_xy_controller(AC_PosControl::XY_MODE_POS_AND_VEL_FF, ekfNavVelGainScaler);

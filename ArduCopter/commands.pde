@@ -10,8 +10,8 @@
 // checks if we should update ahrs/RTL home position from the EKF
 static void update_home_from_EKF()
 {
-    // exit immediately if home already set
-    if (ap.home_state != HOME_UNSET) {
+    // exit immediately if home already set and we are flying
+    if (motors.armed() && (ap.home_state != HOME_UNSET)) {
         return;
     }
 
