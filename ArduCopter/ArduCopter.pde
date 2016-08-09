@@ -641,6 +641,10 @@ static uint32_t rtl_loiter_start_time;
 // Used to exit the roll and pitch auto trim function
 static uint8_t auto_trim_counter;
 
+// Used to delay motor arming/start from when the request to arm was approved
+static uint32_t motor_arm_approved_time_ms = 0;
+static bool motor_arm_pending = false;
+
 // Reference to the relay object
 static AP_Relay relay;
 

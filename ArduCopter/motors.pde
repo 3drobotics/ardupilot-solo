@@ -13,6 +13,12 @@ static uint32_t auto_disarm_begin;
 // called at 10hz
 static void arm_motors_check()
 {
+    // Check if an approved external arming request is pending and the safety delay of 2sec has passed
+    if ((millis() - motor_arm_approved_time_ms) > 2000 && !motors.armed() && motor_arm_pending) {
+        motors.armed(true);
+        motor_arm_pending = false;
+    }
+
     static int16_t arming_counter;
 
     // ensure throttle is down
@@ -103,11 +109,7 @@ static void auto_disarm_check()
 //  returns false if arming failed because of pre-arm checks, arming checks or a gyro calibration failure
 static bool init_arm_motors(bool arming_from_gcs)
 {
-	// arming marker
-    // Flag used to track if we have armed the motors the first time.
-    // This is used to decide if we should run the ground_start routine
-    // which calibrates the IMU
-    static bool did_ground_start = false;
+    // remember if we are arming motors
     static bool in_arm_motors = false;
 
     // exit immediately if already in this function
@@ -140,6 +142,10 @@ static bool init_arm_motors(bool arming_from_gcs)
     gcs_send_text_P(SEVERITY_HIGH, PSTR("ARMING MOTORS"));
 #endif
 
+    // record arming event time which will be used to delay motor arming
+    motor_arm_approved_time_ms = millis();
+    motor_arm_pending = true;
+
     // Remember Orientation
     // --------------------
     init_simple_bearing();
@@ -151,30 +157,6 @@ static bool init_arm_motors(bool arming_from_gcs)
         set_home_to_current_location();
     }
     calc_distance_and_bearing();
-
-    uint32_t gyro_cal_time = 0;
-    if(did_ground_start == false) {
-        uint32_t gyro_cal_begin = millis();
-
-        startup_ground(true);
-
-        gyro_cal_time = millis()-gyro_cal_begin;
-
-        did_ground_start = !(((g.arming_check == ARMING_CHECK_ALL) || (g.arming_check & ARMING_CHECK_INS)) && !ins.gyro_calibrated_ok_all());
-
-        // final check that gyros calibrated successfully
-        if ((gyro_cal_time > MAX_GYR_CAL_TIME_MS) || !did_ground_start) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Gyro calibration failed"));
-            AP_Notify::flags.armed = false;
-            failsafe_enable();
-            in_arm_motors = false;
-            return false;
-        }
-    }
-
-    // pad time out to 2 seconds. minimum of 30ms delay so that RC inputs can be read
-    uint32_t delay_time = max(30,MAX_GYR_CAL_TIME_MS-gyro_cal_time);
-    delay(delay_time);
 
     // enable gps velocity based centrefugal force compensation
     ahrs.set_correct_centrifugal(true);
@@ -190,9 +172,6 @@ static bool init_arm_motors(bool arming_from_gcs)
 
     // enable output to motors
     output_min();
-
-    // finally actually arm the motors
-    motors.armed(true);
 
     // log arming to dataflash
     Log_Write_Event(DATA_ARMED);
