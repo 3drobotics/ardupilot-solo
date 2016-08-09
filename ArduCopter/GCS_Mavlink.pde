@@ -958,6 +958,9 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 if (failsafe.ekf) {
                     ekf_check_switch_mode_on_resolve = false;
                 }
+                if (failsafe.gps_glitch) {
+                    gps_glitch_switch_mode_on_resolve = false;
+                }
             }
         } else {
             // don't allow mode changes while in radio failsafe
