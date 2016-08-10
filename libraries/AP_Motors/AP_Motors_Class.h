@@ -55,6 +55,7 @@
 #define AP_MOTORS_SPIN_WHEN_ARMED   70  // spin motors at this PWM value when armed
 
 #define AP_MOTORS_YAW_HEADROOM_DEFAULT  200
+#define THRUST_LOW_CRITICAL_BLEND_TIME 1.0f  // number of seconds required to remove or restore the yaw controller headroom during a critical loss of thrust event
 
 #define AP_MOTORS_THR_LOW_CMP_DEFAULT   0.5f // ratio controlling the max throttle output during competing requests of low throttle from the pilot (or autopilot) and higher throttle for attitude control.  Higher favours Attitude over pilot input
 #define AP_MOTORS_THST_EXPO_DEFAULT     0.5f // set to 0 for linear and 1 for second order approximation
@@ -136,7 +137,8 @@ public:
     void                set_throttle_filter_cutoff(float filt_hz) { _throttle_filter.set_cutoff_frequency(filt_hz); }
 
     // output - sends commands to the motors
-    void                output();
+    // When thrust_priority is set true, the mixer will prioritise thrust over yaw
+    void                output(bool thrust_priority);
 
     // output_min - sends minimum values out to the motors
     virtual void        output_min() = 0;
@@ -219,7 +221,7 @@ public:
 
 protected:
     // output functions that should be overloaded by child classes
-    virtual void        output_armed_stabilizing()=0;
+    virtual void        output_armed_stabilizing(bool thrust_priority)=0;
     virtual void        output_armed_not_stabilizing()=0;
     virtual void        output_disarmed()=0;
 
@@ -293,6 +295,7 @@ protected:
     float               _throttle_thr_mix;      // mix between throttle and hover throttle for 0 to 1 and ratio above hover throttle for >1
     float               _throttle_thr_mix_desired; // desired throttle_low_comp value, actual throttle_low_comp is slewed towards this value over 1~2 seconds
     float               _motor_out_pct[AP_MOTORS_MAX_NUM_MOTORS];
+    float               _yaw_headroom_scaler;   // scaler between 0.0 and 1.0 that is ued to reduce yaw headroom to increase available thrust
 
     // battery voltage compensation variables
     float               _batt_voltage;          // latest battery voltage reading

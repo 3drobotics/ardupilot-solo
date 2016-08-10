@@ -187,7 +187,7 @@ void stability_test()
         motors.set_roll(pitch_in);
         motors.set_yaw(yaw_in);
         motors.set_throttle(throttle_in);
-        motors.output();
+        motors.output(false);
         // calc average output
         throttle_radio_in = rc3.radio_out;
         avg_out = ((hal.rcout->read(0) + hal.rcout->read(1) + hal.rcout->read(2) + hal.rcout->read(3))/4);

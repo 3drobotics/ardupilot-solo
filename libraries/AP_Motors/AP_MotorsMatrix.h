@@ -67,7 +67,7 @@ public:
 
 protected:
     // output - sends commands to the motors
-    void                output_armed_stabilizing();
+    void                output_armed_stabilizing(bool thrust_priority);
     void                output_armed_not_stabilizing();
     void                output_disarmed();
 
