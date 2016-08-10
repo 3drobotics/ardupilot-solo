@@ -129,6 +129,7 @@ AP_Motors::AP_Motors(RC_Channel& rc_roll, RC_Channel& rc_pitch, RC_Channel& rc_t
     _throttle_in(0.0f),
     _throttle_filter(),
     _recovery_pct(1.0f),
+    _yaw_headroom_scaler(1.0f),
     _recovery_motor_mask(0),
     _recovery_ramp_time(0.25f)
 {
@@ -182,7 +183,8 @@ void AP_Motors::throttle_pass_through(int16_t pwm)
 }
 
 // output - sends commands to the motors
-void AP_Motors::output()
+// When thrust_priority is true, thrust will be prioritised over yaw
+void AP_Motors::output(bool thrust_priority)
 {
     // update throttle filter
     update_throttle_filter();
@@ -204,7 +206,7 @@ void AP_Motors::output()
 
     if (_flags.armed) {
         if (_flags.stabilizing) {
-            output_armed_stabilizing();
+            output_armed_stabilizing(thrust_priority);
         } else {
             output_armed_not_stabilizing();
         }
