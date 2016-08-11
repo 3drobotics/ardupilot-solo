@@ -416,4 +416,10 @@ enum FlipState {
 // for PILOT_THR_BHV parameter
 #define THR_BEHAVE_FEEDBACK_FROM_MID_STICK (1<<0)
 
+// for control of uncontrolled descent recovery
+#define HGT_RATE_ERR_TOL 50
+#define SPD_LIM_RATE_CMSS 50.0f
+#define MIN_SPD_CMS 500.0f
+#define MAX_SPD_CMS 1500.0f
+
 #endif // _DEFINES_H
