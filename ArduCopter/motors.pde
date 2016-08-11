@@ -760,12 +760,17 @@ static void motors_output()
     if (ap.motor_test) {
         motor_test_output();
     } else {
-        // prioritise thrust over yaw control if we have an uncontrolled descent
+        // check for throttle saturation, degraded height tracking and a descending vehicle
+        // to detect uncontrolled loss of height
         bool throttle_maxed = g.rc_3.servo_out > 999;
-        bool height_control_lost = (desired_climb_rate - climb_rate) > 50;
+        bool height_control_lost = (desired_climb_rate - climb_rate) > HGT_RATE_ERR_TOL;
         bool descending = climb_rate < 0;
-        bool thrust_priority = throttle_maxed && height_control_lost && descending;
-
+        bool uncontrolled_descent = throttle_maxed && height_control_lost && descending;
+        // if there has been an uncontrolled loss of height signal the control loops to reduce speed
+        reduce_guided_speed = uncontrolled_descent;
+        // if there is an uncontrolled descent condition, allow the speed limit reduction to complete before
+        // reducing yaw control authority
+        thrust_priority = uncontrolled_descent && !guided_spd_lim_reducing;
         motors.output(thrust_priority);
     }
 }
