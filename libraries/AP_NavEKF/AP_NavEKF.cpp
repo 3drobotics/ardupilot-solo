@@ -2146,15 +2146,8 @@ void NavEKF::FuseVelPosNED()
                 innovVelSumSq += sq(velInnov[i]);
                 varVelSum += varInnovVelPos[i];
             }
-            // calculate weighting used by fuseVelPosNED to do IMU accel data blending
-            // this is used to detect and compensate for aliasing errors with the accelerometers
-            // provide for a first order lowpass filter to reduce noise on the weighting if required
-            // set weighting to 0.5 when on ground to allow more rapid learning of bias errors without 'ringing' in bias estimates
-            if (vehicleArmed) {
-                IMU1_weighting = 1.0f * (K1 / (K1 + K2)) + 0.0f * IMU1_weighting; // filter currently inactive
-            } else {
-                IMU1_weighting = 0.5f;
-            }
+            // Force weighting to be 100% IMU1. This is an airframe specific solution to solve problems with the airframe vibration spectra and the lsm303d sampling
+            IMU1_weighting = 1.0f;
             // apply an innovation consistency threshold test, but don't fail if bad IMU data
             // calculate the test ratio
             velTestRatio = innovVelSumSq / (varVelSum * sq(_gpsVelInnovGate));
@@ -4756,7 +4749,7 @@ void NavEKF::InitialiseVariables()
     hgtRate = 0.0f;
     mag_state.q0 = 1;
     mag_state.DCM.identity();
-    IMU1_weighting = 0.5f;
+    IMU1_weighting = 1.0f;
     onGround = true;
     manoeuvring = false;
     yawAligned = false;
