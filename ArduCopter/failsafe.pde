@@ -64,7 +64,7 @@ void failsafe_check()
         failsafe_last_timestamp = tnow;
         if(motors.armed()) {
             motors.armed(false);
-            motors.output();
+            motors.output(false);
         }
     }
 }

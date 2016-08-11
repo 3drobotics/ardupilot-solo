@@ -760,7 +760,13 @@ static void motors_output()
     if (ap.motor_test) {
         motor_test_output();
     } else {
-        motors.output();
+        // prioritise thrust over yaw control if we have an uncontrolled descent
+        bool throttle_maxed = g.rc_3.servo_out > 999;
+        bool height_control_lost = (desired_climb_rate - climb_rate) > 50;
+        bool descending = climb_rate < 0;
+        bool thrust_priority = throttle_maxed && height_control_lost && descending;
+
+        motors.output(thrust_priority);
     }
 }
 
