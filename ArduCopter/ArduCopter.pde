@@ -563,9 +563,10 @@ static float baro_climbrate;        // barometer climbrate in cm/s
 static LowPassFilterVector3f land_accel_ef_filter(LAND_DETECTOR_ACCEL_LPF_CUTOFF); // accelerations for land and crash detector test
 static LowPassFilterFloat rc_throttle_control_in_filter(1.0f);
 
+// Control responses to recover from loss of height error due to insufficient thrust
 static bool reduce_guided_speed = false;        // true when a reduction in demanded speed in guided mode has been requested
 static bool guided_spd_lim_reducing = false;    // true when the speed limit is being gradually reduced
-static float guided_mode_spd_lim_cms = 1e4f;    // speed limit in cm/s currently applied to guided mode commands
+static float guided_mode_spd_lim_cms = MAX_SPD_CMS; // speed limit in cm/s currently applied to guided mode commands
 static bool thrust_priority = false;            // true when throttle is being given priority over yaw in the motor mixer to recover from uncontrolled height loss
 
 ////////////////////////////////////////////////////////////////////////////////

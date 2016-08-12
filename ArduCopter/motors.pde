@@ -763,7 +763,7 @@ static void motors_output()
         // check for throttle saturation, degraded height tracking and a descending vehicle
         // to detect uncontrolled loss of height
         bool throttle_maxed = g.rc_3.servo_out > 999;
-        bool height_control_lost = (desired_climb_rate - climb_rate) > HGT_RATE_ERR_TOL;
+        bool height_control_lost = (desired_climb_rate - climb_rate) > g.hgt_rate_err_tol;
         bool descending = climb_rate < 0;
         bool uncontrolled_descent = throttle_maxed && height_control_lost && descending;
         // if there has been an uncontrolled loss of height signal the control loops to reduce speed

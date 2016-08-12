@@ -108,6 +108,42 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Increment: 1
     GSCALAR(telem_delay,            "TELEM_DELAY",     0),
 
+    // @Param: HLE_SPD_RATE
+    // @DisplayName: Height loss error horizontal speed limit minimum
+    // @Description: Specifies the minimum horizontal speed limit when recovering from a height loss error
+    // @Units: cm/s
+    // @Range: 0 1000
+    // @Increment: 500
+    // @User: Advanced
+    GSCALAR(spd_lim_rate_cmss,   "HLE_SPD_RATE",     50),
+
+    // @Param: HLE_SPD_MIN
+    // @DisplayName: Height loss error horizontal speed limit change rate
+    // @Description: Specifies the rate at which the horizontal speed limitw ill be chenged when recovering from a height loss error
+    // @Units: cm/s/s
+    // @Range: 0 300
+    // @Increment: 50
+    // @User: Advanced
+    GSCALAR(spd_min_cms,   "HLE_SPD_MIN",     500),
+
+    // @Param: HLE_CRT_ERR_TOL
+    // @DisplayName: Climb rate controller error tolerance
+    // @Description: The climb rate controller tracking error must be above this value in combinaton with max throttle demand and a descending vehicle for a height loss error response to occur.
+    // @Units: cm/s
+    // @Range: 50 200
+    // @Increment: 10
+    // @User: Advanced
+    GSCALAR(hgt_rate_err_tol,   "HLE_CRT_ERR_TOL",     50),
+
+    // @Param: HLE_YHRM_SLEW
+    // @DisplayName: Yaw headroom slew time
+    // @Description: Defines
+    // @Units: msec
+    // @Range: 100 2000
+    // @Increment: 100
+    // @User: Advanced
+    GSCALAR(yaw_hdrm_slew_time_ms,   "HLE_YHRM_SLEW",     1000),
+
     // @Param: RTL_ALT
     // @DisplayName: RTL Altitude
     // @Description: The minimum altitude the model will move to before Returning to Launch.  Set to zero to return at current altitude.
