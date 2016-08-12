@@ -119,7 +119,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: HLE_SPD_MIN
     // @DisplayName: Height loss error horizontal speed limit change rate
-    // @Description: Specifies the rate at which the horizontal speed limitw ill be chenged when recovering from a height loss error
+    // @Description: Specifies the rate at which the horizontal speed limit will be chenged when recovering from a height loss error
     // @Units: cm/s/s
     // @Range: 0 300
     // @Increment: 50
@@ -128,9 +128,9 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: HLE_CRT_ERR_TOL
     // @DisplayName: Climb rate controller error tolerance
-    // @Description: The climb rate controller tracking error must be above this value in combinaton with max throttle demand and a descending vehicle for a height loss error response to occur.
+    // @Description: The climb rate controller tracking error must be above this value in combinaton with max throttle demand and a descending vehicle for a height loss error response to occur. If a value of 0 is set, the speed and yaw headroom response to a loss of height error will be inhibited.
     // @Units: cm/s
-    // @Range: 50 200
+    // @Range: 0 200
     // @Increment: 10
     // @User: Advanced
     GSCALAR(hgt_rate_err_tol,   "HLE_CRT_ERR_TOL",     50),

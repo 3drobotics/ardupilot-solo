@@ -362,10 +362,12 @@ public:
     AP_Int16        takeoff_trigger_dz;
     AP_Float        pilot_takeoff_alt;
 
-    AP_Int16        spd_lim_rate_cmss;
-    AP_Int16        spd_min_cms;
-    AP_Int16        hgt_rate_err_tol;
-    AP_Int16        yaw_hdrm_slew_time_ms;
+    // Thrust loss recovery
+    //
+    AP_Int16        spd_lim_rate_cmss;      // rate that the horizontal speed limit applied to guided mode demands is reduced - cm/s/s
+    AP_Int16        spd_min_cms;            // minimum value for the guided mode speed limit - cm/s
+    AP_Int16        hgt_rate_err_tol;       // height rate control tracking error threshold used to detect loss of height control - cm/s
+    AP_Int16        yaw_hdrm_slew_time_ms;  // time required to slew the control mixer headroom from the value specified by MOT_YAW_HEADROOM to 0 - msec
 
     AP_Int16        rtl_altitude;
     AP_Int16        rtl_speed_cms;
