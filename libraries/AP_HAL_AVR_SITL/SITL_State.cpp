@@ -547,8 +547,6 @@ void SITL_State::_simulator_output(bool synthetic_clock_mode)
 		_motors_on = ((control.pwm[2]-1500)/500.0f) != 0;
 	} else {
 		_motors_on = false;
-        // apply engine multiplier to a motor
-        control.pwm[0] = ((control.pwm[0]-1000) * _sitl->engine_mul) + 1000;
         // run checks on each motor
 		for (i=0; i<4; i++) {
             // apply engine multiplier to all motors
