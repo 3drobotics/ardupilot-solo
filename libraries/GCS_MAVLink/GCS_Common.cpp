@@ -414,6 +414,15 @@ void GCS_MAVLINK::handle_gimbal_torque_report(AP_Mount &mount, mavlink_message_t
 {
     mount.handle_gimbal_torque_report(chan,msg);
 }
+
+/*
+  handle r10c gimbal report
+*/
+void GCS_MAVLINK::handle_r10c_gimbal_report(AP_Mount &mount, mavlink_message_t *msg) const
+{
+    mount.handle_r10c_gimbal_report(chan,msg);
+}
+
 /*
   return true if a channel has flow control
  */
