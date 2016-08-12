@@ -8,6 +8,9 @@ static void run_nav_updates(void)
     // fetch position from inertial navigation
     calc_position();
 
+    // update home location from EKF if necessary
+    update_home_from_EKF();
+    
     // calculate distance and bearing for reporting and autopilot decisions
     calc_distance_and_bearing();
 
