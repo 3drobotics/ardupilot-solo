@@ -1291,6 +1291,11 @@ static void update_altitude()
     if (should_log(MASK_LOG_CTUN)) {
         Log_Write_Control_Tuning();
     }
+
+    // write height recovery info to dataflash logs
+    if (should_log(MASK_LOG_HEIGHT_RECOVERY)) {
+        Log_Write_Height_Recovery();
+    }
 }
 
 AP_HAL_MAIN();
