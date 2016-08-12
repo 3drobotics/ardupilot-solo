@@ -765,7 +765,7 @@ static void motors_output()
         bool throttle_maxed = g.rc_3.servo_out > 999;
         bool height_control_lost = (desired_climb_rate - climb_rate) > g.hgt_rate_err_tol;
         bool descending = climb_rate < 0;
-        bool uncontrolled_descent = throttle_maxed && height_control_lost && descending;
+        bool uncontrolled_descent = throttle_maxed && height_control_lost && descending && (g.hgt_rate_err_tol > 0);
         // if there has been an uncontrolled loss of height, signal the guided mode controller to reduce speed
         reduce_guided_speed = uncontrolled_descent;
         // if there is an uncontrolled descent condition, allow the speed limit reduction to complete before
