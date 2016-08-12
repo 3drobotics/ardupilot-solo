@@ -143,28 +143,8 @@ static void guided_set_velocity(const Vector3f& velocity)
 
     Vector3f vel_target_cms = velocity;
 
-    // If a speed reduction is requested, gradually reduce a circular horizontal speed limit
-    // at a rate of SPD_LIM_RATE_CMSS until it reaches the minimum of MIN_SPD_CMS
-    // When the speed reduction request clears, increase the speed limit at a rate of SPD_LIM_RATE_CMSS
-    float spd_dmd_cms = pythagorous2(vel_target_cms.x,vel_target_cms.y);
-    if (reduce_guided_speed && (guided_mode_spd_lim_cms > MIN_SPD_CMS)) {
-        guided_spd_lim_reducing = true;
-        guided_mode_spd_lim_cms -= SPD_LIM_RATE_CMSS * 0.001f * (float)(millis() - vel_update_time_ms);
-        guided_mode_spd_lim_cms = min(guided_mode_spd_lim_cms, spd_dmd_cms);
-        guided_mode_spd_lim_cms = max(guided_mode_spd_lim_cms, MIN_SPD_CMS);
-    } else if (!reduce_guided_speed && (guided_mode_spd_lim_cms < MAX_SPD_CMS)) {
-        guided_mode_spd_lim_cms += SPD_LIM_RATE_CMSS * 0.001f * (float)(millis() - vel_update_time_ms);
-        guided_mode_spd_lim_cms = constrain_float(guided_mode_spd_lim_cms,MIN_SPD_CMS,MAX_SPD_CMS);
-        guided_spd_lim_reducing = false;
-    } else {
-        guided_spd_lim_reducing = false;
-    }
-
-    if (spd_dmd_cms > guided_mode_spd_lim_cms) {
-        float scaler = guided_mode_spd_lim_cms / spd_dmd_cms;
-        vel_target_cms.x *= scaler;
-        vel_target_cms.y *= scaler;
-    }
+    // If required, limit the velocity target to assit with recovery from loss of height control
+    guided_limit_velocity(vel_target_cms);
 
     // set position controller velocity target
     pos_control.set_desired_velocity(vel_target_cms);
@@ -181,27 +161,8 @@ static void guided_set_destination_posvel(const Vector3f& destination, const Vec
     posvel_pos_target_cm = destination;
     posvel_vel_target_cms = velocity;
 
-    // If a speed reduction is requested, gradually reduce a circular horizontal speed limit
-    // at a rate of SPD_LIM_RATE_CMSS until it reaches the minimum of MIN_SPD_CMS
-    // When the speed reduction request clears, increase the speed limit at a rate of SPD_LIM_RATE_CMSS
-    float spd_dmd_cms = pythagorous2(posvel_vel_target_cms.x,posvel_vel_target_cms.y);
-    if (reduce_guided_speed && (guided_mode_spd_lim_cms > MIN_SPD_CMS)) {
-        guided_spd_lim_reducing = true;
-        guided_mode_spd_lim_cms -= SPD_LIM_RATE_CMSS * 0.001f * (float)(millis() - posvel_update_time_ms);
-        guided_mode_spd_lim_cms = constrain_float(guided_mode_spd_lim_cms,MIN_SPD_CMS,spd_dmd_cms);
-    } else if (!reduce_guided_speed && (guided_mode_spd_lim_cms < MAX_SPD_CMS)) {
-        guided_mode_spd_lim_cms += SPD_LIM_RATE_CMSS * 0.001f * (float)(millis() - posvel_update_time_ms);
-        guided_mode_spd_lim_cms = constrain_float(guided_mode_spd_lim_cms,MIN_SPD_CMS,MAX_SPD_CMS);
-        guided_spd_lim_reducing = false;
-    } else {
-        guided_spd_lim_reducing = false;
-    }
-
-    if (spd_dmd_cms > guided_mode_spd_lim_cms) {
-        float scaler = guided_mode_spd_lim_cms / spd_dmd_cms;
-        posvel_vel_target_cms.x *= scaler;
-        posvel_vel_target_cms.y *= scaler;
-    }
+    // If required, limit the velocity target to assit with recovery from loss of height control
+    guided_limit_velocity(posvel_vel_target_cms);
 
     // set the position and velocity targets
     pos_control.set_pos_target(posvel_pos_target_cm);
@@ -471,4 +432,37 @@ static bool guided_limit_check()
 
     // if we got this far we must be within limits
     return false;
+}
+
+// guided_limit_velocity - limits the target velocity to recover from loss of height control
+static void guided_limit_velocity(Vector3f& velocity)
+{
+    Vector3f vel_target_cms = velocity;
+    static uint32_t update_time_ms = 0;
+
+    // If a speed reduction is requested, gradually reduce a circular horizontal speed limit
+    // at a rate of SPD_LIM_RATE_CMSS until it reaches the minimum of MIN_SPD_CMS
+    // When the speed reduction request clears, increase the speed limit at a rate of SPD_LIM_RATE_CMSS
+    float spd_dmd_cms = pythagorous2(vel_target_cms.x,vel_target_cms.y);
+    if (reduce_guided_speed && (guided_mode_spd_lim_cms > g.spd_min_cms)) {
+        guided_spd_lim_reducing = true;
+        guided_mode_spd_lim_cms -= g.spd_lim_rate_cmss * 0.001f * (float)(millis() - update_time_ms);
+        guided_mode_spd_lim_cms = constrain_float(guided_mode_spd_lim_cms,g.spd_min_cms,spd_dmd_cms);
+    } else if (!reduce_guided_speed && (guided_mode_spd_lim_cms < MAX_SPD_CMS)) {
+        guided_mode_spd_lim_cms += g.spd_lim_rate_cmss * 0.001f * (float)(millis() - update_time_ms);
+        guided_mode_spd_lim_cms = constrain_float(guided_mode_spd_lim_cms,g.spd_min_cms,MAX_SPD_CMS);
+        guided_spd_lim_reducing = false;
+    } else {
+        guided_spd_lim_reducing = false;
+    }
+
+    update_time_ms = millis();
+
+    if (spd_dmd_cms > guided_mode_spd_lim_cms) {
+        float scaler = guided_mode_spd_lim_cms / spd_dmd_cms;
+        vel_target_cms.x *= scaler;
+        vel_target_cms.y *= scaler;
+    }
+
+    velocity = vel_target_cms;
 }
