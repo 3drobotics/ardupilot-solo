@@ -620,6 +620,28 @@ static void Log_Write_Parameter_Tuning(uint8_t param, float tuning_val, int16_t 
     DataFlash.WriteBlock(&pkt_tune, sizeof(pkt_tune));
 }
 
+struct PACKED log_LandDetector {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    float land_accel_ef_x;
+    float land_accel_ef_y;
+    float land_accel_ef_z;
+};
+
+static void Log_Write_Land_Detector()
+{
+    const Vector3f land_accel_ef = land_accel_ef_filter.get();
+    struct log_LandDetector pkt_land = {
+        LOG_PACKET_HEADER_INIT(LOG_LANDDETECT_MSG),
+        time_ms           : hal.scheduler->millis(),
+        land_accel_ef_x   : land_accel_ef.x,
+        land_accel_ef_y   : land_accel_ef.y,
+        land_accel_ef_z   : land_accel_ef.z
+    };
+    
+    DataFlash.WriteBlock(&pkt_land, sizeof(pkt_land));
+}
+
 static const struct LogStructure log_structure[] PROGMEM = {
     LOG_COMMON_STRUCTURES,
 #if AUTOTUNE_ENABLED == ENABLED
@@ -642,6 +664,8 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "RATE", "Iffffffffffff",  "TimeMS,RDes,R,ROut,PDes,P,POut,YDes,Y,YOut,ADes,A,AOut" },
     { LOG_MOTBATT_MSG, sizeof(log_MotBatt),
       "MOTB", "Iffff",  "TimeMS,LiftMax,BatVolt,BatRes,ThLimit" },
+    { LOG_LANDDETECT_MSG, sizeof(log_LandDetector),
+      "LAND", "Ifff", "TimeMS,LandAccX,LandAccY,LandAccZ" },
     { LOG_STARTUP_MSG, sizeof(log_Startup),         
       "STRT", "",            "" },
     { LOG_EVENT_MSG, sizeof(log_Event),         
