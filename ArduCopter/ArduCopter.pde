@@ -1030,6 +1030,7 @@ static void ten_hz_logging_loop()
     if (should_log(MASK_LOG_NTUN) && (mode_requires_GPS(control_mode) || landing_with_GPS())) {
         Log_Write_Nav_Tuning();
     }
+    Log_Write_Land_Detector();
 }
 
 // fifty_hz_logging_loop
