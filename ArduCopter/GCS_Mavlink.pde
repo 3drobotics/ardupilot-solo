@@ -952,9 +952,9 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
     {
         if (!failsafe.radio) {
             uint8_t prev_mode = control_mode;
-            handle_set_mode(msg, set_mode);
+            bool mode_change_success = handle_set_mode(msg, set_mode);
             send_heartbeat_immediately = (control_mode != prev_mode);
-            if (control_mode != prev_mode) {
+            if (mode_change_success) {
                 if (failsafe.ekf) {
                     ekf_check_switch_mode_on_resolve = false;
                 }

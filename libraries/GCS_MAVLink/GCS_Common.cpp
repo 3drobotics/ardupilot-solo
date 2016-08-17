@@ -1215,7 +1215,7 @@ void GCS_MAVLINK::send_battery2(const AP_BattMonitor &battery)
 /*
   handle a SET_MODE MAVLink message
  */
-void GCS_MAVLINK::handle_set_mode(mavlink_message_t* msg, bool (*set_mode)(uint8_t mode))
+bool GCS_MAVLINK::handle_set_mode(mavlink_message_t* msg, bool (*set_mode)(uint8_t mode))
 {
     uint8_t result = MAV_RESULT_FAILED;
     mavlink_set_mode_t packet;
@@ -1242,6 +1242,8 @@ void GCS_MAVLINK::handle_set_mode(mavlink_message_t* msg, bool (*set_mode)(uint8
 
     // send ACK or NAK
     mavlink_msg_command_ack_send_buf(msg, chan, MAVLINK_MSG_ID_SET_MODE, result);
+    
+    return (result == MAV_RESULT_ACCEPTED);
 }
 
 #if AP_AHRS_NAVEKF_AVAILABLE

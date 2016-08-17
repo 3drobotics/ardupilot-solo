@@ -304,7 +304,7 @@ private:
     void handle_radio_status(mavlink_message_t *msg, DataFlash_Class &dataflash, bool log_radio);
     void handle_serial_control(mavlink_message_t *msg, AP_GPS &gps);
     void lock_channel(mavlink_channel_t chan, bool lock);
-    void handle_set_mode(mavlink_message_t* msg, bool (*set_mode)(uint8_t mode));
+    bool handle_set_mode(mavlink_message_t* msg, bool (*set_mode)(uint8_t mode));
     void handle_gimbal_report(AP_Mount &mount, mavlink_message_t *msg) const;
     void handle_gimbal_torque_report(AP_Mount &mount, mavlink_message_t *msg) const;
     void handle_r10c_gimbal_report(AP_Mount &mount, mavlink_message_t *msg) const;
