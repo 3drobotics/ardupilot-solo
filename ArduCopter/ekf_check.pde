@@ -132,10 +132,13 @@ static void failsafe_ekf_event()
     }
 
     // EKF failsafe event has occurred
-    ekf_check_mode_before_fs_on = control_mode;
-    ekf_check_switch_mode_on_resolve = true;
     failsafe.ekf = true;
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_EKFINAV, ERROR_CODE_FAILSAFE_OCCURRED);
+
+    // make sure the gps glitch failsafe does nothing on resilve
+    gps_glitch_switch_mode_on_resolve = false;
+    ekf_check_mode_before_fs_on = control_mode;
+    ekf_check_switch_mode_on_resolve = true;
 
     if (mode_requires_GPS(control_mode) && !mode_requires_RC(control_mode)) {
         set_mode_land_with_pause();
@@ -172,9 +175,11 @@ static void failsafe_ekf_off_event(void)
     failsafe.ekf = false;
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_EKFINAV, ERROR_CODE_FAILSAFE_RESOLVED);
     
-    if (!mode_requires_RC(ekf_check_mode_before_fs_on) && ekf_check_switch_mode_on_resolve) {
-        set_mode_RTL_or_land_with_pause();
-    } else if (mode_requires_GPS(ekf_check_mode_before_fs_on) && ekf_check_switch_mode_on_resolve) {
-        set_mode(LOITER);
+    if (ekf_check_switch_mode_on_resolve) {
+        if (!mode_requires_RC(ekf_check_mode_before_fs_on)) {
+            set_mode_RTL_or_land_with_pause();
+        } else if (mode_requires_GPS(ekf_check_mode_before_fs_on)) {
+            set_mode(LOITER);
+        }
     }
 }

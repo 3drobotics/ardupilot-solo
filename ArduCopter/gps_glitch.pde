@@ -21,6 +21,12 @@ static void gps_glitch_on_event() {
 }
 
 static void gps_glitch_off_event() {
+  
+    // return immediately if not in gps glitch
+    if (!failsafe.gps_glitch) {
+        return;
+    }
+  
     failsafe.gps_glitch = false;
 
     if (gps_glitch_switch_mode_on_resolve) {
