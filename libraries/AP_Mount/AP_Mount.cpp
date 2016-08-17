@@ -451,14 +451,14 @@ void AP_Mount::update(uint8_t mount_compid,  AP_SerialManager& serial_manager)
 {
 #if AP_AHRS_NAVEKF_AVAILABLE
     static AP_HAL::UARTDriver *uart = serial_manager.find_serial(AP_SerialManager::SerialProtocol_MAVLink,1);
-    static bool begin_gmb_uart;
-    static uint32_t baud = serial_manager.find_baudrate(AP_SerialManager::SerialProtocol_MAVLink,1);
+    //static bool begin_gmb_uart;
+    //static uint32_t baud = serial_manager.find_baudrate(AP_SerialManager::SerialProtocol_MAVLink,1);
     for (uint8_t instance=0; instance<AP_MOUNT_MAX_INSTANCES; instance++) {
-
+        /*
         if(_retries > MAX_RETRIES) { //no mavlink gimbal found
             break;
         }
-
+        */
         MountType mount_type = get_mount_type(instance);
         // check for MAVLink mounts
         if (mount_type == Mount_Type_MAVLink && !_mav_gimbal_found) {
@@ -479,6 +479,9 @@ void AP_Mount::update(uint8_t mount_compid,  AP_SerialManager& serial_manager)
                     _primary = instance;
                     primary_set = true;
                 }
+            }
+        }
+        /*
             } else if(_timeout) {
                 //change baud rate of gimbal port and retry
                 if(baud == 921600) {
@@ -511,6 +514,7 @@ void AP_Mount::update(uint8_t mount_compid,  AP_SerialManager& serial_manager)
                 _timeout = ((hal.scheduler->millis() - _last_time)>=5000) ? true : false;
             }
         }
+        */
     }
 #endif
     // update each instance
