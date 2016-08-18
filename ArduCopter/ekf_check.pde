@@ -135,7 +135,7 @@ static void failsafe_ekf_event()
     failsafe.ekf = true;
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_EKFINAV, ERROR_CODE_FAILSAFE_OCCURRED);
 
-    // make sure the gps glitch failsafe does nothing on resilve
+    // make sure the gps glitch failsafe does nothing on resolve
     gps_glitch_switch_mode_on_resolve = false;
     ekf_check_mode_before_fs_on = control_mode;
     ekf_check_switch_mode_on_resolve = true;
