@@ -638,6 +638,12 @@ static uint16_t mainLoop_count;
 // Loiter timer - Records how long we have been in loiter
 static uint32_t rtl_loiter_start_time;
 
+// last time in msec that the pre-arm compass consistency check failed
+static uint32_t last_mag_fail_time_ms = 0;
+
+// last time in msec that the pre-arm compass consistency check passed
+static uint32_t last_mag_pass_time_ms = 0;
+
 // Used to exit the roll and pitch auto trim function
 static uint8_t auto_trim_counter;
 

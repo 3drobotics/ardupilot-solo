@@ -303,10 +303,20 @@ static bool pre_arm_checks(bool display_failure)
             return false;
         }
 
+        // Check that the different magnetometers are providing consistent data
+        // Latch the check to passsed if 3 continuous seconds of pass occurs
+        // This allows the user to pick up the copter to clear the failure if it is caused by a ground level magnetic anomaly
         if (!compass.consistent()) {
+            last_mag_fail_time_ms = millis();
+        } else {
+            last_mag_pass_time_ms = millis();
+        }
+        bool mag_consistency_failed = (last_mag_pass_time_ms == 0 || (millis() - last_mag_fail_time_ms) <= 3000);
+        if (mag_consistency_failed) {
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent compasses"));
             }
+            last_mag_fail_time_ms = millis();
             return false;
         }
     }
