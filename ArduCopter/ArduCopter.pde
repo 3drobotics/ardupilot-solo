@@ -629,6 +629,8 @@ AC_PosControl pos_control(ahrs, inertial_nav, motors, attitude_control,
                         g.p_pos_xy, g.pi_vel_xy);
 static AC_WPNav wp_nav(inertial_nav, ahrs, pos_control, attitude_control);
 static AC_Circle circle_nav(inertial_nav, ahrs, pos_control);
+// lean angle limit in centi degrees
+static int16_t angle_max_dynamic = 1000;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
