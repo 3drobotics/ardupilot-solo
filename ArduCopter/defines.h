@@ -419,4 +419,7 @@ enum FlipState {
 // for control of uncontrolled descent recovery
 #define MAX_SPD_CMS 1500.0f
 
+// minimum value of tilt limit that will be applied in flight (centi-degrees)
+#define ANGLE_LIMIT_MINIMUM 10000
+
 #endif // _DEFINES_H
