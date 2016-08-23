@@ -103,6 +103,12 @@ const AP_Param::GroupInfo AP_GPS::var_info[] PROGMEM = {
     // @Description: Set to a non-zero value to override the GPS receivers reported speed accuracy in cm/s
     // @User: Advanced
     AP_GROUPINFO("SPD_ERR_OW", 9, AP_GPS, _spd_err_ow, 0),
+    
+    // @Param: UBLOX_NO_FIX
+    // @DisplayName: uBlox no fix force flag
+    // @Description: Set to a non-zero value to force uBlox receivers to report no gps fix
+    // @User: Advanced
+    AP_GROUPINFO("UBLOX_NO_FIX", 10, AP_GPS, _ublox_no_fix, 0),
 
     AP_GROUPEND
 };

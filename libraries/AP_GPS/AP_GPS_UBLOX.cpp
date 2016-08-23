@@ -480,28 +480,30 @@ AP_GPS_UBLOX::_parse_gps(void)
 
     switch (_msg_id) {
     case MSG_POSLLH:
-        Debug("MSG_POSLLH next_fix=%u", next_fix);
-        _last_pos_time        = _buffer.posllh.time;
-        state.location.lng    = _buffer.posllh.longitude;
-        state.location.lat    = _buffer.posllh.latitude;
-        state.location.alt    = _buffer.posllh.altitude_msl / 10;
-        state.status          = next_fix;
-        _new_position = true;
-#if UBLOX_FAKE_3DLOCK
-        state.location.lng = 1491652300L;
-        state.location.lat = -353632610L;
-        state.location.alt = 58400;
-#endif
-        state.horizontal_accuracy = _buffer.posllh.horizontal_accuracy*1.0e-3f;
-        state.vertical_accuracy = _buffer.posllh.vertical_accuracy*1.0e-3f;
-        state.have_horizontal_accuracy = true;
-        state.have_vertical_accuracy = true;
-        break;
+        if (!gps._ublox_no_fix) {
+            Debug("MSG_POSLLH next_fix=%u", next_fix);
+            _last_pos_time        = _buffer.posllh.time;
+            state.location.lng    = _buffer.posllh.longitude;
+            state.location.lat    = _buffer.posllh.latitude;
+            state.location.alt    = _buffer.posllh.altitude_msl / 10;
+            state.status          = next_fix;
+            _new_position = true;
+    #if UBLOX_FAKE_3DLOCK
+            state.location.lng = 1491652300L;
+            state.location.lat = -353632610L;
+            state.location.alt = 58400;
+    #endif
+            state.horizontal_accuracy = _buffer.posllh.horizontal_accuracy*1.0e-3f;
+            state.vertical_accuracy = _buffer.posllh.vertical_accuracy*1.0e-3f;
+            state.have_horizontal_accuracy = true;
+            state.have_vertical_accuracy = true;
+        }
+        break;  
     case MSG_STATUS:
         Debug("MSG_STATUS fix_status=%u fix_type=%u",
               _buffer.status.fix_status,
               _buffer.status.fix_type);
-        if (_buffer.status.fix_status & NAV_STATUS_FIX_VALID) {
+        if (_buffer.status.fix_status & NAV_STATUS_FIX_VALID && !gps._ublox_no_fix) {
             if( _buffer.status.fix_type == AP_GPS_UBLOX::FIX_3D) {
                 next_fix = AP_GPS::GPS_OK_FIX_3D;
             }else if (_buffer.status.fix_type == AP_GPS_UBLOX::FIX_2D) {
@@ -529,7 +531,7 @@ AP_GPS_UBLOX::_parse_gps(void)
         Debug("MSG_SOL fix_status=%u fix_type=%u",
               _buffer.solution.fix_status,
               _buffer.solution.fix_type);
-        if (_buffer.solution.fix_status & NAV_STATUS_FIX_VALID) {
+        if (_buffer.solution.fix_status & NAV_STATUS_FIX_VALID && !gps._ublox_no_fix) {
             if( _buffer.solution.fix_type == AP_GPS_UBLOX::FIX_3D) {
                 next_fix = AP_GPS::GPS_OK_FIX_3D;
             }else if (_buffer.solution.fix_type == AP_GPS_UBLOX::FIX_2D) {
@@ -542,7 +544,11 @@ AP_GPS_UBLOX::_parse_gps(void)
             next_fix = AP_GPS::NO_FIX;
             state.status = AP_GPS::NO_FIX;
         }
-        state.num_sats    = _buffer.solution.satellites;
+        if (gps._ublox_no_fix) {
+            state.num_sats = 0;
+        } else {
+            state.num_sats    = _buffer.solution.satellites;
+        }
         if (next_fix >= AP_GPS::GPS_OK_FIX_2D) {
             state.last_gps_time_ms = hal.scheduler->millis();
             if (state.time_week == _buffer.solution.week &&
@@ -564,22 +570,24 @@ AP_GPS_UBLOX::_parse_gps(void)
 #endif
         break;
     case MSG_VELNED:
-        Debug("MSG_VELNED");
-        _last_vel_time         = _buffer.velned.time;
-        state.ground_speed     = _buffer.velned.speed_2d*0.01f;          // m/s
-        state.ground_course_cd = _buffer.velned.heading_2d / 1000;       // Heading 2D deg * 100000 rescaled to deg * 100
-        state.have_vertical_velocity = true;
-        state.velocity.x = _buffer.velned.ned_north * 0.01f;
-        state.velocity.y = _buffer.velned.ned_east * 0.01f;
-        state.velocity.z = _buffer.velned.ned_down * 0.01f;
-        state.have_speed_accuracy = true;
-        // Allow overwrite of reported speed accuracy to assist with testing GPS glitch logic
-        if (gps._spd_err_ow == 0) {
-            state.speed_accuracy = _buffer.velned.speed_accuracy*0.01f;
-        } else {
-            state.speed_accuracy = gps._spd_err_ow*0.01f;
+        if (!gps._ublox_no_fix) {
+            Debug("MSG_VELNED");
+            _last_vel_time         = _buffer.velned.time;
+            state.ground_speed     = _buffer.velned.speed_2d*0.01f;          // m/s
+            state.ground_course_cd = _buffer.velned.heading_2d / 1000;       // Heading 2D deg * 100000 rescaled to deg * 100
+            state.have_vertical_velocity = true;
+            state.velocity.x = _buffer.velned.ned_north * 0.01f;
+            state.velocity.y = _buffer.velned.ned_east * 0.01f;
+            state.velocity.z = _buffer.velned.ned_down * 0.01f;
+            state.have_speed_accuracy = true;
+            // Allow overwrite of reported speed accuracy to assist with testing GPS glitch logic
+            if (gps._spd_err_ow == 0) {
+                state.speed_accuracy = _buffer.velned.speed_accuracy*0.01f;
+            } else {
+                state.speed_accuracy = gps._spd_err_ow*0.01f;
+            }
+            _new_speed = true;
         }
-        _new_speed = true;
         break;
 #if UBLOX_VERSION_AUTODETECTION
     case MSG_NAV_SVINFO:

@@ -334,6 +334,7 @@ public:
     AP_Int8 _sbas_mode;
     AP_Int8 _min_elevation;
     AP_Int16 _spd_err_ow;
+    AP_Int16 _ublox_no_fix;
     
     // handle sending of initialisation strings to the GPS
     void send_blob_start(uint8_t instance, const prog_char *_blob, uint16_t size);
