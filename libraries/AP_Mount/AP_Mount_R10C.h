@@ -15,12 +15,18 @@
 #include <RC_Channel_aux.h>
 #include "AP_Mount_Backend.h"
 
+enum r10c_gimbal_state_t {
+    R10C_GIMBAL_STATE_NOT_PRESENT = 0,
+    R10C_GIMBAL_STATE_PRESENT_RUNNING
+};
+
 class AP_Mount_R10C : public AP_Mount_Backend
 {
 public:
     // Constructor
     AP_Mount_R10C(AP_Mount &frontend, AP_Mount::mount_state &state, uint8_t instance):
         AP_Mount_Backend(frontend, state, instance),
+        _r10c_state(R10C_GIMBAL_STATE_NOT_PRESENT),
         _roll_idx(RC_Channel_aux::k_none),
         _tilt_idx(RC_Channel_aux::k_none),
         _pan_idx(RC_Channel_aux::k_none),
@@ -50,7 +56,13 @@ public:
     // status_msg - called to allow mounts to send their status to GCS using the MOUNT_STATUS message
     virtual void status_msg(mavlink_channel_t chan);
 
+    bool present();
+
+    // handle an R10C_GIMBAL_REPORT message
+    void handle_r10c_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg);
+
 private:
+    r10c_gimbal_state_t _r10c_state;
 
     // flags structure
     struct {
@@ -81,6 +93,8 @@ private:
     Vector3f _angle_bf_output_deg;  // final body frame output angle in degrees
 
     uint32_t _last_check_servo_map_ms;  // system time of latest call to check_servo_map function
+
+    uint32_t _last_report_msg_ms;
 };
 
 #endif // __AP_Mount_R10C_H__

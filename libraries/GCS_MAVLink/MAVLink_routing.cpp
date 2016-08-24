@@ -490,6 +490,10 @@ void MAVLink_routing::get_targets(const mavlink_message_t* msg, int16_t &sysid, 
         sysid  = mavlink_msg_gimbal_report_get_target_system(msg);
         compid = mavlink_msg_gimbal_report_get_target_component(msg);
         break;
+    case MAVLINK_MSG_ID_R10C_GIMBAL_REPORT:
+        sysid  = mavlink_msg_r10c_gimbal_report_get_target_system(msg);
+        compid = mavlink_msg_r10c_gimbal_report_get_target_component(msg);
+        break;
     case MAVLINK_MSG_ID_GIMBAL_CONTROL:
         sysid  = mavlink_msg_gimbal_control_get_target_system(msg);
         compid = mavlink_msg_gimbal_control_get_target_component(msg);

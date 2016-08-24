@@ -903,7 +903,7 @@ void loop()
 }
 
 
-// Main loop - 100hz
+// Main loop - 400hz
 static void fast_loop()
 {
 
@@ -930,9 +930,6 @@ static void fast_loop()
 
     // run the attitude controllers
     update_flight_mode();
-
-    // update home from EKF if necessary
-    update_home_from_EKF();
 
     // check if we've landed or crashed
     update_land_and_crash_detectors();
@@ -1127,6 +1124,9 @@ static void one_hz_loop()
 
     gcs_send_message(MSG_ARMMASK);
 
+    // update home location from EKF if necessary
+    update_home_from_EKF();
+    
     if (!motors.armed()) {
         // make it possible to change ahrs orientation at runtime during initial config
         ahrs.set_orientation();

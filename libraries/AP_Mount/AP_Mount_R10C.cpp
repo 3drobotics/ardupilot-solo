@@ -23,6 +23,17 @@ void AP_Mount_R10C::init(const AP_SerialManager& serial_manager)
     check_servo_map();
 }
 
+bool AP_Mount_R10C::present()
+{
+    if (_r10c_state != R10C_GIMBAL_STATE_NOT_PRESENT && hal.scheduler->millis()-_last_report_msg_ms > 3000) {
+        // gimbal went away
+        _r10c_state = R10C_GIMBAL_STATE_NOT_PRESENT;
+        return false;
+    }
+
+    return _r10c_state != R10C_GIMBAL_STATE_NOT_PRESENT;
+}
+
 // update mount position - should be called periodically
 void AP_Mount_R10C::update()
 {
@@ -85,35 +96,37 @@ void AP_Mount_R10C::update()
 
 void AP_Mount_R10C::gmb_att_update()
 {
-    const AP_InertialSensor &ins = _frontend._ahrs.get_ins();
-    const Vector3f &gyro = ins.get_gyro();
-    mavlink_channel_t chan = MAVLINK_COMM_2;
+    if (present()) {
+        const AP_InertialSensor &ins = _frontend._ahrs.get_ins();
+        const Vector3f &gyro = ins.get_gyro();
+        mavlink_channel_t chan = MAVLINK_COMM_2;
 
 
-    Quaternion quat;
-    _frontend._ahrs.get_NavEKF_const().getQuaternion(quat);
-    Vector3f euler312;
-    quat.to_vector312(euler312.x,euler312.y,euler312.z);
-    //Quaternion quat;
-    //quat.from_euler(_frontend._ahrs.roll,_frontend._ahrs.pitch,0);
-    //if(degrees(_frontend._ahrs.roll) > 150 || degrees(_frontend._ahrs.roll) < -150) {
-    //    return;
-    //}
+        Quaternion quat;
+        _frontend._ahrs.get_NavEKF_const().getQuaternion(quat);
+        Vector3f euler312;
+        quat.to_vector312(euler312.x,euler312.y,euler312.z);
+        //Quaternion quat;
+        //quat.from_euler(_frontend._ahrs.roll,_frontend._ahrs.pitch,0);
+        //if(degrees(_frontend._ahrs.roll) > 150 || degrees(_frontend._ahrs.roll) < -150) {
+        //    return;
+        //}
 
-    if (get_mode() != MAV_MOUNT_MODE_NEUTRAL) {
-        mavlink_msg_r10c_gimbal_update_send(
-                                  chan,
-                                  euler312.x,            //these will be normalised again on gimbal
-                                  euler312.y,
-                                  euler312.z,
-                                  _angle_bf_output_deg.y*100);                           
-    } else {
-        mavlink_msg_r10c_gimbal_update_send(
-                                  chan,
-                                  0,
-                                  0,
-                                  0,
-                                  _angle_bf_output_deg.y*100);
+        if (get_mode() != MAV_MOUNT_MODE_NEUTRAL) {
+            mavlink_msg_r10c_gimbal_update_send(
+                                      chan,
+                                      euler312.x,            //these will be normalised again on gimbal
+                                      euler312.y,
+                                      euler312.z,
+                                      _angle_bf_output_deg.y*100);
+        } else {
+            mavlink_msg_r10c_gimbal_update_send(
+                                      chan,
+                                      0,
+                                      0,
+                                      0,
+                                      _angle_bf_output_deg.y*100);
+        }
     }
 }
 // set_mode - sets mount's mode
@@ -137,7 +150,9 @@ void AP_Mount_R10C::check_servo_map()
 // status_msg - called to allow mounts to send their status to GCS using the MOUNT_STATUS message
 void AP_Mount_R10C::status_msg(mavlink_channel_t chan)
 {
-    mavlink_msg_mount_status_send(chan, 0, 0, _angle_bf_output_deg.y*100, _angle_bf_output_deg.x*100, _angle_bf_output_deg.z*100);
+    if (present()) {
+        mavlink_msg_mount_status_send(chan, 0, 0, _angle_bf_output_deg.y*100, _angle_bf_output_deg.x*100, _angle_bf_output_deg.z*100);
+    }
 }
 
 // stabilize - stabilizes the mount relative to the Earth's frame
@@ -186,4 +201,30 @@ void AP_Mount_R10C::move_servo(uint8_t function_idx, int16_t angle, int16_t angl
     mavlink_channel_t chan = MAVLINK_COMM_2;
 
     mavlink_msg_command_long_send(chan,mavlink_system.sysid,MAV_COMP_ID_R10C_GIMBAL,MAV_CMD_DO_SET_SERVO,0,function_idx - RC_Channel_aux::k_mount_pan,servo_out*10,0,0,0,0,0);
+}
+
+void AP_Mount_R10C::handle_r10c_gimbal_report(mavlink_channel_t chan, mavlink_message_t *msg) {
+    mavlink_r10c_gimbal_report_t r10c_report;
+    mavlink_msg_r10c_gimbal_report_decode(msg, &r10c_report);
+    uint32_t tnow_ms = hal.scheduler->millis();
+    _last_report_msg_ms = tnow_ms;
+
+    if (r10c_report.target_system != 1) {
+        _r10c_state = R10C_GIMBAL_STATE_NOT_PRESENT;
+    }
+
+    switch(_r10c_state) {
+        case R10C_GIMBAL_STATE_NOT_PRESENT:
+            // gimbal was just connected or we just rebooted
+            _r10c_state = R10C_GIMBAL_STATE_PRESENT_RUNNING;
+            break;
+
+        case R10C_GIMBAL_STATE_PRESENT_RUNNING:
+            break;
+    }
+
+    float pitch_ref = (float)r10c_report.pitch_ref/(1<<22);
+    float roll_out = (float)r10c_report.roll_out/(1<<22);
+    float pitch_out = (float)r10c_report.pitch_out/(1<<22);
+    _frontend._dataflash->Log_Write_R10CGimbal(pitch_ref, roll_out, pitch_out, r10c_report.roll_pwm, r10c_report.pitch_pwm);
 }
