@@ -187,17 +187,22 @@ public:
         k_param_gcs2,
         k_param_serial2_baud_old, // deprecated
         k_param_serial2_protocol, // deprecated
-        k_param_serial_manager,  // 119
+        k_param_serial_manager,
         k_param_ch9_option,
         k_param_ch10_option,
         k_param_ch11_option,
-        k_param_ch12_option,     // 123
-        k_param_takeoff_trigger_dz,
+        k_param_ch12_option,
+        k_param_takeoff_trigger_dz, // 124
 
-        //solo params 135..139
-        k_param_rtl_speed_cms=135,
+        // 131: Solo parameters
+        //
+        k_param_spd_lim_rate_cmss = 131,
+        k_param_spd_min_cms,
+        k_param_hgt_rate_err_tol,
+        k_param_yaw_hdrm_slew_time_ms,
+        k_param_rtl_speed_cms,
         k_param_fs_batt_curr_rtl,
-        k_param_rtl_cone_slope,
+        k_param_rtl_cone_slope, // 137
 
         //
         // 140: Sensor parameters
@@ -357,9 +362,17 @@ public:
     AP_Int16        takeoff_trigger_dz;
     AP_Float        pilot_takeoff_alt;
 
+    // Thrust loss recovery
+    //
+    AP_Int16        spd_lim_rate_cmss;      // rate that the horizontal speed limit applied to guided mode demands is reduced - cm/s/s
+    AP_Int16        spd_min_cms;            // minimum value for the guided mode speed limit - cm/s
+    AP_Int16        hgt_rate_err_tol;       // height rate control tracking error threshold used to detect loss of height control - cm/s
+    AP_Int16        yaw_hdrm_slew_time_ms;  // time required to slew the control mixer headroom from the value specified by MOT_YAW_HEADROOM to 0 - msec
+
     AP_Int16        rtl_altitude;
     AP_Int16        rtl_speed_cms;
     AP_Float        rtl_cone_slope;
+
     AP_Float        sonar_gain;
 
     AP_Int8         failsafe_battery_enabled;   // battery failsafe enabled

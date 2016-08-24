@@ -233,7 +233,7 @@ enum FlipState {
 #define LOG_STARTUP_MSG                 0x0A
 #define LOG_OPTFLOW_MSG                 0x0C
 #define LOG_EVENT_MSG                   0x0D
-#define LOG_PID_MSG                     0x0E    // deprecated
+#define LOG_HEIGHT_RECOVERY_MSG         0x0E
 #define LOG_INAV_MSG                    0x11    // deprecated
 #define LOG_CAMERA_MSG_DEPRECATED       0x12    // deprecated
 #define LOG_ERROR_MSG                   0x13
@@ -261,7 +261,7 @@ enum FlipState {
 #define MASK_LOG_CURRENT                (1<<9)
 #define MASK_LOG_RCOUT                  (1<<10)
 #define MASK_LOG_OPTFLOW                (1<<11)
-#define MASK_LOG_PID                    (1<<12) // deprecated
+#define MASK_LOG_HEIGHT_RECOVERY        (1<<12)
 #define MASK_LOG_COMPASS                (1<<13)
 #define MASK_LOG_INAV                   (1<<14) // deprecated
 #define MASK_LOG_CAMERA                 (1<<15)
@@ -415,5 +415,8 @@ enum FlipState {
 
 // for PILOT_THR_BHV parameter
 #define THR_BEHAVE_FEEDBACK_FROM_MID_STICK (1<<0)
+
+// for control of uncontrolled descent recovery
+#define MAX_SPD_CMS 1500.0f
 
 #endif // _DEFINES_H
