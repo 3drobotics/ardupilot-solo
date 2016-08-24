@@ -61,7 +61,7 @@ static void run_cli(AP_HAL::UARTDriver *port)
     // cut the engines
     if(motors.armed()) {
         motors.armed(false);
-        motors.output();
+        motors.output(false);
     }
 
     while (1) {

@@ -50,6 +50,16 @@ static void update_land_detector()
         // check that the airframe is not accelerating (not falling or breaking after fast forward flight)
         bool accel_stationary = (land_accel_ef_filter.get().length() <= LAND_DETECTOR_ACCEL_MAX);
 
+        // If we are in land mode and motors are at the lower limit, reduce the tilt limit to the minimum over 500msec to prevent tipover
+        if (motor_at_lower_limit && (angle_max_dynamic > ANGLE_LIMIT_MINIMUM) && (control_mode == LAND)) {
+            angle_max_dynamic -= (aparm.angle_max-ANGLE_LIMIT_MINIMUM)/(MAIN_LOOP_RATE/2);
+        } else if (!motor_at_lower_limit && (angle_max_dynamic < aparm.angle_max)) {
+            angle_max_dynamic += (aparm.angle_max-ANGLE_LIMIT_MINIMUM)/(MAIN_LOOP_RATE/2);
+        } else {
+            angle_max_dynamic = aparm.angle_max;
+        }
+        angle_max_dynamic = max(min(angle_max_dynamic,aparm.angle_max),ANGLE_LIMIT_MINIMUM);
+
         if (motor_at_lower_limit && accel_stationary) {
             // landed criteria met - increment the counter and check if we've triggered
             if( land_detector_count < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {

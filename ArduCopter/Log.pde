@@ -475,6 +475,40 @@ static void Log_Write_Event(uint8_t id)
     }
 }
 
+struct PACKED log_Height_Recovery {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    uint8_t flag_bitmask;
+    uint16_t spd_lim;
+    uint8_t yaw_scaler;
+};
+
+// Write a height recovery packet
+static void Log_Write_Height_Recovery()
+{
+    union hgt_recovery_mask {
+        struct {
+            uint8_t reduce_spd_lim      : 1; // 0 - true if a reduction in speed limit has been requested
+            uint8_t spd_lim_reducing    : 1; // 1 - true if the speed limit is reducing
+            uint8_t reduce_yaw_headroom : 1; // 2 - true if a reduction in yaw headroom has been requested
+        } flags;
+        uint8_t value;
+    };
+    hgt_recovery_mask status;
+    status.value = 0;
+    status.flags.reduce_spd_lim = reduce_guided_speed;
+    status.flags.spd_lim_reducing = guided_spd_lim_reducing;
+    status.flags.reduce_yaw_headroom = thrust_priority;
+    struct log_Height_Recovery pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_HEIGHT_RECOVERY_MSG),
+        time_ms             : hal.scheduler->millis(),
+        flag_bitmask        : (uint8_t)status.value,
+        spd_lim             : (uint16_t)guided_mode_spd_lim_cms,
+        yaw_scaler          : (uint8_t)(100.0f*motors.get_yaw_headroom_scaler()),
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Data_Int16t {
     LOG_PACKET_HEADER;
     uint8_t id;
@@ -642,7 +676,27 @@ static void Log_Write_Land_Detector()
     DataFlash.WriteBlock(&pkt_land, sizeof(pkt_land));
 }
 
-static const struct LogStructure log_structure[] PROGMEM = {
+    /*
+    Format characters in the format string for binary log messages
+      b   : int8_t
+      B   : uint8_t
+      h   : int16_t
+      H   : uint16_t
+      i   : int32_t
+      I   : uint32_t
+      f   : float
+      n   : char[4]
+      N   : char[16]
+      Z   : char[64]
+      c   : int16_t * 100
+      C   : uint16_t * 100
+      e   : int32_t * 100
+      E   : uint32_t * 100
+      L   : int32_t latitude/longitude
+      M   : uint8_t flight mode
+     */
+
+    static const struct LogStructure log_structure[] PROGMEM = {
     LOG_COMMON_STRUCTURES,
 #if AUTOTUNE_ENABLED == ENABLED
     { LOG_AUTOTUNE_MSG, sizeof(log_AutoTune),
@@ -670,7 +724,9 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "STRT", "",            "" },
     { LOG_EVENT_MSG, sizeof(log_Event),         
       "EV",   "B",           "Id" },
-    { LOG_DATA_INT16_MSG, sizeof(log_Data_Int16t),         
+    { LOG_HEIGHT_RECOVERY_MSG, sizeof(log_Height_Recovery),
+      "HLE", "IBHB", "TimeMS,status,spd_lim,yaw_scaler" },
+    { LOG_DATA_INT16_MSG, sizeof(log_Data_Int16t),
       "D16",   "Bh",         "Id,Value" },
     { LOG_DATA_UINT16_MSG, sizeof(log_Data_UInt16t),         
       "DU16",  "BH",         "Id,Value" },
@@ -738,6 +794,7 @@ static void Log_Write_Event(uint8_t id){}
 static void Log_Write_Optflow() {}
 static void Log_Write_Nav_Tuning() {}
 static void Log_Write_Control_Tuning() {}
+static void Log_Write_Height_Recovery() {}
 static void Log_Write_Performance() {}
 static void Log_Write_Cmd(const AP_Mission::Mission_Command &cmd) {}
 static void Log_Write_Error(uint8_t sub_system, uint8_t error_code) {}

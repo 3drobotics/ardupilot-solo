@@ -525,8 +525,8 @@ static void poshold_run()
         }
         
         // constrain target pitch/roll angles
-        poshold.roll = constrain_int16(poshold.roll, -aparm.angle_max, aparm.angle_max);
-        poshold.pitch = constrain_int16(poshold.pitch, -aparm.angle_max, aparm.angle_max);
+        poshold.roll = constrain_int16(poshold.roll, -angle_max_dynamic, angle_max_dynamic);
+        poshold.pitch = constrain_int16(poshold.pitch, -angle_max_dynamic, angle_max_dynamic);
 
         // update attitude controller targets
         attitude_control.angle_ef_roll_pitch_rate_ef_yaw(poshold.roll, poshold.pitch, target_yaw_rate);
