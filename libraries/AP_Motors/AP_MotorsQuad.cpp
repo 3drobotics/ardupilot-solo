@@ -89,10 +89,10 @@ void AP_MotorsQuad::setup_motors()
         add_motor(AP_MOTORS_MOT_3, -60, -60, 0, 4);
         add_motor(AP_MOTORS_MOT_4, 0, 160, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 2);
     }else{
-        // X frame set-up
-        add_motor(AP_MOTORS_MOT_1,   45, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 1);
-        add_motor(AP_MOTORS_MOT_2, -135, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 3);
-        add_motor(AP_MOTORS_MOT_3,  -45, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
-        add_motor(AP_MOTORS_MOT_4,  135, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  2);
+        // X frame set-up - modified for frame specific c.g. offset
+        add_motor(AP_MOTORS_MOT_1,   43, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 1);
+        add_motor(AP_MOTORS_MOT_2, -137, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 3);
+        add_motor(AP_MOTORS_MOT_3,  -43, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
+        add_motor(AP_MOTORS_MOT_4,  137, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  2);
     }
 }
