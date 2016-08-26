@@ -772,7 +772,12 @@ static void motors_output()
         // reducing yaw control authority. This gives speed reduction a chance to work before we compromise
         // yaw control
         thrust_priority = uncontrolled_descent && !guided_spd_lim_reducing;
-        motors.output(thrust_priority);
+        // if the copter is armed and tilted more than 60 degrees, prioritise roll/pitch moments in the mixer to speed recovery from a tilt upset event
+        // This takes priority inside the mixer over the thrust_priority demand
+        // Do not apply during flip or acro modes
+        const Matrix3f &Tbn = ahrs.get_dcm_matrix();
+        bool rp_priority = (Tbn.c.z < 0.5f) && motors.armed() && (control_mode != ACRO) && (control_mode != FLIP);
+        motors.output(thrust_priority,rp_priority);
     }
 }
 
