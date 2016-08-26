@@ -155,7 +155,6 @@ protected:
 
     // mavlink detect vars
     uint8_t             _retries;
-    bool                _mav_gimbal_found;
     bool                primary_set = false;
     uint32_t            _last_time;
     bool                _timeout;
