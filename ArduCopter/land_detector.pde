@@ -2,6 +2,7 @@
 
 // counter to verify landings
 uint32_t land_detector_count = 0;
+int32_t land_detector_maybe_count = 0;
 
 // run land and crash detectors
 // called at MAIN_LOOP_RATE
@@ -64,16 +65,27 @@ static void update_land_detector()
             // landed criteria met - increment the counter and check if we've triggered
             if( land_detector_count < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
                 land_detector_count++;
+
             } else {
                 set_land_complete(true);
+            }
+            // landed maybe criteria met - increment the counter
+            if (land_detector_maybe_count < 2*LAND_DETECTOR_MAYBE_TRIGGER_SEC*MAIN_LOOP_RATE) {
+                land_detector_maybe_count++;
             }
         } else {
             // we've sensed movement up or down so reset land_detector
             land_detector_count = 0;
+            // decrement the may be landed count
+            if (land_detector_maybe_count > 0) {
+               land_detector_maybe_count--;
+            }
         }
     }
 
-    set_land_complete_maybe(ap.land_complete || (land_detector_count > LAND_DETECTOR_MAYBE_TRIGGER_SEC*MAIN_LOOP_RATE));
+    // set the boolean that indicates that we may be landed
+    // this is used to soften the position controller to prevent tipovers on landing
+    set_land_complete_maybe(ap.land_complete || (land_detector_maybe_count > LAND_DETECTOR_MAYBE_TRIGGER_SEC*MAIN_LOOP_RATE));
 }
 
 static void set_land_complete(bool b)
@@ -83,6 +95,7 @@ static void set_land_complete(bool b)
         return;
 
     land_detector_count = 0;
+    land_detector_maybe_count = 0;
 
     if(b){
         Log_Write_Event(DATA_LAND_COMPLETE);
