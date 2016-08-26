@@ -428,6 +428,13 @@ void AP_Mount::init(DataFlash_Class *dataflash, const AP_SerialManager& serial_m
             _backends[instance] = new AP_Mount_Alexmos(*this, state[instance], instance);
             _num_instances++;
 
+#if AP_AHRS_NAVEKF_AVAILABLE
+        // check for Mavlink mount (R10C)
+        } else if (mount_type == Mount_Type_MAVLink) {
+            _backends[instance] = new AP_Mount_R10C(*this, state[instance], instance);
+            _num_instances++;
+#endif
+            
         // check for SToRM32 mounts
         } else if (mount_type == Mount_Type_SToRM32) {
             _backends[instance] = new AP_Mount_SToRM32(*this, state[instance], instance);
@@ -448,34 +455,6 @@ void AP_Mount::init(DataFlash_Class *dataflash, const AP_SerialManager& serial_m
 // update - give mount opportunity to update servos.  should be called at 10hz or higher
 void AP_Mount::update(uint8_t mount_compid,  AP_SerialManager& serial_manager)
 {
-#if AP_AHRS_NAVEKF_AVAILABLE
-    static AP_HAL::UARTDriver *uart = serial_manager.find_serial(AP_SerialManager::SerialProtocol_MAVLink,1);
-
-    for (uint8_t instance=0; instance<AP_MOUNT_MAX_INSTANCES; instance++) {
-        MountType mount_type = get_mount_type(instance);
-        // check for MAVLink mounts
-        if (mount_type == Mount_Type_MAVLink && !_mav_gimbal_found) {
-            if(mount_compid == MAV_COMP_ID_GIMBAL) {    
-                _backends[instance] = new AP_Mount_MAVLink(*this, state[instance], instance);
-                _num_instances++;
-                _mav_gimbal_found = true;
-            }
-            if (mount_compid == MAV_COMP_ID_R10C_GIMBAL) {
-                _backends[instance] = new AP_Mount_R10C(*this, state[instance], instance);
-                _num_instances++;
-                _mav_gimbal_found = true;
-            }
-            // init new instance
-            if (_backends[instance] != NULL && _mav_gimbal_found) {
-                _backends[instance]->init(serial_manager);
-                if (!primary_set) {
-                    _primary = instance;
-                    primary_set = true;
-                }
-            }
-        }
-    }
-#endif
     // update each instance
     for (uint8_t instance=0; instance<AP_MOUNT_MAX_INSTANCES; instance++) {
         if (_backends[instance] != NULL) {
