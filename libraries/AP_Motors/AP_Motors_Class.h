@@ -138,7 +138,7 @@ public:
 
     // output - sends commands to the motors
     // When thrust_priority is set true, the mixer will prioritise thrust over yaw
-    void                output(bool thrust_priority);
+    void                output(bool thrust_priority, bool rp_priority);
 
     // output_min - sends minimum values out to the motors
     virtual void        output_min() = 0;
@@ -224,7 +224,7 @@ public:
 
 protected:
     // output functions that should be overloaded by child classes
-    virtual void        output_armed_stabilizing(bool thrust_priority)=0;
+    virtual void        output_armed_stabilizing(bool thrust_priority, bool rp_priority)=0;
     virtual void        output_armed_not_stabilizing()=0;
     virtual void        output_disarmed()=0;
 

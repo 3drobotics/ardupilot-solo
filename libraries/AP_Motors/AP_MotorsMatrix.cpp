@@ -173,14 +173,45 @@ void AP_MotorsMatrix::output_armed_not_stabilizing()
 // output_armed - sends commands to the motors
 // includes new scaling stability patch
 // TODO pull code that is common to output_armed_not_stabilizing into helper functions
-// When thrust_priority is true, thrust will be prioritised over yaw
-void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority)
+// When thrust_priority is true, thrust will be prioritised over yaw and some roll and
+// pitch authority will be removed
+// When rp_priority is true, roll and pitch control moments will be prioritised over everything else
+void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority, bool rp_priority)
 {
-    int8_t i;
+
+    // If thrust is prioritised, scale the yaw headroom to zero and raise out_min_pwm to the
+    // minimum of out_mid_pwm and get_hover_throttle_as_pwm(). Apply the scaling linearly over time
+    if (thrust_priority && (_yaw_headroom_scaler > 0.0f)) {
+        // linear ramp down with time
+        _yaw_headroom_scaler -= 1.0f / (THRUST_LOW_CRITICAL_BLEND_TIME * (float)_loop_rate);
+    } else if (!thrust_priority && (_yaw_headroom_scaler < 1.0f)) {
+        // linear ramp up with time
+        _yaw_headroom_scaler += 1.0f / (THRUST_LOW_CRITICAL_BLEND_TIME * (float)_loop_rate);
+    }
+
+    // if roll/pitch priority is requested, force the yaw headroom scaler to 0
+    float min_pwm_scaler;
+    if (!rp_priority) {
+        _yaw_headroom_scaler = constrain_float(_yaw_headroom_scaler, 0.0f, 1.0f);
+        min_pwm_scaler = 1.0f - _yaw_headroom_scaler;
+    } else {
+        _yaw_headroom_scaler = 0.0f;
+        min_pwm_scaler = 0.0f;
+    }
+
+    int8_t i; // motor index
     int16_t out_min_pwm = _rc_throttle.radio_min + _min_throttle;      // minimum pwm value we can send to the motors
     int16_t out_max_pwm = _rc_throttle.radio_max;                      // maximum pwm value we can send to the motors
     int16_t out_mid_pwm = (out_min_pwm+out_max_pwm)/2;                  // mid pwm value we can send to the motors
-    int16_t out_best_thr_pwm;  // the is the best throttle we can come up which provides good control without climbing
+
+    // adjust the minimum  and mid pwm value if we are prioritising thrust
+    if (min_pwm_scaler > 0.0f) {
+        float target_min_pwm = (float)out_min_pwm + min_pwm_scaler * (float)(min(out_mid_pwm, get_hover_throttle_as_pwm()) - out_min_pwm);
+        out_min_pwm = (int16_t)target_min_pwm;
+        out_mid_pwm = (out_min_pwm+out_max_pwm)/2;
+    }
+
+    int16_t out_best_thr_pwm;  // the is the best throttle for the given priorities
     float rpy_scale = 1.0; // this is used to scale the roll, pitch and yaw to fit within the motor limits
 
     int16_t rpy_out[AP_MOTORS_MAX_NUM_MOTORS]; // buffer so we don't have to multiply coefficients multiple times.
@@ -188,7 +219,7 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority)
 
     int16_t rpy_low = 0;    // lowest motor value
     int16_t rpy_high = 0;   // highest motor value
-    int16_t yaw_allowed;    // amount of yaw we can fit in
+    int16_t yaw_allowed;    // amount of yaw we can fit in after roll/pitch/throttle has been allocated
     int16_t thr_adj;        // the difference between the pilot's desired throttle and out_best_thr_pwm (the throttle that is actually provided)
 
     // initialize limits flags
@@ -232,7 +263,7 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority)
         }
     }
 
-    // calculate throttle that gives most possible room for yaw (range 1000 ~ 2000) which is the lower of:
+    // calculate an optimum throttle (range 1000 ~ 2000) which is the lower of:
     //      1. mid throttle - average of highest and lowest motor (this would give the maximum possible room margin above the highest motor and below the lowest)
     //      2. the higher of:
     //            a) the pilot's throttle input
@@ -241,25 +272,20 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority)
     //      Situation #2b allows us to raise the throttle above what the pilot commanded but not so far that it would actually cause the copter to rise.
     //      We will choose #1 (the best throttle for yaw control) if that means reducing throttle to the motors (i.e. we favour reducing throttle *because* it provides better yaw control)
     //      We will choose #2 (a mix of pilot and hover throttle) only when the throttle is quite low.  We favour reducing throttle instead of better yaw control because the pilot has commanded it
-    //      Allow thrust to be prioritised over yaw control if requested
+    //      If the rp_priority flag is set, limit throttle to the value that maximises tilt moment headroom. This should only be used to right a copter that has tilted too far in flight
     int16_t motor_mid = (rpy_low+rpy_high)/2;
     out_best_thr_pwm = min(out_mid_pwm - motor_mid, max(_rc_throttle.radio_out, _rc_throttle.radio_out*max(0,1.0f-_throttle_thr_mix)+get_hover_throttle_as_pwm()*_throttle_thr_mix));
+    if (rp_priority) {
+        out_best_thr_pwm = min(out_best_thr_pwm, out_mid_pwm - motor_mid);
+    }
 
-    // calculate amount of yaw we can fit into the throttle range
+    // calculate amount of yaw we can fit into the throttle range assuing throttle is set to out_best_thr_pwm
     // this is always equal to or less than the requested yaw from the pilot or rate controller
     yaw_allowed = min(out_max_pwm - out_best_thr_pwm, out_best_thr_pwm - out_min_pwm) - (rpy_high-rpy_low)/2;
 
-    // If thrust is prioritised over yaw, reduce the yaw headroom to zero.
-    // Apply the change in yaw headroom linearly over time
-    if (thrust_priority && (_yaw_headroom_scaler > 0.0f)) {
-        // linear ramp down with time
-        _yaw_headroom_scaler -= 1.0f / (THRUST_LOW_CRITICAL_BLEND_TIME * (float)_loop_rate);
-    } else if (!thrust_priority && (_yaw_headroom_scaler < 1.0f)) {
-        // linear ramp up with time
-        _yaw_headroom_scaler += 1.0f / (THRUST_LOW_CRITICAL_BLEND_TIME * (float)_loop_rate);
-    }
-    _yaw_headroom_scaler = constrain_float(_yaw_headroom_scaler, 0.0f, 1.0f);
-    float yaw_headroom_dynamic = (float)_yaw_headroom * _yaw_headroom_scaler;
+    // scale the yaw headroom to provide additional authority for thrust or roll/pitch if requested
+    float yaw_headroom_dynamic;
+    yaw_headroom_dynamic = (float)_yaw_headroom * _yaw_headroom_scaler;
     yaw_allowed = max(yaw_allowed, (int16_t)yaw_headroom_dynamic);
 
     if (_rc_yaw.pwm_out >= 0) {
