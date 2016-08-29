@@ -134,6 +134,8 @@ static void update_land_detector()
         if (accel_check_passed && throttle_check_passed && !reduce_max_pwm) {
             // set the flag that will be used to signal the motor mixer to reduce the upper pwm limit
             reduce_max_pwm = true;
+            // log the event
+            Log_Write_Event(DATA_TEST_START_LAND_COMPLETE);
             // reset the counter that will be used to determine if the landing is complete and we can
             // disarm and stop motors
             counter_landed = 0;
@@ -150,8 +152,12 @@ static void update_land_detector()
             }
         } else {
             counter_landed = 0;
-            // cancel the esc reduction request
-            reduce_max_pwm = false;
+            if (reduce_max_pwm) {
+                // cancel the esc reduction request
+                reduce_max_pwm = false;
+                // log the event
+                Log_Write_Event(DATA_TEST_CANCEL_LAND_COMPLETE);
+            }
         }
 
     }
