@@ -772,7 +772,7 @@ static void motors_output()
         // reducing yaw control authority. This gives speed reduction a chance to work before we compromise
         // yaw control
         thrust_priority = uncontrolled_descent && !guided_spd_lim_reducing;
-        motors.output(thrust_priority);
+        motors.output(thrust_priority, reduce_max_pwm);
     }
 }
 

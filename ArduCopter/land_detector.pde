@@ -1,8 +1,14 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-// counter to verify landings
-uint32_t land_detector_count = 0;
+// counters used to verify landings
 int32_t land_detector_maybe_count = 0;
+int32_t counter_not_accelerating = 0;
+int32_t counter_not_falling = 0;
+int32_t counter_min_throttle = 0;
+int32_t counter_landed = 0;
+
+// booen requesting the max pwm value be reduced to test the landed hypothesis
+bool reduce_max_pwm = false;
 
 // run land and crash detectors
 // called at MAIN_LOOP_RATE
@@ -46,46 +52,109 @@ static void update_land_detector()
     } else {
         // we are armed and not landed - check for landed criteria
         // check that the average throttle output is near minimum
-        bool motor_at_lower_limit = motors.limit.throttle_lower && motors.is_throttle_mix_min();
+        bool throttle_at_lower_limit = motors.limit.throttle_lower && motors.is_throttle_mix_min();
 
         // check that the airframe is not accelerating (not falling or breaking after fast forward flight)
         bool accel_stationary = (land_accel_ef_filter.get().length() <= LAND_DETECTOR_ACCEL_MAX);
 
+        // check that the airframe is not falling
+        bool accel_not_falling = (land_accel_ef_filter.get().z <= LAND_DETECTOR_ACCEL_MAX);
+
         // If we are in land mode and motors are at the lower limit, reduce the tilt limit to the minimum over 500msec to prevent tipover
-        if (motor_at_lower_limit && (angle_max_dynamic > ANGLE_LIMIT_MINIMUM) && (control_mode == LAND)) {
+        if (throttle_at_lower_limit && (angle_max_dynamic > ANGLE_LIMIT_MINIMUM) && (control_mode == LAND)) {
             angle_max_dynamic -= (aparm.angle_max-ANGLE_LIMIT_MINIMUM)/(MAIN_LOOP_RATE/2);
-        } else if (!motor_at_lower_limit && (angle_max_dynamic < aparm.angle_max)) {
+        } else if (!throttle_at_lower_limit && (angle_max_dynamic < aparm.angle_max)) {
             angle_max_dynamic += (aparm.angle_max-ANGLE_LIMIT_MINIMUM)/(MAIN_LOOP_RATE/2);
         } else {
             angle_max_dynamic = aparm.angle_max;
         }
         angle_max_dynamic = max(min(angle_max_dynamic,aparm.angle_max),ANGLE_LIMIT_MINIMUM);
 
-        if (motor_at_lower_limit && accel_stationary) {
-            // landed criteria met - increment the counter and check if we've triggered
-            if( land_detector_count < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
-                land_detector_count++;
+        // Increment a counter when throttle is at the lower limit
+        // Reset the counter if the throttle comes off the limit
+        // Declare the check as passed when the coutner reaches the pass threshold
+        // If the throttle comes off the limit, also reset the counter used check for monitor movement
+        bool throttle_check_passed = false;
+        if (throttle_at_lower_limit) {
+            if (counter_min_throttle < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
+                counter_min_throttle++;
+            } else {
+                throttle_check_passed = true;
+            }
+        } else {
+            counter_min_throttle = 0;
+            // also reset the movement detection check
+            counter_not_accelerating = 0;
+        }
 
+        // Increment a counter when not moving vehicle passes is at the lower limit
+        // decrement the counter when the not moving check fails
+        // declare the check as passed when the counter reaches the pass threshold
+        bool accel_check_passed = false;
+        if (accel_stationary) {
+            if (counter_not_accelerating < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
+                counter_not_accelerating++;
+            } else {
+                accel_check_passed = true;
+            }
+        } else {
+            counter_not_accelerating--;
+        }
+
+        // Increment a counter when not falling
+        // reset the counter if falling is detected
+        // declare the check as passed when the counter reaches the pass threshold
+        bool falling_check_passed = false;
+        if (accel_not_falling) {
+            if (counter_not_falling < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
+                counter_not_falling++;
+            } else {
+                falling_check_passed = true;
+            }
+        } else {
+            counter_not_falling = 0;
+        }
+
+        // determine if we are maybe landed which is used to soften the position controller to prevent tipover
+        // can tolerate some short duration false positives on this check
+        if (throttle_at_lower_limit && accel_stationary) {
+            if (land_detector_maybe_count < ((float)LAND_DETECTOR_MAYBE_TRIGGER_SEC)*MAIN_LOOP_RATE*2) {
+                land_detector_maybe_count++;
+            }
+        } else if (land_detector_maybe_count > 0){
+            land_detector_maybe_count--;
+        }
+        set_land_complete_maybe(ap.land_complete || (land_detector_maybe_count > LAND_DETECTOR_MAYBE_TRIGGER_SEC*MAIN_LOOP_RATE));
+
+        // Test the 'is landed' hypothesis by sending a command to reduce the upper PWM limit to the ESC's
+        // and check that the vehicle does not fall. We cannot tolerate false positives on this check as
+        // the motors will stop
+
+        // If the throttle and movement checks pass then we can start the test
+        if (accel_check_passed && throttle_check_passed && !reduce_max_pwm) {
+            // set the flag that will be used to signal the motor mixer to reduce the upper pwm limit
+            reduce_max_pwm = true;
+            // reset the counter that will be used to determine if the landing is complete and we can
+            // disarm and stop motors
+            counter_landed = 0;
+        }
+
+        // Landing hypothesis is confirmed if we have continuous low throttle and not falling condition
+        // Because the esc's have already been lowered to a value that will not allow the copter to tip
+        // this check can be slower to pass
+        if (falling_check_passed && throttle_check_passed && reduce_max_pwm) {
+            if (counter_landed > ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
+                counter_landed++;
             } else {
                 set_land_complete(true);
             }
-            // landed maybe criteria met - increment the counter
-            if (land_detector_maybe_count < 2*LAND_DETECTOR_MAYBE_TRIGGER_SEC*MAIN_LOOP_RATE) {
-                land_detector_maybe_count++;
-            }
         } else {
-            // we've sensed movement up or down so reset land_detector
-            land_detector_count = 0;
-            // decrement the may be landed count
-            if (land_detector_maybe_count > 0) {
-               land_detector_maybe_count--;
-            }
+            counter_landed = 0;
+            // cancel the esc reduction request
+            reduce_max_pwm = false;
         }
-    }
 
-    // set the boolean that indicates that we may be landed
-    // this is used to soften the position controller to prevent tipovers on landing
-    set_land_complete_maybe(ap.land_complete || (land_detector_maybe_count > LAND_DETECTOR_MAYBE_TRIGGER_SEC*MAIN_LOOP_RATE));
+    }
 }
 
 static void set_land_complete(bool b)
@@ -94,8 +163,15 @@ static void set_land_complete(bool b)
     if( ap.land_complete == b )
         return;
 
-    land_detector_count = 0;
+    // reset all counters used for the landing test
     land_detector_maybe_count = 0;
+    counter_not_accelerating = 0;
+    counter_not_falling = 0;
+    counter_min_throttle = 0;
+    counter_landed = 0;
+
+    // reset the test landed request
+    reduce_max_pwm = false;
 
     if(b){
         Log_Write_Event(DATA_LAND_COMPLETE);
