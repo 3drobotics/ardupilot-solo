@@ -145,7 +145,7 @@ static void update_land_detector()
         // Because the esc's have already been lowered to a value that will not allow the copter to tip
         // this check can be slower to pass
         if (falling_check_passed && throttle_check_passed && reduce_max_pwm) {
-            if (counter_landed > ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
+            if (counter_landed < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
                 counter_landed++;
             } else {
                 set_land_complete(true);
