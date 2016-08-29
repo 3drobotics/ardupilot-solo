@@ -184,7 +184,7 @@ void AP_Motors::throttle_pass_through(int16_t pwm)
 
 // output - sends commands to the motors
 // When thrust_priority is true, thrust will be prioritised over yaw
-void AP_Motors::output(bool thrust_priority)
+void AP_Motors::output(bool thrust_priority, bool reduce_max_pwm)
 {
     // update throttle filter
     update_throttle_filter();
@@ -206,7 +206,7 @@ void AP_Motors::output(bool thrust_priority)
 
     if (_flags.armed) {
         if (_flags.stabilizing) {
-            output_armed_stabilizing(thrust_priority);
+            output_armed_stabilizing(thrust_priority, reduce_max_pwm);
         } else {
             output_armed_not_stabilizing();
         }

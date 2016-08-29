@@ -67,7 +67,9 @@ public:
 
 protected:
     // output - sends commands to the motors
-    void                output_armed_stabilizing(bool thrust_priority);
+    // When thrust_priority is set, the motor mixer will sacrifice yaw to maintain thrust.
+    // When reduce_max_pwm is true, the maximum pwm demand will be reduced. This is used by the land detector to confirm that the vehicle has landed
+    void                output_armed_stabilizing(bool thrust_priority, bool reduce_max_pwm);
     void                output_armed_not_stabilizing();
     void                output_disarmed();
 

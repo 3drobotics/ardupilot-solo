@@ -174,11 +174,22 @@ void AP_MotorsMatrix::output_armed_not_stabilizing()
 // includes new scaling stability patch
 // TODO pull code that is common to output_armed_not_stabilizing into helper functions
 // When thrust_priority is true, thrust will be prioritised over yaw
-void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority)
+void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority, bool reduce_max_pwm)
 {
     int8_t i;
     int16_t out_min_pwm = _rc_throttle.radio_min + _min_throttle;      // minimum pwm value we can send to the motors
-    int16_t out_max_pwm = _rc_throttle.radio_max;                      // maximum pwm value we can send to the motors
+    int16_t out_max_pwm;
+    // set the upper throttle limit that will be used to test if the vehicle has landed
+    int16_t land_test_throttle = _min_throttle + (int16_t)(((float)(_hover_out - _min_throttle)) * AP_MOTORS_LAND_TEST_GAIN);
+    if (!reduce_max_pwm || (_rc_throttle.servo_out > land_test_throttle)) {
+        // maximum pwm value we can send to the motors during normal flight
+        out_max_pwm = _rc_throttle.radio_max;
+    } else {
+        // Set a reduced max pwm value below the hover value to test if we hae landed
+        // Do not do this if the throttle is more than halfway above the mid point between min and hover throttle as additional
+        // protection against inadvertent triggering in flight
+        out_max_pwm = _rc_throttle.radio_min + land_test_throttle;
+    }
     int16_t out_mid_pwm = (out_min_pwm+out_max_pwm)/2;                  // mid pwm value we can send to the motors
     int16_t out_best_thr_pwm;  // the is the best throttle we can come up which provides good control without climbing
     float rpy_scale = 1.0; // this is used to scale the roll, pitch and yaw to fit within the motor limits

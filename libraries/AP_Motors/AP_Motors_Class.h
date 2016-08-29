@@ -57,6 +57,8 @@
 #define AP_MOTORS_YAW_HEADROOM_DEFAULT  200
 #define THRUST_LOW_CRITICAL_BLEND_TIME 1.0f  // number of seconds required to remove or restore the yaw controller headroom during a critical loss of thrust event
 
+#define AP_MOTORS_LAND_TEST_GAIN 0.5f   // gain used to reduce the max pwm when checking the 'is landed' hypothesis immediately prior to disarm
+
 #define AP_MOTORS_THR_LOW_CMP_DEFAULT   0.5f // ratio controlling the max throttle output during competing requests of low throttle from the pilot (or autopilot) and higher throttle for attitude control.  Higher favours Attitude over pilot input
 #define AP_MOTORS_THST_EXPO_DEFAULT     0.5f // set to 0 for linear and 1 for second order approximation
 #define AP_MOTORS_THST_MAX_DEFAULT      0.95f   // throttle which produces the maximum thrust.  (i.e. 0 ~ 1 ) of the full throttle range
@@ -138,7 +140,8 @@ public:
 
     // output - sends commands to the motors
     // When thrust_priority is set true, the mixer will prioritise thrust over yaw
-    void                output(bool thrust_priority);
+    // When reduce_max_pwm is true, the maximum pwm demand will be reduced. This is used by the land detector to confirm that the vehicle has landed
+    void                output(bool thrust_priority, bool reduce_max_pwm);
 
     // output_min - sends minimum values out to the motors
     virtual void        output_min() = 0;
@@ -224,7 +227,7 @@ public:
 
 protected:
     // output functions that should be overloaded by child classes
-    virtual void        output_armed_stabilizing(bool thrust_priority)=0;
+    virtual void        output_armed_stabilizing(bool thrust_priority, bool reduce_max_pwm)=0;
     virtual void        output_armed_not_stabilizing()=0;
     virtual void        output_disarmed()=0;
 
