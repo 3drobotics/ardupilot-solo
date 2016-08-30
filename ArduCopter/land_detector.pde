@@ -72,11 +72,11 @@ static void update_land_detector()
 
         // Increment a counter when throttle is at the lower limit
         // Reset the counter if the throttle comes off the limit
-        // Declare the check as passed when the coutner reaches the pass threshold
+        // Declare the check as passed when the counter reaches the pass threshold
         // If the throttle comes off the limit, also reset the counter used check for monitor movement
         bool throttle_check_passed = false;
         if (throttle_at_lower_limit) {
-            if (counter_min_throttle < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
+            if (counter_min_throttle < ((float)FIRST_STAGE_LANDED_TRIGGER_SEC)*MAIN_LOOP_RATE) {
                 counter_min_throttle++;
             } else {
                 throttle_check_passed = true;
@@ -92,7 +92,7 @@ static void update_land_detector()
         // declare the check as passed when the counter reaches the pass threshold
         bool accel_check_passed = false;
         if (accel_stationary) {
-            if (counter_not_accelerating < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
+            if (counter_not_accelerating < ((float)FIRST_STAGE_LANDED_TRIGGER_SEC)*MAIN_LOOP_RATE) {
                 counter_not_accelerating++;
             } else {
                 accel_check_passed = true;
@@ -106,7 +106,7 @@ static void update_land_detector()
         // declare the check as passed when the counter reaches the pass threshold
         bool falling_check_passed = false;
         if (accel_not_falling) {
-            if (counter_not_falling < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
+            if (counter_not_falling < ((float)FIRST_STAGE_LANDED_TRIGGER_SEC)*MAIN_LOOP_RATE) {
                 counter_not_falling++;
             } else {
                 falling_check_passed = true;
@@ -145,7 +145,7 @@ static void update_land_detector()
         // Because the esc's have already been lowered to a value that will not allow the copter to tip
         // this check can be slower to pass
         if (falling_check_passed && throttle_check_passed && reduce_max_pwm) {
-            if (counter_landed < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
+            if (counter_landed < ((float)SECOND_STAGE_LANDED_TRIGGER_SEC)*MAIN_LOOP_RATE) {
                 counter_landed++;
             } else {
                 set_land_complete(true);

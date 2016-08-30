@@ -406,17 +406,23 @@
 //////////////////////////////////////////////////////////////////////////////
 // Landing Detector
 //
-#ifndef LAND_DETECTOR_TRIGGER_SEC
- # define LAND_DETECTOR_TRIGGER_SEC         1.0f    // number of seconds to detect a landing
+// Number of seconds to detect a probable landing. This results in the ESC upper pwm limit being reduced and is reversible.
+#ifndef FIRST_STAGE_LANDED_TRIGGER_SEC
+ # define FIRST_STAGE_LANDED_TRIGGER_SEC    1.0f
+#endif
+// Number of seconds to detect with certainty that we have landed. This results in motors being disarmed.
+// This check commences after the first stage detector has passed and the ESC upper pwm limit has been reduced
+#ifndef SECOND_STAGE_LANDED_TRIGGER_SEC
+ # define SECOND_STAGE_LANDED_TRIGGER_SEC   2.0f
 #endif
 #ifndef LAND_DETECTOR_MAYBE_TRIGGER_SEC
  # define LAND_DETECTOR_MAYBE_TRIGGER_SEC   0.2f    // number of seconds that means we might be landed (used to reset horizontal position targets to prevent tipping over)
 #endif
 #ifndef LAND_DETECTOR_ACCEL_LPF_CUTOFF
-# define LAND_DETECTOR_ACCEL_LPF_CUTOFF     5.0f    // frequency cutoff of land detector accelerometer filter
+ # define LAND_DETECTOR_ACCEL_LPF_CUTOFF     5.0f    // frequency cutoff of land detector accelerometer filter
 #endif
 #ifndef LAND_DETECTOR_ACCEL_MAX
-# define LAND_DETECTOR_ACCEL_MAX            1.0f    // vehicle acceleration must be under 1m/s/s
+ # define LAND_DETECTOR_ACCEL_MAX            1.0f    // vehicle acceleration must be under 1m/s/s
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
