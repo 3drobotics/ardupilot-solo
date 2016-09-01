@@ -85,6 +85,7 @@ apm2beta: EXTRAFLAGS += "-DAPM2_BETA_HARDWARE "
 apm2beta: apm2
 
 sitl-mount: EXTRAFLAGS += "-DMOUNT=ENABLED"
+sitl-mount: EXTRAFLAGS += "-DMOUNT_SITL"
 sitl-mount: sitl
 
 .PHONY: etags

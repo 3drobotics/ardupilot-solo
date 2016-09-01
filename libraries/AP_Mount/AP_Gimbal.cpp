@@ -53,6 +53,10 @@ void AP_Gimbal::receive_feedback(mavlink_channel_t chan, mavlink_message_t *msg)
         _state = GIMBAL_STATE_NOT_PRESENT;
     }
 
+#ifdef MOUNT_SITL
+    _state = GIMBAL_STATE_PRESENT_RUNNING;
+#endif
+
     switch(_state) {
         case GIMBAL_STATE_NOT_PRESENT:
             // gimbal was just connected or we just rebooted, transition to PRESENT_INITIALIZING
