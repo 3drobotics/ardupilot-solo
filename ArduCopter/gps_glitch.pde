@@ -33,5 +33,6 @@ static void gps_glitch_off_event() {
 
     if (gps_glitch_switch_mode_on_resolve) {
         set_mode(LOITER);
+        gps_glitch_switch_mode_on_resolve = false;
     }
 }
