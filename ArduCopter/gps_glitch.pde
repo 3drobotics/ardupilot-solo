@@ -5,7 +5,7 @@ static void gps_glitch_update() {
 
     if (glitch && !failsafe.gps_glitch) {
         gps_glitch_on_event();
-    } else if (!glitch && failsafe.gps_glitch) {
+    } else if (!glitch && failsafe.gps_glitch && position_ok()) {
         gps_glitch_off_event();
     }
 }
