@@ -311,8 +311,8 @@ static bool pre_arm_checks(bool display_failure)
         } else {
             last_mag_pass_time_ms = millis();
         }
-        bool mag_consistency_passed = (last_mag_pass_time_ms != 0 && (millis() - last_mag_fail_time_ms) > 3000);
-        if (!mag_consistency_passed) {
+        mag_pass_latched = (last_mag_pass_time_ms != 0 && (millis() - last_mag_fail_time_ms) > 3000) || mag_pass_latched;
+        if (!mag_pass_latched) {
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent compasses"));
             }

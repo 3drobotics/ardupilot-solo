@@ -655,6 +655,9 @@ static uint32_t last_mag_fail_time_ms = 0;
 // last time in msec that the pre-arm compass consistency check passed
 static uint32_t last_mag_pass_time_ms = 0;
 
+// true when the pre-arm compass consistency check has passed for long enough to latch
+static bool mag_pass_latched = false;
+
 // Used to exit the roll and pitch auto trim function
 static uint8_t auto_trim_counter;
 
