@@ -704,7 +704,6 @@ private:
     bool gpsAccuracyGood;           // true when the GPS accuracy is considered to be good enough for safe flight.
     uint32_t timeAtDisarm_ms;       // time of last disarm event in msec
     uint32_t magYawResetTimer_ms;   // timer in msec used to track how long good magnetometer data is failing innovation consistency checks
-    bool consistentMagData;         // true when the magnetometers are passing consistency checks
     float hgtInnovFiltState;        // state used for fitering of the height innovations used for pre-flight checks
     uint32_t lastConstPosFuseTime_ms;   // last time in msec the constant position constraint was applied
     uint32_t lastGpsAccuracySendTime_ms;    //last sendtime of mavlink GPS_ACCURACY packet

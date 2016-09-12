@@ -4363,9 +4363,6 @@ void NavEKF::readMagData()
         // read compass data and scale to improve numerical conditioning
         magData = _ahrs->get_compass()->get_field() * 0.001f;
 
-        // check for consistent data between magnetometers
-        consistentMagData = _ahrs->get_compass()->consistent();
-
         // get states stored at time closest to measurement time after allowance for measurement delay
         RecallStates(statesAtMagMeasTime, (imuSampleTime_ms - msecMagDelay));
 
@@ -5280,12 +5277,12 @@ bool NavEKF::calcGpsGoodToAlign(void)
         gpsCheckStatus.flags.bad_hAcc = true;
     }
 
-    // If we have good magnetometer consistency and bad innovations for longer than 5 seconds then we reset heading and field states
+    // If we have bad innovations for longer than 5 seconds and are on the ground (disarmed) then reset heading and field states
     // This enables us to handle large changes to the external magnetic field environment that occur before arming
-    if ((magTestRatio.x <= 1.0f && magTestRatio.y <= 1.0f) || !consistentMagData) {
+    if (magTestRatio.x <= 1.0f && magTestRatio.y <= 1.0f) {
         magYawResetTimer_ms = imuSampleTime_ms;
     }
-    if (imuSampleTime_ms - magYawResetTimer_ms > 5000) {
+    if ((imuSampleTime_ms - magYawResetTimer_ms > 5000) && !vehicleArmed) {
         // reset heading and field states
         Vector3f eulerAngles;
         getEulerAngles(eulerAngles);
