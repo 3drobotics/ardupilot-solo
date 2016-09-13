@@ -181,7 +181,11 @@ static void failsafe_ekf_off_event(void)
         } else if (!mode_requires_RC(ekf_check_mode_before_fs_on)) {
             set_mode_RTL_or_land_with_pause();
         } else if (mode_requires_GPS(ekf_check_mode_before_fs_on)) {
-            set_mode(LOITER);
+            if (failsafe.gps_glitch) {
+                gps_glitch_switch_mode_on_resolve = true;
+            } else {
+                set_mode(LOITER);
+            }
         }
     }
 }
