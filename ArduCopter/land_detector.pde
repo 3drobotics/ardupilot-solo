@@ -52,7 +52,7 @@ static void update_land_detector()
     } else {
         // we are armed and not landed - check for landed criteria
         // check that the average throttle output is near minimum
-        bool throttle_at_lower_limit = motors.limit.throttle_lower && motors.is_throttle_mix_min();
+        bool throttle_at_lower_limit = g.rc_3.servo_out <= g.throttle_min;
 
         // check that the airframe is not accelerating (not falling or breaking after fast forward flight)
         bool accel_stationary = (land_accel_ef_filter.get().length() <= LAND_DETECTOR_ACCEL_MAX);
@@ -60,8 +60,9 @@ static void update_land_detector()
         // check that the airframe is not falling
         bool accel_not_falling = (land_accel_ef_filter.get().z <= LAND_DETECTOR_ACCEL_MAX);
 
-        // If we are in land mode and motors are at the lower limit, reduce the tilt limit to the minimum over 500msec to prevent tipover
-        if (throttle_at_lower_limit && (angle_max_dynamic > ANGLE_LIMIT_MINIMUM) && (control_mode == LAND)) {
+        // If we are in LAND or RTL mode and motors are at the lower limit, reduce the tilt limit to the minimum over 500msec to prevent tipover
+        bool mode_check =  (control_mode == LAND) || (control_mode == RTL);
+        if (throttle_at_lower_limit && (angle_max_dynamic > ANGLE_LIMIT_MINIMUM) && mode_check) {
             angle_max_dynamic -= (aparm.angle_max-ANGLE_LIMIT_MINIMUM)/(MAIN_LOOP_RATE/2);
         } else if (!throttle_at_lower_limit && (angle_max_dynamic < aparm.angle_max)) {
             angle_max_dynamic += (aparm.angle_max-ANGLE_LIMIT_MINIMUM)/(MAIN_LOOP_RATE/2);
