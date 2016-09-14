@@ -301,27 +301,38 @@ static bool pre_arm_checks(bool display_failure)
             return false;
         }
 
-        // check for unreasonable mag field length
-        float mag_field = compass.get_field().length();
-        if (mag_field > COMPASS_MAGFIELD_EXPECTED*1.65 || mag_field < COMPASS_MAGFIELD_EXPECTED*0.35) {
-            if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check mag field"));
-            }
-            return false;
-        }
-
         // Check that the different magnetometers are providing consistent data
+        // Check for unreasonable external magnetic field strength when compasses are consistent
         // Latch the check to passsed if 3 continuous seconds of pass occurs
         // This allows the user to pick up the copter to clear the failure if it is caused by a ground level magnetic anomaly
+        float mag_field = compass.get_field().length();
         if (!compass.consistent()) {
             last_mag_fail_time_ms = millis();
+        } else if (mag_field < COMPASS_MAGFIELD_EXPECTED*1.65 && mag_field > COMPASS_MAGFIELD_EXPECTED*0.35) {
+            // we have consistent compass data and a valid external field strength
+            last_field_pass_time_ms = last_mag_pass_time_ms = millis();
         } else {
-            last_mag_pass_time_ms = millis();
+            // we have an invalid external field strength which cannot be explained by a localised anomaly
+            // this could cause poor yaw accuracy and loss of position control
+            last_field_fail_time_ms = millis();
         }
+
+        // latch the compass consistency check to pass if passed for 3 continuous seconds
+        // this allows the copter to be picked up from the ground to clear the check
         mag_pass_latched = (last_mag_pass_time_ms != 0 && (millis() - last_mag_fail_time_ms) > 3000) || mag_pass_latched;
         if (!mag_pass_latched) {
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent compasses"));
+            }
+            return false;
+        }
+
+        // latch the field strength check to pass if passed for 3 continuous seconds
+        // this allows the copter to be picked up from the ground to clear the check
+        field_pass_latched = (last_field_pass_time_ms != 0 && (millis() - last_field_fail_time_ms) > 3000) || field_pass_latched;
+        if (!field_pass_latched) {
+            if (display_failure) {
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check mag field"));
             }
             return false;
         }
