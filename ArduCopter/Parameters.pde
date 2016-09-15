@@ -1096,6 +1096,15 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(autotune_aggressiveness, "AUTOTUNE_AGGR", 0.1f),
 
+    // @Param: GND_PRESS_MIN
+    // @DisplayName: ground level air pressure minimum
+    // @Description: If the ground level air pressure is lower than this value, then the copter will not arm. This is used to prevent takeoff at high elevaton locations where air density is insuffient for safe flight.
+    // @Units: Pa
+    // @Range: 50000 80000
+    // @Increment: 1000
+    // @User: Advanced
+    GSCALAR(baro_launch_limit, "GND_PRESS_MIN", 80000.0f),
+
     AP_VAREND
 };
 

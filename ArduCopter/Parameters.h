@@ -139,7 +139,8 @@ public:
         k_param_altitude_limit,         // deprecated - remove
         k_param_fence,
         k_param_gps_glitch,             // deprecated
-        k_param_baro_glitch,            // 71 - deprecated
+        k_param_baro_glitch,            // deprecated
+        k_param_baro_launch_limit,   // 72
 
         //
         // 75: Singlecopter, CoaxCopter
@@ -361,6 +362,9 @@ public:
     AP_Int16        throttle_behavior;
     AP_Int16        takeoff_trigger_dz;
     AP_Float        pilot_takeoff_alt;
+
+    // takeoff environmental limits
+    AP_Float        baro_launch_limit;      // If the barometric pressure is lower than this value, the copter will not arm - Pa
 
     // Thrust loss recovery
     //

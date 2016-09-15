@@ -252,6 +252,13 @@ static bool pre_arm_checks(bool display_failure)
             }
             return false;
         }
+        // check that we are below our launch service ceiling
+        if( barometer.get_pressure() < g.baro_launch_limit ) {
+            if (display_failure) {
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Launch ceiling exceeded"));
+            }
+            return false;
+        }
         // Check baro & inav alt are within 1m if EKF is operating in an absolute position mode.
         // Do not check if intending to operate in a ground relative height mode as EKF will output a ground relative height
         // that may differ from the baro height due to baro drift.
