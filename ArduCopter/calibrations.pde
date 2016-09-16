@@ -34,6 +34,10 @@ static void compass_cal_update() {
 
 static void accel_cal_update() {
     accelcal.update();
+    if( accelcal.get_status() == ACCEL_CAL_WAITING_FOR_ORIENTATION || accelcal.get_status() == ACCEL_CAL_COLLECTING_SAMPLE ) {
+        camera_mount.set_mode(MAV_MOUNT_MODE_NEUTRAL);
+    }
+    
     if (motors.armed() && accelcal.get_status() != ACCEL_CAL_NOT_STARTED) {
         accelcal.clear();
     }
