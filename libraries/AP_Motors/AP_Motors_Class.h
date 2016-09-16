@@ -55,8 +55,8 @@
 #define AP_MOTORS_SPIN_WHEN_ARMED   70  // spin motors at this PWM value when armed
 
 #define AP_MOTORS_YAW_HEADROOM_DEFAULT  200
-#define THRUST_LOW_CRITICAL_BLEND_TIME 1.0f  // number of seconds required to remove or restore the yaw controller headroom during a critical loss of thrust event
-#define AP_MOTORS_MIN_PWM_GAIN         0.5f  // sets the minimum pwm that will be sent to the ESC during a critical loss of thrust event as a fraction of the hover throttle
+#define AP_MOTORS_THRUST_PRIORITY_SLEW_TIME_DEFAULT 1.0f // number of seconds required to remove or restore the yaw controller headroom during a critical loss of thrust event
+#define AP_MOTORS_MIN_PWM_GAIN_DEFAULT              0.5f // sets the minimum pwm that will be sent to the ESC during a critical loss of thrust event as a fraction of the hover throttle
 
 #define AP_MOTORS_LAND_TEST_GAIN 0.5f   // gain used to reduce the max pwm when checking the 'is landed' hypothesis immediately prior to disarm
 
@@ -287,6 +287,8 @@ protected:
     AP_Float            _batt_voltage_min;      // minimum voltage used to scale lift
     AP_Float            _batt_current_max;      // current over which maximum throttle is limited
     AP_Float            _thr_mix_min;           // current over which maximum throttle is limited
+    AP_Float            _thr_pty_slew_time;     // number of seconds required to remove or restore the thrust priority during a critical loss of thrust event
+    AP_Float            _thr_pty_min_pwm_gain;  // sets the minimum pwm that will be sent to the ESC during a critical loss of thrust event as a fraction of the hover throttle
 
     // internal variables
     RC_Channel&         _rc_roll;               // roll input in from users is held in servo_out

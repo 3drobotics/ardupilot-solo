@@ -100,6 +100,20 @@ const AP_Param::GroupInfo AP_Motors::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("THR_MIX_MIN", 13, AP_Motors, _thr_mix_min, AP_MOTORS_THR_MIX_MIN_DEFAULT),
 
+    // @Param: THR_PTY_SLEW
+    // @DisplayName: Throttle Priority Slew Time
+    // @Description: Number of seconds required to remove or restore the yaw controller headroom during a critical loss of thrust event
+    // @Range: 0.5 2.0
+    // @User: Advanced
+    AP_GROUPINFO("THR_PTY_SLEW", 14, AP_Motors, _thr_pty_slew_time, AP_MOTORS_THRUST_PRIORITY_SLEW_TIME_DEFAULT),
+
+    // @Param: THR_PTY_GAIN
+    // @DisplayName: Throttle Priority Gain
+    // @Description: Sets the minimum pwm that will be sent to the ESC during a critical loss of thrust event as a fraction of the hover throttle
+    // @Range: 0.0 1.0
+    // @User: Advanced
+    AP_GROUPINFO("THR_PTY_GAIN", 15, AP_Motors, _thr_pty_min_pwm_gain, AP_MOTORS_MIN_PWM_GAIN_DEFAULT),
+
     AP_GROUPEND
 };
 

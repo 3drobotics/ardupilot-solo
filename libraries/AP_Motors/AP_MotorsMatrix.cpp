@@ -196,15 +196,15 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority, bool reduce
     // Apply the change in yaw headroom linearly over time
     if (thrust_priority && (_yaw_headroom_scaler > 0.0f)) {
         // linear ramp down with time
-        _yaw_headroom_scaler -= 1.0f / (THRUST_LOW_CRITICAL_BLEND_TIME * (float)_loop_rate);
+        _yaw_headroom_scaler -= 1.0f / (_thr_pty_slew_time * (float)_loop_rate);
     } else if (!thrust_priority && (_yaw_headroom_scaler < 1.0f)) {
         // linear ramp up with time
-        _yaw_headroom_scaler += 1.0f / (THRUST_LOW_CRITICAL_BLEND_TIME * (float)_loop_rate);
+        _yaw_headroom_scaler += 1.0f / (_thr_pty_slew_time * (float)_loop_rate);
     }
     _yaw_headroom_scaler = constrain_float(_yaw_headroom_scaler, 0.0f, 1.0f);
 
     // Use the yaw headroom scaler to lift the min pwm
-    int16_t min_pwm_lift = (int16_t)(((float)(_hover_out - _min_throttle)) * (1.0f - _yaw_headroom_scaler) * AP_MOTORS_MIN_PWM_GAIN);
+    int16_t min_pwm_lift = (int16_t)(((float)(_hover_out - _min_throttle)) * (1.0f - _yaw_headroom_scaler) * _thr_pty_min_pwm_gain);
     min_pwm_lift = min(max(min_pwm_lift,0),_hover_out);
     out_min_pwm += min_pwm_lift;
 
