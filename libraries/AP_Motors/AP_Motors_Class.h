@@ -56,6 +56,7 @@
 
 #define AP_MOTORS_YAW_HEADROOM_DEFAULT  200
 #define THRUST_LOW_CRITICAL_BLEND_TIME 1.0f  // number of seconds required to remove or restore the yaw controller headroom during a critical loss of thrust event
+#define AP_MOTORS_MIN_PWM_GAIN         0.5f  // sets the minimum pwm that will be sent to the ESC during a critical loss of thrust event as a fraction of the hover throttle
 
 #define AP_MOTORS_LAND_TEST_GAIN 0.5f   // gain used to reduce the max pwm when checking the 'is landed' hypothesis immediately prior to disarm
 
