@@ -205,7 +205,7 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority, bool reduce
 
     // Use the yaw headroom scaler to lift the min pwm
     int16_t min_pwm_lift = (int16_t)(((float)(_hover_out - _min_throttle)) * (1.0f - _yaw_headroom_scaler) * _thr_pty_min_pwm_gain);
-    min_pwm_lift = min(max(min_pwm_lift,0),_hover_out);
+    min_pwm_lift = min(max(min_pwm_lift,0),(_hover_out - _min_throttle));
     out_min_pwm += min_pwm_lift;
 
     int16_t out_mid_pwm = (out_min_pwm+out_max_pwm)/2;                  // mid pwm value we can send to the motors
