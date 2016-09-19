@@ -140,13 +140,35 @@ static void read_battery(void)
         motors.set_current(battery.current_amps());
     }
 
-    // check for low voltage or current if the low voltage check hasn't already been triggered
-    // we only check when we're not powered by USB to avoid false alarms during bench tests
-    float fs_dist_ofs = 0.0f;
+    // calculate energy required in mAh to perform an RTL from vehicle's current position
+    float fs_dist_ofs = 0.0f;  // units in mAh
     if (g.fs_batt_curr_rtl != 0.0f && ap.home_state != HOME_UNSET && position_ok()) {
-        fs_dist_ofs = (home_distance) * (g.fs_batt_curr_rtl*1000.0f) / (3600*g.rtl_speed_cms);
+        // calculate mAh required to:
+        // 1. rise to RTL_ALT at WPNAV_SPEED_UP (cm/s) (if necessary)
+        // 2. fly home at RTL_SPEED (cm/s)
+        // 3. descend from RTL_ALT or current altitude at WPNAV_SPEED_DN (cm/s).
+        // Conversions: 1000 milliamps per amp & 3600 seconds per hour
+        // home_distance is in cm
+        // fs_batt_curr_rtl is in amps
+        // rtl_altitude is in cm
+
+        float current_alt_cm = inertial_nav.get_altitude();
+
+        // calculate mAh required to rise
+        float fs_rise_ofs = (g.rtl_altitude - min(current_alt_cm, g.rtl_altitude)) * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_up());
+
+        // calculate mAh required to fly home
+        float fs_home_ofs = (home_distance) * (g.fs_batt_curr_rtl*1000.0f) / (3600*g.rtl_speed_cms);
+
+        // calculate mAh required to descend
+        float fs_land_ofs = max(current_alt_cm, g.rtl_altitude) * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_down());
+
+        // sum up required mAh fs
+        fs_dist_ofs = fs_rise_ofs + fs_home_ofs + fs_land_ofs;
     }
 
+    // check for low voltage or current if the low voltage check hasn't already been triggered
+    // we only check when we're not powered by USB to avoid false alarms during bench tests
     if (!ap.usb_connected && !failsafe.battery && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah + fs_dist_ofs)) {
         failsafe_battery_event();
     }
