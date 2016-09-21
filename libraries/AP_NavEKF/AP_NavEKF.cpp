@@ -4529,6 +4529,12 @@ Quaternion NavEKF::calcQuatAndFieldStates(float roll, float pitch)
         yawAligned = false;
     }
 
+    if (!vehicleArmed) {
+        // The flags indicating that the in-air alignment has been completed need to be cleared
+        // because this alignment is on-ground and the yaw and field values could be incorrect.
+        secondMagYawInit = firstMagYawInit = false;
+    }
+
     // return attitude quaternion
     return initQuat;
 }
