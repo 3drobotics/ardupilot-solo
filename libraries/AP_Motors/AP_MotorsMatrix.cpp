@@ -203,6 +203,10 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority, bool reduce
     }
     _yaw_headroom_scaler = constrain_float(_yaw_headroom_scaler, 0.0f, 1.0f);
 
+    // calculate an input gain that will be applied to roll and pitch demands
+    // this will be reduced during thrust priority operation
+    float rp_input_gain = _roll_pitch_gain + (1.0f - _roll_pitch_gain) * _yaw_headroom_scaler;
+
     // Use the yaw headroom scaler to lift the min pwm
     int16_t min_pwm_lift = (int16_t)(((float)(_hover_out - _min_throttle)) * (1.0f - _yaw_headroom_scaler) * _thr_pty_min_pwm_gain);
     min_pwm_lift = min(max(min_pwm_lift,0),(_hover_out - _min_throttle));
@@ -247,8 +251,8 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority, bool reduce
     // set rpy_low and rpy_high to the lowest and highest values of the motors
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
-            rpy_out[i] = _rc_roll.pwm_out * _roll_factor[i] * get_compensation_gain() +
-                            _rc_pitch.pwm_out * _pitch_factor[i] * get_compensation_gain();
+            rpy_out[i] = _rc_roll.pwm_out * _roll_factor[i] * get_compensation_gain() * rp_input_gain +
+                            _rc_pitch.pwm_out * _pitch_factor[i] * get_compensation_gain() * rp_input_gain;
 
             // record lowest roll pitch command
             if (rpy_out[i] < rpy_low) {

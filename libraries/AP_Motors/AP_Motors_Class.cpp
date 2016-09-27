@@ -114,6 +114,13 @@ const AP_Param::GroupInfo AP_Motors::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("THR_PTY_GAIN", 15, AP_Motors, _thr_pty_min_pwm_gain, AP_MOTORS_MIN_PWM_GAIN_DEFAULT),
 
+    // @Param: RP_GAIN
+    // @DisplayName: Roll Pitch Height Loss Event Gain
+    // @Description: Sets the minimum input gain that will be applied to roll and pitch demands during a critical loss of thrust event.
+    // @Range: 0.25 1.0
+    // @User: Advanced
+    AP_GROUPINFO("RP_GAIN", 16, AP_Motors, _roll_pitch_gain, AP_MOTORS_MIN_RP_GAIN_DEFAULT),
+
     AP_GROUPEND
 };
 
