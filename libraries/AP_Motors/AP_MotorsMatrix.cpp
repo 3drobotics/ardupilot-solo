@@ -375,12 +375,12 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority, bool reduce
     // apply thrust curve and voltage scaling
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
-            motor_out[i] = apply_thrust_curve_and_volt_scaling(motor_out[i], out_min_pwm, out_max_pwm);
+            motor_out[i] = apply_thrust_curve_and_volt_scaling(motor_out[i], (out_min_pwm-min_pwm_lift), out_max_pwm);
         }
     }
 
     // apply thrust curve to out_max_pwm for constraint
-    out_max_pwm = apply_thrust_curve_and_volt_scaling(out_max_pwm, out_min_pwm, out_max_pwm);
+    out_max_pwm = apply_thrust_curve_and_volt_scaling(out_max_pwm, (out_min_pwm-min_pwm_lift), out_max_pwm);
 
     // clip motor output if required (shouldn't be unless we're doing a recovery)
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
