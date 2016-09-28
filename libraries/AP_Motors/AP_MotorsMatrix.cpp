@@ -203,9 +203,17 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority, bool reduce
     }
     _yaw_headroom_scaler = constrain_float(_yaw_headroom_scaler, 0.0f, 1.0f);
 
-    // calculate an input gain that will be applied to roll and pitch demands
-    // this will be reduced during thrust priority operation
-    float rp_input_gain = _roll_pitch_gain + (1.0f - _roll_pitch_gain) * _yaw_headroom_scaler;
+    // If thrust is prioritised and diagonal motor pairs are detected to be limit cycling
+    // reduce the gain in the roll and pitch channels
+    if (thrust_priority && (_pair_12_limit_cycle || _pair_34_limit_cycle) && (_rp_gain_scaler > 0.0f)) {
+        // linear ramp down with time
+        _rp_gain_scaler -= 1.0f / (_thr_pty_slew_time * (float)_loop_rate);
+    } else if (_rp_gain_scaler < 1.0f) {
+        // linear ramp up with time
+        _rp_gain_scaler += 1.0f / (_thr_pty_slew_time * (float)_loop_rate);
+    }
+    _rp_gain_scaler = constrain_float(_rp_gain_scaler, 0.0f, 1.0f);
+    float rp_input_gain = _roll_pitch_gain + (1.0f - _roll_pitch_gain) * _rp_gain_scaler;
 
     // Use the yaw headroom scaler to lift the min pwm
     int16_t min_pwm_lift = (int16_t)(((float)(_hover_out - _min_throttle)) * (1.0f - _yaw_headroom_scaler) * _thr_pty_min_pwm_gain);
@@ -372,6 +380,9 @@ void AP_MotorsMatrix::output_armed_stabilizing(bool thrust_priority, bool reduce
         }
     }
 
+    // check for limit cycling casuing alternate saturation on diagonal motor pairs
+    limit_cycle_check(motor_out, out_min_pwm, out_max_pwm);
+
     // apply thrust curve and voltage scaling
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
@@ -507,4 +518,41 @@ void AP_MotorsMatrix::remove_all_motors()
     for( int8_t i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++ ) {
         remove_motor(i);
     }
+}
+
+// test for limit cycling saturating diagonal motor pairs
+void AP_MotorsMatrix::limit_cycle_check(int16_t motor_out[AP_MOTORS_MAX_NUM_MOTORS], int16_t out_min_pwm, int16_t out_max_pwm)
+{
+    // detect limit cycling of motor 3/4 or 1/2 pair
+    int16_t pwm_test_margin = 50;
+    bool motor_1_low = motor_out[0] <= (out_min_pwm+pwm_test_margin);
+    bool motor_2_low = motor_out[1] <= (out_min_pwm+pwm_test_margin);
+    bool motor_3_low = motor_out[2] <= (out_min_pwm+pwm_test_margin);
+    bool motor_4_low = motor_out[3] <= (out_min_pwm+pwm_test_margin);
+
+    bool motor_1_high = motor_out[0] >= (out_max_pwm-pwm_test_margin);
+    bool motor_2_high = motor_out[1] >= (out_max_pwm-pwm_test_margin);
+    bool motor_3_high = motor_out[2] >= (out_max_pwm-pwm_test_margin);
+    bool motor_4_high = motor_out[3] >= (out_max_pwm-pwm_test_margin);
+
+    int32_t now_time_ms = hal.scheduler->millis();
+    if (motor_1_low && motor_2_high) {
+        _pair_12_event_ms = now_time_ms;
+    }
+
+    if (motor_2_low && motor_1_high) {
+        _pair_21_event_ms = now_time_ms;
+    }
+
+    if (motor_3_low && motor_4_high) {
+        _pair_34_event_ms = now_time_ms;
+    }
+
+    if (motor_4_low && motor_3_high) {
+        _pair_43_event_ms = now_time_ms;
+    }
+
+    _pair_12_limit_cycle = (abs(_pair_12_event_ms - _pair_21_event_ms) < 500) && (now_time_ms - _pair_12_event_ms < 2000) && (now_time_ms - _pair_21_event_ms < 2000);
+    _pair_34_limit_cycle = (abs(_pair_34_event_ms - _pair_43_event_ms) < 500) && (now_time_ms - _pair_34_event_ms < 2000) && (now_time_ms - _pair_43_event_ms < 2000);
+
 }

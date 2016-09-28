@@ -82,6 +82,20 @@ protected:
     uint8_t             _test_order[AP_MOTORS_MAX_NUM_MOTORS];  // order of the motors in the test sequence
 
     int16_t             _max_motor_out[AP_MOTORS_MAX_NUM_MOTORS];
+
+    // limits cycle checks
+    void limit_cycle_check(int16_t motor_out[AP_MOTORS_MAX_NUM_MOTORS], int16_t out_min_pwm, int16_t out_max_pwm);
+
+    int32_t _pair_12_event_ms = 0; //last recorded time motor 1 was low and motor 2 was high
+    int32_t _pair_21_event_ms = 0; //last recorded time motor 2 was low and motor 1 was high
+    int32_t _pair_34_event_ms = 0; //last recorded time motor 3 was low and motor 4 was high
+    int32_t _pair_43_event_ms = 0; //last recorded time motor 4 was low and motor 3 was high
+
+    bool _pair_12_limit_cycle = false; // true when the 1/2 motor pair are limit cycling
+    bool _pair_34_limit_cycle = false; // true when the 3/4 motor pair are limit cycling
+
+    float _rp_gain_scaler; // scaler between 0.0 and 1.0 that is ued to reduce roll/pitch gain to recover from limit cycle
+
 };
 
 #endif  // AP_MOTORSMATRIX
