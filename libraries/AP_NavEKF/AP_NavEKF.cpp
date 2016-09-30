@@ -431,6 +431,13 @@ const AP_Param::GroupInfo NavEKF::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("GPS_LIM_HSPD", 40, NavEKF, _gpsHorizSpdLim, 0.3f),
 
+    // @Param: GYR_SELECT
+    // @DisplayName: Source of rate gyro data
+    // @Description: This parameter controls which IMU's are used for angular rate data. A value of will 0 cause it to use a blend of IMU1 and IMU2. A value of 1 will casue it to use IMU1 only. a value of 2 will cause it to use IMU2 only.
+    // @Values: 0:Use both, 1:Use IMU1, 2:Use IMU2
+    // @User: Advanced
+    AP_GROUPINFO("GYR_SELECT",    41, NavEKF, _gyroSelect, 0),
+
     AP_GROUPEND
 };
 AP_Float _gpsHorizSpdLim;       // Maximum measured GPS horizontal speed allowed during pre-flight checks (m/s)
@@ -4170,17 +4177,30 @@ void NavEKF::readIMUData()
     // the imu sample time is used as a common time reference throughout the filter
     imuSampleTime_ms = hal.scheduler->millis();
 
-    if (ins.get_accel_health(0) && ins.get_accel_health(1)) {
-        // dual accel mode
+    if (ins.get_accel_health(0) && ins.get_accel_health(1) && (_gyroSelect != 1) && (_gyroSelect != 2)) {
+        // use both IMU1 and IMU2 if healthy
         readDeltaVelocity(0, dVelIMU1, dtDelVel1);
         readDeltaVelocity(1, dVelIMU2, dtDelVel2);
-    } else {
-        // single accel mode - one of the first two accelerometers are unhealthy
-        // read primary accelerometer into dVelIMU1 and copy to dVelIMU2
-        readDeltaVelocity(ins.get_primary_accel(), dVelIMU1, dtDelVel1);
 
+    } else if (ins.get_accel_health(0) && (_gyroSelect == 1)) {
+        // use IMU1 if healthy
+        readDeltaVelocity(0, dVelIMU1, dtDelVel1);
         dtDelVel2 = dtDelVel1;
         dVelIMU2 = dVelIMU1;
+
+    } else if (ins.get_accel_health(1) && (_gyroSelect == 2)) {
+        // use IMU2 if healthy
+        readDeltaVelocity(1, dVelIMU1, dtDelVel1);
+        dtDelVel2 = dtDelVel1;
+        dVelIMU2 = dVelIMU1;
+
+    } else {
+        // single accel mode - a selected accelerometer is unhealthy
+        // read primary accelerometer into dVelIMU1 and copy to dVelIMU2
+        readDeltaVelocity(ins.get_primary_accel(), dVelIMU1, dtDelVel1);
+        dtDelVel2 = dtDelVel1;
+        dVelIMU2 = dVelIMU1;
+
     }
 
     if (ins.get_gyro_health(0) && ins.get_gyro_health(1)) {

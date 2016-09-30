@@ -524,6 +524,7 @@ private:
     AP_Float _gpsPosDriftLim;       // Maximum measured GPS horizontal position drift rate allowed during pre-flight checks (m/s)
     AP_Float _gpsVertSpdLim;        // Maximum measured GPS vertical speed allowed during pre-flight checks (m/s)
     AP_Float _gpsHorizSpdLim;       // Maximum measured GPS horizontal speed allowed during pre-flight checks (m/s)
+    AP_Int8 _gyroSelect;            // Selects the IMU gyros used. 0 = use blend of IMU1 and IMU2, 1 = force use IMU1, 2 = force use IMU2
 
     // Tuning parameters
     const float gpsNEVelVarAccScale;    // Scale factor applied to NE velocity measurement variance due to manoeuvre acceleration
