@@ -265,6 +265,9 @@ static void auto_land_start(const Vector3f& destination)
 {
     auto_mode = Auto_Land;
 
+    // Setup land controller
+    land_init(false);
+
     // initialise loiter target destination
     wp_nav.init_loiter_target(destination);
 
