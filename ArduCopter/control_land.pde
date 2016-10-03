@@ -228,8 +228,9 @@ static float get_land_descent_speed()
     if (pos_control.get_pos_target().z >= pv_alt_above_origin(LAND_START_ALT) && !(sonar_ok && sonar_alt_health >= SONAR_ALT_HEALTH_MAX)) {
         // if we are within the land ramp profile
         if (land_ramp && pos_control.get_pos_target().z <= land_ramp_xi){
-            return -fabsf(land_ramp_vi + (land_ramp_vf-land_ramp_vi)*(pos_control.get_pos_target().z-land_ramp_xi)/(land_ramp_xf-land_ramp_xi));
+            return -constrain_float(fabsf(land_ramp_vi + (land_ramp_vf-land_ramp_vi)*(pos_control.get_pos_target().z-land_ramp_xi)/(land_ramp_xf-land_ramp_xi)), land_ramp_vf, land_ramp_vi);
         }else{
+            // note: returns a negative value
             return pos_control.get_speed_down();
         }
     // if we're below LAND_START_ALT, use land_speed
