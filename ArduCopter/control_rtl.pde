@@ -303,6 +303,9 @@ static void rtl_land_start()
     rtl_state = Land;
     rtl_state_complete = false;
 
+    // Setup land controller
+    land_init(false);
+
     // Set wp navigation target to above home
     wp_nav.init_loiter_target(wp_nav.get_wp_destination());
 
