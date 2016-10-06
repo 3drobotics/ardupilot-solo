@@ -500,6 +500,10 @@ static bool pre_arm_checks(bool display_failure)
 #endif
     }
 
+    if (display_failure) {
+        gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: OK"));
+    }
+
     return true;
 }
 
@@ -723,6 +727,9 @@ static bool arm_checks(bool display_failure, bool arming_from_gcs)
     }
 
     // if we've gotten this far all is ok
+    if (display_failure) {
+        gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: OK"));
+    }
     return true;
 }
 
