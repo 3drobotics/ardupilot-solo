@@ -32,7 +32,9 @@ static void gps_glitch_off_event() {
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_GPS, ERROR_CODE_FAILSAFE_RESOLVED);
 
     if (gps_glitch_switch_mode_on_resolve) {
-        set_mode(LOITER);
+        if (!failsafe.battery) {
+            set_mode(LOITER);
+        }
         gps_glitch_switch_mode_on_resolve = false;
     }
 }
