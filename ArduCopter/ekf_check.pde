@@ -182,7 +182,9 @@ static void failsafe_ekf_off_event(void)
             if (failsafe.gps_glitch) {
                 gps_glitch_switch_mode_on_resolve = true;
             } else {
-                set_mode(LOITER);
+                if (!failsafe.battery) {
+                    set_mode(LOITER);
+                }
             }
         }
     }
