@@ -126,8 +126,12 @@ void AP_AccelCal::update()
 
 void AP_AccelCal::start(GCS_MAVLINK *gcs)
 {
-    if (gcs == NULL || _started) {
+    if (gcs == NULL) {
         return;
+    }
+
+    if (_started) {
+        clear();
     }
 
     _num_calibrators = 0;
