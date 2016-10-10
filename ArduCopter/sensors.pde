@@ -155,7 +155,7 @@ static void read_battery(void)
         float current_alt_cm = inertial_nav.get_altitude();
 
         // calculate mAh required to rise
-        float fs_rise_ofs = (g.rtl_altitude - min(current_alt_cm, g.rtl_altitude)) * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_up());
+        float fs_rise_ofs = (max(current_alt_cm + max(0, g.rtl_climb_min), max(g.rtl_altitude, RTL_ALT_MIN)) - current_alt_cm) * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_up());
 
         // calculate mAh required to fly home
         float fs_home_ofs = (home_distance) * (g.fs_batt_curr_rtl*1000.0f) / (3600*g.rtl_speed_cms);
@@ -169,7 +169,7 @@ static void read_battery(void)
 
     // check for low voltage or current if the low voltage check hasn't already been triggered
     // we only check when we're not powered by USB to avoid false alarms during bench tests
-    if (!ap.usb_connected && !failsafe.battery && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah + fs_dist_ofs)) {
+    if (!ap.usb_connected && !failsafe.battery && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah + fabsf(fs_dist_ofs))) {
         failsafe_battery_event();
     }
 
