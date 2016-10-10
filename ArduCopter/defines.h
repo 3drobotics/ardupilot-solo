@@ -234,7 +234,7 @@ enum FlipState {
 #define LOG_OPTFLOW_MSG                 0x0C
 #define LOG_EVENT_MSG                   0x0D
 #define LOG_HEIGHT_RECOVERY_MSG         0x0E
-#define LOG_INAV_MSG                    0x11    // deprecated
+#define LOG_FAILSAFE_MSG                0x11
 #define LOG_CAMERA_MSG_DEPRECATED       0x12    // deprecated
 #define LOG_ERROR_MSG                   0x13
 #define LOG_DATA_INT16_MSG              0x14
@@ -263,7 +263,7 @@ enum FlipState {
 #define MASK_LOG_OPTFLOW                (1<<11)
 #define MASK_LOG_HEIGHT_RECOVERY        (1<<12)
 #define MASK_LOG_COMPASS                (1<<13)
-#define MASK_LOG_INAV                   (1<<14) // deprecated
+#define MASK_LOG_FAILSAFE               (1<<14)
 #define MASK_LOG_CAMERA                 (1<<15)
 #define MASK_LOG_WHEN_DISARMED          (1UL<<16)
 #define MASK_LOG_MOTBATT                (1UL<<17)

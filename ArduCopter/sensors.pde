@@ -167,6 +167,9 @@ static void read_battery(void)
 
         // sum up required mAh fs
         fs_dist_ofs = fs_rise_ofs + fs_home_ofs + fs_land_ofs;
+
+        // log offsets
+        Log_Write_Failsafe(fs_dist_ofs, fs_rise_ofs, fs_home_ofs, fs_land_ofs);
     }
 
     // check for low voltage or current if the low voltage check hasn't already been triggered

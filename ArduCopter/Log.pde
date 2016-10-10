@@ -509,6 +509,29 @@ static void Log_Write_Height_Recovery()
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+struct PACKED log_Failsafe {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    float fs_dist_ofs;
+    float fs_rise_ofs;
+    float fs_home_ofs;
+    float fs_land_ofs;
+};
+
+// Write a failsafe packet
+static void Log_Write_Failsafe(float fs_dist_ofs, float fs_rise_ofs, float fs_home_ofs, float fs_land_ofs)
+{
+    struct log_Failsafe fs_pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_FAILSAFE_MSG),
+        time_ms              : hal.scheduler->millis(),
+        fs_dist_ofs          : fs_dist_ofs,
+        fs_rise_ofs          : fs_rise_ofs,
+        fs_home_ofs          : fs_home_ofs,
+        fs_land_ofs          : fs_land_ofs
+    };
+    DataFlash.WriteBlock(&fs_pkt, sizeof(fs_pkt));
+}
+
 struct PACKED log_Data_Int16t {
     LOG_PACKET_HEADER;
     uint8_t id;
@@ -726,6 +749,8 @@ static void Log_Write_Land_Detector()
       "EV",   "B",           "Id" },
     { LOG_HEIGHT_RECOVERY_MSG, sizeof(log_Height_Recovery),
       "HLE", "IBHB", "TimeMS,status,spd_lim,yaw_scaler" },
+    { LOG_FAILSAFE_MSG, sizeof(log_Failsafe),
+      "FS", "Iffff", "TimeMS,fs_dist_ofs,fs_rise_ofs,fs_home_ofs,fs_land_ofs" },
     { LOG_DATA_INT16_MSG, sizeof(log_Data_Int16t),
       "D16",   "Bh",         "Id,Value" },
     { LOG_DATA_UINT16_MSG, sizeof(log_Data_UInt16t),         
@@ -795,6 +820,7 @@ static void Log_Write_Optflow() {}
 static void Log_Write_Nav_Tuning() {}
 static void Log_Write_Control_Tuning() {}
 static void Log_Write_Height_Recovery() {}
+static void Log_Write_Failsafe(float fs_dist_ofs, float fs_rise_ofs, float fs_home_fs, float fs_land_ofs) {}
 static void Log_Write_Performance() {}
 static void Log_Write_Cmd(const AP_Mission::Mission_Command &cmd) {}
 static void Log_Write_Error(uint8_t sub_system, uint8_t error_code) {}
