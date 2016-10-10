@@ -154,14 +154,16 @@ static void read_battery(void)
 
         float current_alt_cm = inertial_nav.get_altitude();
 
+        float current_rtl_alt_cm = max(current_alt_cm + max(0, g.rtl_climb_min), max(g.rtl_altitude, RTL_ALT_MIN));
+
         // calculate mAh required to rise
-        float fs_rise_ofs = (max(current_alt_cm + max(0, g.rtl_climb_min), max(g.rtl_altitude, RTL_ALT_MIN)) - current_alt_cm) * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_up());
+        float fs_rise_ofs = (current_rtl_alt_cm - current_alt_cm) * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_up());
 
         // calculate mAh required to fly home
         float fs_home_ofs = (home_distance) * (g.fs_batt_curr_rtl*1000.0f) / (3600*g.rtl_speed_cms);
 
         // calculate mAh required to descend
-        float fs_land_ofs = max(current_alt_cm, g.rtl_altitude) * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_down());
+        float fs_land_ofs = current_rtl_alt_cm * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_down());
 
         // sum up required mAh fs
         fs_dist_ofs = fs_rise_ofs + fs_home_ofs + fs_land_ofs;
