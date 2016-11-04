@@ -162,14 +162,17 @@ static void read_battery(void)
         // calculate mAh required to fly home
         float fs_home_ofs = (home_distance) * (g.fs_batt_curr_rtl*1000.0f) / (3600*g.rtl_speed_cms);
 
-        // calculate mAh required to descend
-        float fs_land_ofs = current_rtl_alt_cm * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_down());
+        // calculate mAh required to descend to LAND_START_ALT
+        float fs_land_init_ofs = (current_rtl_alt_cm - LAND_START_ALT) * (g.fs_batt_curr_rtl*1000.0f) / (3600*wp_nav.get_speed_down());
+
+        // calculate mAh required to descend from LAND_START_ALT to ground
+        float fs_land_final_ofs = LAND_START_ALT * (g.fs_batt_curr_rtl*1000.0f) / (3600*g.land_speed);
 
         // sum up required mAh fs
-        fs_dist_ofs = fs_rise_ofs + fs_home_ofs + fs_land_ofs;
+        fs_dist_ofs = fs_rise_ofs + fs_home_ofs + fs_land_init_ofs + fs_land_final_ofs;
 
         // log offsets
-        Log_Write_Failsafe(fs_dist_ofs, fs_rise_ofs, fs_home_ofs, fs_land_ofs);
+        Log_Write_Failsafe(fs_dist_ofs, fs_rise_ofs, fs_home_ofs, fs_land_init_ofs, fs_land_final_ofs);
     }
 
     // check for low voltage or current if the low voltage check hasn't already been triggered

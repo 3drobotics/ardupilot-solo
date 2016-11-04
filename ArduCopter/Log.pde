@@ -512,22 +512,24 @@ static void Log_Write_Height_Recovery()
 struct PACKED log_Failsafe {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
-    float fs_dist_ofs;
-    float fs_rise_ofs;
-    float fs_home_ofs;
-    float fs_land_ofs;
+    float fs_dist;
+    float fs_rise;
+    float fs_home;
+    float fs_land_i;
+    float fs_land_f;
 };
 
 // Write a failsafe packet
-static void Log_Write_Failsafe(float fs_dist_ofs, float fs_rise_ofs, float fs_home_ofs, float fs_land_ofs)
+static void Log_Write_Failsafe(float fs_dist_ofs, float fs_rise_ofs, float fs_home_ofs, float fs_land_init_ofs, float fs_land_final_ofs)
 {
     struct log_Failsafe fs_pkt = {
         LOG_PACKET_HEADER_INIT(LOG_FAILSAFE_MSG),
         time_ms              : hal.scheduler->millis(),
-        fs_dist_ofs          : fs_dist_ofs,
-        fs_rise_ofs          : fs_rise_ofs,
-        fs_home_ofs          : fs_home_ofs,
-        fs_land_ofs          : fs_land_ofs
+        fs_dist              : fs_dist_ofs,
+        fs_rise              : fs_rise_ofs,
+        fs_home              : fs_home_ofs,
+        fs_land_i            : fs_land_init_ofs,
+        fs_land_f            : fs_land_final_ofs
     };
     DataFlash.WriteBlock(&fs_pkt, sizeof(fs_pkt));
 }
@@ -750,7 +752,7 @@ static void Log_Write_Land_Detector()
     { LOG_HEIGHT_RECOVERY_MSG, sizeof(log_Height_Recovery),
       "HLE", "IBHB", "TimeMS,status,spd_lim,yaw_scaler" },
     { LOG_FAILSAFE_MSG, sizeof(log_Failsafe),
-      "FS", "Iffff", "TimeMS,fs_dist_ofs,fs_rise_ofs,fs_home_ofs,fs_land_ofs" },
+      "FS", "Ifffff", "TimeMS,fs_dist,fs_rise,fs_home,fs_land_i,fs_land_f" },
     { LOG_DATA_INT16_MSG, sizeof(log_Data_Int16t),
       "D16",   "Bh",         "Id,Value" },
     { LOG_DATA_UINT16_MSG, sizeof(log_Data_UInt16t),         
@@ -820,7 +822,7 @@ static void Log_Write_Optflow() {}
 static void Log_Write_Nav_Tuning() {}
 static void Log_Write_Control_Tuning() {}
 static void Log_Write_Height_Recovery() {}
-static void Log_Write_Failsafe(float fs_dist_ofs, float fs_rise_ofs, float fs_home_fs, float fs_land_ofs) {}
+static void Log_Write_Failsafe(float fs_dist_ofs, float fs_rise_ofs, float fs_home_fs, float fs_land_init_ofs, float fs_land_final_ofs) {}
 static void Log_Write_Performance() {}
 static void Log_Write_Cmd(const AP_Mission::Mission_Command &cmd) {}
 static void Log_Write_Error(uint8_t sub_system, uint8_t error_code) {}
