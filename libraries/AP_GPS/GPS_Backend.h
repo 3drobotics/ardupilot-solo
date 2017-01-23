@@ -37,7 +37,7 @@ public:
     // valid packet from the GPS.
     virtual bool read() = 0;
 
-    virtual void inject_data(uint8_t *data, uint8_t len) { return; }
+    virtual void inject_data(const uint8_t *data, uint16_t len) { return; }
 
 #if GPS_RTK_AVAILABLE
     // Highest status supported by this GPS. 
@@ -52,6 +52,8 @@ public:
 #endif
 
 #endif
+
+    virtual void handle_msg(const mavlink_message_t *msg) { return ; }
 
 protected:
     AP_HAL::UARTDriver *port;           ///< UART we are attached to

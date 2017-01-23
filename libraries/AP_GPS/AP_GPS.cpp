@@ -405,6 +405,25 @@ AP_GPS::update(void)
 }
 
 /*
+  pass along a mavlink message (for MAV type)
+ */
+void
+AP_GPS::handle_msg(const mavlink_message_t *msg)
+{
+    if (msg->msgid == MAVLINK_MSG_ID_GPS_RTCM_DATA) {
+        // pass data to de-fragmenter
+        handle_gps_rtcm_data(msg);
+        return;
+    }
+    uint8_t i;
+    for (i=0; i<num_instances; i++) {
+        if ((drivers[i] != nullptr) && (_type[i] != GPS_TYPE_NONE)) {
+            drivers[i]->handle_msg(msg);
+        }
+    }
+}
+
+/*
   set HIL (hardware in the loop) status for a GPS instance
  */
 void 
@@ -459,9 +478,6 @@ AP_GPS::lock_port(uint8_t instance, bool lock)
 void 
 AP_GPS::inject_data(uint8_t *data, uint8_t len)
 {
-
-#if GPS_MAX_INSTANCES > 1
-
     //Support broadcasting to all GPSes.
     if (_inject_to == 127) {
         for (uint8_t i=0; i<GPS_MAX_INSTANCES; i++) {
@@ -470,18 +486,14 @@ AP_GPS::inject_data(uint8_t *data, uint8_t len)
     } else {
         inject_data(_inject_to, data, len);
     }
-
-#else
-    inject_data(0,data,len);
-#endif
-
 }
 
 void 
 AP_GPS::inject_data(uint8_t instance, uint8_t *data, uint8_t len)
 {
-    if (instance < GPS_MAX_INSTANCES && drivers[instance] != NULL)
+    if (instance < GPS_MAX_INSTANCES && drivers[instance] != NULL){
         drivers[instance]->inject_data(data, len);
+	}	
 }  
 
 void 
@@ -568,3 +580,87 @@ AP_GPS::send_mavlink_gps2_rtk(mavlink_channel_t chan)
 }
 #endif
 #endif
+
+/* 
+   re-assemble GPS_RTCM_DATA message
+ */
+void AP_GPS::handle_gps_rtcm_data(const mavlink_message_t *msg)
+{
+    mavlink_gps_rtcm_data_t packet;
+    mavlink_msg_gps_rtcm_data_decode(msg, &packet);
+
+    if (packet.len > MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN) {
+        // invalid packet
+        return;
+    }
+    
+    if ((packet.flags & 1) == 0) {
+        // it is not fragmented, pass direct
+        inject_data_all(packet.data, packet.len);
+        return;
+    }
+
+    // see if we need to allocate re-assembly buffer
+    if (rtcm_buffer == nullptr) {
+        rtcm_buffer = (struct rtcm_buffer *)calloc(1, sizeof(*rtcm_buffer));
+        if (rtcm_buffer == nullptr) {
+            // nothing to do but discard the data
+            return;
+        }
+    }
+
+    uint8_t fragment = (packet.flags >> 1U) & 0x03;
+    uint8_t sequence = (packet.flags >> 3U) & 0x1F;
+
+    // see if this fragment is consistent with existing fragments
+    if (rtcm_buffer->fragments_received &&
+        (rtcm_buffer->sequence != sequence ||
+         rtcm_buffer->fragments_received & (1U<<fragment))) {
+        // we have one or more partial fragments already received
+        // which conflict with the new fragment, discard previous fragments
+        memset(rtcm_buffer, 0, sizeof(*rtcm_buffer));
+    }
+
+    // add this fragment
+    rtcm_buffer->sequence = sequence;
+    rtcm_buffer->fragments_received |= (1U << fragment);
+
+    // copy the data
+    memcpy(&rtcm_buffer->buffer[MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN*(uint16_t)fragment], packet.data, packet.len);
+
+    // when we get a fragment of less than max size then we know the
+    // number of fragments. Note that this means if you want to send a
+    // block of RTCM data of an exact multiple of the buffer size you
+    // need to send a final packet of zero length
+    if (packet.len < MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN) {
+        rtcm_buffer->fragment_count = fragment+1;
+        rtcm_buffer->total_length = (MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN*fragment) + packet.len;
+    } else if (rtcm_buffer->fragments_received == 0x0F) {
+        // special case of 4 full fragments
+        rtcm_buffer->fragment_count = 4;
+        rtcm_buffer->total_length = MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN*4;
+    }
+
+
+    // see if we have all fragments
+    if (rtcm_buffer->fragment_count != 0 &&
+        rtcm_buffer->fragments_received == (1U << rtcm_buffer->fragment_count) - 1) {
+        // we have them all, inject
+        inject_data_all(rtcm_buffer->buffer, rtcm_buffer->total_length);
+        memset(rtcm_buffer, 0, sizeof(*rtcm_buffer));
+    }
+}
+
+/*
+  inject data into all backends
+*/
+void AP_GPS::inject_data_all(const uint8_t *data, uint16_t len)
+{
+    uint8_t i;
+    for (i=0; i<num_instances; i++) {
+        if ((drivers[i] != nullptr) && (_type[i] != GPS_TYPE_NONE)) {
+            drivers[i]->inject_data(data, len);
+        }
+    }
+    
+}

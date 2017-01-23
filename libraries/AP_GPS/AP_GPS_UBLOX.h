@@ -37,7 +37,7 @@
  * modules are configured with all ubx binary messages off, which
  * would mean we would never detect it.
  */
-#define UBLOX_SET_BINARY "\265\142\006\001\003\000\001\006\001\022\117$PUBX,41,1,0003,0001,38400,0*26\r\n"
+#define UBLOX_SET_BINARY "\265\142\006\001\003\000\001\006\001\022\117$PUBX,41,1,0023,0001,38400,0*24\r\n"
 
 //Configuration Sub-Sections
 #define SAVE_CFG_IO     (1<<0)
@@ -59,6 +59,8 @@ public:
 
     static bool _detect(struct UBLOX_detect_state &state, uint8_t data);
 
+	void inject_data(const uint8_t *data, uint16_t len) override;
+	
 private:
     // u-blox UBX protocol essentials
     struct PACKED ubx_header {
@@ -279,7 +281,8 @@ private:
         FIX_TIME = 5
     };
     enum ubx_nav_status_bits {
-        NAV_STATUS_FIX_VALID = 1
+        NAV_STATUS_FIX_VALID = 1,
+        NAV_STATUS_DGPS_USED = 2
     };
     enum ubx_hardware_version {
         ANTARIS = 0,
