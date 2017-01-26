@@ -52,7 +52,7 @@ const ToneAlarm_PX4::Tone ToneAlarm_PX4::_tones[] {
     #define AP_NOTIFY_PX4_TONE_QUIET_READY_OR_FINISHED 7
     { "MFMLT200L32O3cdef#gf#P32g>c<P64g>c", false },
     #define AP_NOTIFY_PX4_TONE_LOUD_ATTENTION_NEEDED 8
-    { "MFT100L4>B#B#B#B#", false },
+    { "MFT100L4>A#A#A#A#", false },
     #define AP_NOTIFY_PX4_TONE_QUIET_ARMING_WARNING 9
     { "MFMLT220L128O1cc#dd#eff#gg#aa#b>cc#dd#eff#gcc#dd#eff#gg#aa#b>cc#dd#eff#gcc#dd#eff#gcc#dd#eff#gg#aa#bP8L32<cg>cg>c", false },
     #define AP_NOTIFY_PX4_TONE_QUIET_DISARMED 10
@@ -62,9 +62,9 @@ const ToneAlarm_PX4::Tone ToneAlarm_PX4::_tones[] {
     #define AP_NOTIFY_PX4_TONE_LOUD_LAND_WARNING_CTS 12
     { "MBT200L2A-G-A-G-A-G-", true },
     #define AP_NOTIFY_PX4_TONE_LOUD_VEHICLE_LOST_CTS 13
-    { "MBT200>B#1", true },
+    { "MBT200>A#1", true },
     #define AP_NOTIFY_PX4_TONE_LOUD_BATTERY_ALERT_CTS 14
-    { "MBNT255>B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8", true },
+    { "MBNT255>A#8A#8A#8A#8A#8A#8A#8A#8A#8A#8A#8A#8A#8A#8A#8A#8", true },
     #define AP_NOTIFY_PX4_TONE_QUIET_COMPASS_CALIBRATING_CTS 15
     { "MBMLT100O3L512eP4eP16bP16bP2", true },
     #define AP_NOTIFY_PX4_TONE_LOUD_GPS_DISCONNECTED 16
