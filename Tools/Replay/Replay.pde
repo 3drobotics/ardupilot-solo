@@ -21,7 +21,7 @@
 #include <AP_Math.h>
 #include <AP_HAL.h>
 #include <AP_HAL_AVR.h>
-#include <AP_HAL_AVR_SITL.h>
+#include <AP_HAL_SITL.h>
 #include <AP_HAL_Linux.h>
 #include <AP_HAL_Empty.h>
 #include <AP_ADC.h>
@@ -64,6 +64,8 @@
 
 #include "LogReader.h"
 
+#define streq(x, y) (!strcmp(x, y))
+
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
 static Parameters g;
@@ -79,7 +81,7 @@ static AP_Vehicle::FixedWing aparm;
 static AP_Airspeed airspeed(aparm);
 static DataFlash_File dataflash("logs");
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
+#if CONFIG_HAL_BOARD == HAL_BOARD_SITL
 SITL sitl;
 #endif
 
@@ -101,7 +103,7 @@ static uint16_t update_rate = 50;
 static uint32_t arm_time_ms;
 static bool ahrs_healthy;
 static bool have_imu2;
-static uint32_t last_imu_usec;
+static bool have_fram;
 
 static uint8_t num_user_parameters;
 static struct {
@@ -199,10 +201,10 @@ void setup()
     dataflash.Init(log_structure, sizeof(log_structure)/sizeof(log_structure[0]));
     dataflash.StartNewLog();
 
-    LogReader.wait_type(LOG_GPS_MSG);
-    LogReader.wait_type(LOG_IMU_MSG);
-    LogReader.wait_type(LOG_GPS_MSG);
-    LogReader.wait_type(LOG_IMU_MSG);
+    LogReader.wait_type("GPS");
+    LogReader.wait_type("IMU");
+    LogReader.wait_type("GPS");
+    LogReader.wait_type("IMU");
 
     feenableexcept(FE_INVALID | FE_OVERFLOW);
 
@@ -211,11 +213,8 @@ void setup()
     ahrs.set_wind_estimation(true);
     ahrs.set_correct_centrifugal(true);
 
-    if (arm_time_ms != 0) {
-        hal.util->set_soft_armed(false);
-    } else {
-        hal.util->set_soft_armed(true);
-    }
+    printf("Starting disarmed\n");
+    hal.util->set_soft_armed(false);
 
     barometer.init();
     barometer.setHIL(0);
@@ -255,12 +254,14 @@ void setup()
 
     ahrs.set_ekf_use(true);
 
-    ::printf("Waiting for InertialNav to start\n");
-    while (!ahrs.have_inertial_nav()) {
-        uint8_t type;
-        if (!LogReader.update(type)) break;
+    ::printf("Waiting for GPS\n");
+    while (!done_home_init) {
+        char type[5];
+        if (!LogReader.update(type)) {
+            break;
+        }
         read_sensors(type);
-        if (type == LOG_GPS_MSG && 
+        if (streq(type, "GPS") &&
             gps.status() >= AP_GPS::GPS_OK_FIX_3D && 
             done_baro_init && !done_home_init) {
             const Location &loc = gps.location();
@@ -273,13 +274,6 @@ void setup()
             compass.set_initial_location(loc.lat, loc.lng);
             done_home_init = true;
         }
-    }
-
-    ::printf("InertialNav started\n");
-
-    if (!ahrs.have_inertial_nav()) {
-        ::printf("Failed to start NavEKF\n");
-        exit(1);
     }
 }
 
@@ -297,66 +291,61 @@ static void set_user_parameters(void)
     }
 }
 
-static void read_sensors(uint8_t type)
+static void read_sensors(const char *type)
 {
-    if (!done_parameters && type != LOG_FORMAT_MSG && type != LOG_PARAMETER_MSG) {
+    if (!done_parameters && !streq(type,"FMT") && !streq(type,"PARM")) {
         done_parameters = true;
         set_user_parameters();
     }
-    if (type == LOG_IMU2_MSG) {
+    if (streq(type,"IMU2")) {
         have_imu2 = true;
     }
 
-    if (type == LOG_GPS_MSG) {
+    if (streq(type,"GPS")) {
         gps.update();
         if (gps.status() >= AP_GPS::GPS_OK_FIX_3D) {
             ahrs.estimate_wind();
         }
-    } else if ((type == LOG_PLANE_COMPASS_MSG && LogReader.vehicle == VehicleType::VEHICLE_PLANE) ||
-               (type == LOG_COPTER_COMPASS_MSG && LogReader.vehicle == VehicleType::VEHICLE_COPTER) ||
-               (type == LOG_ROVER_COMPASS_MSG && LogReader.vehicle == VehicleType::VEHICLE_ROVER)) {
+    } else if (streq(type,"MAG")) {
         compass.read();
-    } else if (type == LOG_PLANE_AIRSPEED_MSG && LogReader.vehicle == VehicleType::VEHICLE_PLANE) {
+    } else if (streq(type,"ARSP")) {
         ahrs.set_airspeed(&airspeed);
-    } else if (type == LOG_BARO_MSG) {
+    } else if (streq(type,"BARO")) {
         barometer.update();
         if (!done_baro_init) {
             done_baro_init = true;
             ::printf("Barometer initialised\n");
             barometer.update_calibration();
         }
+    } 
+
+    bool run_ahrs = false;
+    if (streq(type,"FRAM")) {
+        if (!have_fram) {
+            have_fram = true;
+            printf("Have FRAM framing\n");
+        }
+        run_ahrs = true;
     }
 
     // special handling of IMU messages as these trigger an ahrs.update()
-    if ((type == LOG_IMU_MSG && !have_imu2) || (type == LOG_IMU2_MSG && have_imu2)) {
-        uint32_t imu_deltat_usec = LogReader.last_timestamp_us() - last_imu_usec;
-        uint32_t update_delta_usec = 1e6 / update_rate;
-        if (imu_deltat_usec < update_delta_usec/2) {
-            // it is a duplicate
-            return;
+    if (!have_fram && 
+        ((streq(type,"IMU") && !have_imu2) || (streq(type, "IMU2") && have_imu2))) {
+        run_ahrs = true;
+    }
+    if (run_ahrs) {
+        ahrs.update();
+        if (ahrs.get_home().lat != 0) {
+            inertial_nav.update(ins.get_delta_time());
         }
-        uint32_t update_count = (imu_deltat_usec + (update_delta_usec-1)) / update_delta_usec;
-        if (update_count > 8) {
-            update_count = 8;
-        }
-        if (update_count < 1) {
-            update_count = 1;
-        }
-        last_imu_usec = LogReader.last_timestamp_us();
-        for (uint8_t i=0; i<update_count; i++) {
-            ahrs.update();
-            if (ahrs.get_home().lat != 0) {
-                inertial_nav.update(ins.get_delta_time());
-            }
-            hal.scheduler->stop_clock(hal.scheduler->micros() + update_delta_usec);
-            dataflash.Log_Write_EKF(ahrs,false);
-            dataflash.Log_Write_AHRS2(ahrs);
-            ins.set_gyro(0, ins.get_gyro());
-            ins.set_accel(0, ins.get_accel());
-            if (ahrs.healthy() != ahrs_healthy) {
-                ahrs_healthy = ahrs.healthy();
-                printf("AHRS health: %u\n", (unsigned)ahrs_healthy);
-            }
+        dataflash.Log_Write_EKF(ahrs,false);
+        dataflash.Log_Write_AHRS2(ahrs);
+        dataflash.Log_Write_POS(ahrs);
+        if (ahrs.healthy() != ahrs_healthy) {
+            ahrs_healthy = ahrs.healthy();
+            printf("AHRS health: %u at %lu\n", 
+                   (unsigned)ahrs_healthy,
+                   (unsigned long)hal.scheduler->millis());
         }
     }
 }
@@ -364,7 +353,7 @@ static void read_sensors(uint8_t type)
 void loop()
 {
     while (true) {
-        uint8_t type;
+        char type[5];
 
         if (arm_time_ms != 0 && hal.scheduler->millis() > arm_time_ms) {
             if (!hal.util->get_soft_armed()) {
@@ -380,11 +369,7 @@ void loop()
         }
         read_sensors(type);
 
-        if ((type == LOG_ATTITUDE_MSG) ||
-            (type == LOG_PLANE_ATTITUDE_MSG && LogReader.vehicle == VehicleType::VEHICLE_PLANE) ||
-            (type == LOG_COPTER_ATTITUDE_MSG && LogReader.vehicle == VehicleType::VEHICLE_COPTER) ||
-            (type == LOG_ROVER_ATTITUDE_MSG && LogReader.vehicle == VehicleType::VEHICLE_ROVER)) {
-
+        if (streq(type,"ATT")) {
             Vector3f ekf_euler;
             Vector3f velNED;
             Vector3f posNED;
@@ -409,7 +394,7 @@ void loop()
             Vector2f offset;
             uint8_t faultStatus;
 
-            const Matrix3f &dcm_matrix = ((AP_AHRS_DCM)ahrs).get_dcm_matrix();
+            const Matrix3f &dcm_matrix = ahrs.AP_AHRS_DCM::get_dcm_matrix();
             dcm_matrix.to_euler(&DCM_attitude.x, &DCM_attitude.y, &DCM_attitude.z);
             NavEKF.getEulerAngles(ekf_euler);
             NavEKF.getVelNED(velNED);

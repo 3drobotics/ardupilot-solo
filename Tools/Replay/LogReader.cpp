@@ -17,20 +17,6 @@
 #include <fcntl.h>
 
 #include "MsgHandler.h"
-#include "MsgHandler_PARM.h"
-#include "MsgHandler_GPS.h"
-#include "MsgHandler_GPS2.h"
-#include "MsgHandler_MSG.h"
-#include "MsgHandler_IMU.h"
-#include "MsgHandler_IMU2.h"
-#include "MsgHandler_IMU3.h"
-#include "MsgHandler_SIM.h"
-#include "MsgHandler_BARO.h"
-#include "MsgHandler_AHR2.h"
-#include "MsgHandler_ATT.h"
-#include "MsgHandler_MAG.h"
-#include "MsgHandler_NTUN_Copter.h"
-#include "MsgHandler_ARSP.h"
 
 #define streq(x, y) (!strcmp(x, y))
 
@@ -94,7 +80,26 @@ void LogReader::maybe_install_vehicle_specific_parsers() {
 
 MsgHandler_PARM *parameter_handler;
 
-bool LogReader::update(uint8_t &type)
+/*
+  messages which we will be generating, so should be discarded
+ */
+static const char *generated_types[] = { "EKF1", "EKF2", "EKF3", "EKF4", "EKF5", 
+                                         "AHR2", "POS", NULL };
+
+/*
+  see if a type is in a list of types
+ */
+bool LogReader::in_list(const char *type, const char *list[])
+{
+    for (uint8_t i=0; list[i] != NULL; i++) {
+        if (strcmp(type, list[i]) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool LogReader::update(char type[5])
 {
     uint8_t hdr[3];
     if (::read(fd, hdr, 3) != 3) {
@@ -112,12 +117,19 @@ bool LogReader::update(uint8_t &type)
             return false;
         }
         memcpy(&formats[f.type], &f, sizeof(formats[f.type]));
-        type = f.type;
+        strncpy(type, f.name, 4);
+        type[4] = 0;
 
 	char name[5];
 	memset(name, '\0', 5);
 	memcpy(name, f.name, 4);
 	::printf("Defining log format for type (%d) (%s)\n", f.type, name);
+
+        if (!in_list(type, generated_types)) {
+            // any messages which we won't be generating internally in
+            // replay should get the original FMT header
+            dataflash.WriteBlock(&f, sizeof(f));
+        }
 
 	// map from format name to a parser subclass:
 	if (streq(name, "PARM")) {
@@ -158,6 +170,12 @@ bool LogReader::update(uint8_t &type)
 	} else if (streq(name, "BARO")) {
 	  msgparser[f.type] = new MsgHandler_BARO(formats[f.type], dataflash,
                                                   last_timestamp_usec, baro);
+	} else if (streq(name, "ARM")) {
+	  msgparser[f.type] = new MsgHandler_ARM(formats[f.type], dataflash,
+                                                  last_timestamp_usec);
+	} else if (streq(name, "EV")) {
+	  msgparser[f.type] = new MsgHandler_Event(formats[f.type], dataflash,
+                                                  last_timestamp_usec);
 	} else if (streq(name, "AHR2")) {
 	  msgparser[f.type] = new MsgHandler_AHR2(formats[f.type], dataflash,
 						  last_timestamp_usec,
@@ -167,9 +185,12 @@ bool LogReader::update(uint8_t &type)
 	  // and also the rover/copter/plane-specific (old) messages
 	  msgparser[f.type] = new MsgHandler_ATT(formats[f.type], dataflash,
 						 last_timestamp_usec,
-                                                 ahr2_attitude);
+                                                 attitude);
 	} else if (streq(name, "MAG")) {
 	  msgparser[f.type] = new MsgHandler_MAG(formats[f.type], dataflash,
+						 last_timestamp_usec, compass);
+	} else if (streq(name, "MAG2")) {
+	  msgparser[f.type] = new MsgHandler_MAG2(formats[f.type], dataflash,
 						 last_timestamp_usec, compass);
 	} else if (streq(name, "NTUN")) {
 	    // the label "NTUN" is used by rover, copter and plane -
@@ -182,6 +203,9 @@ bool LogReader::update(uint8_t &type)
 	    msgparser[f.type] = new MsgHandler_ARSP(formats[f.type], dataflash,
                                                     last_timestamp_usec,
                                                     airspeed);
+	} else if (streq(name, "FRAM")) {
+	    msgparser[f.type] = new MsgHandler_FRAM(formats[f.type], dataflash,
+                                                    last_timestamp_usec);
 	} else {
             ::printf("  No parser for (%s)\n", name);
 	}
@@ -204,13 +228,15 @@ bool LogReader::update(uint8_t &type)
         return false;
     }
 
-    type = f.type;
+    strncpy(type, f.name, 4);
+    type[4] = 0;
 
-    MsgHandler *p = msgparser[type];
+    if (!in_list(type, generated_types)) {
+        dataflash.WriteBlock(msg, f.length);        
+    }
+
+    MsgHandler *p = msgparser[f.type];
     if (p == NULL) {
-	// I guess this wasn't as self-describing as it could have been....
-	// ::printf("No format message received for type %d; ignoring message\n",
-	// 	 type);
 	return true;
     }
 
@@ -221,14 +247,14 @@ bool LogReader::update(uint8_t &type)
     return true;
 }
 
-bool LogReader::wait_type(uint8_t wtype)
+bool LogReader::wait_type(const char *wtype)
 {
     while (true) {
-        uint8_t type;
+        char type[5];
         if (!update(type)) {
             return false;
         }
-        if (wtype == type) {
+        if (streq(type,wtype)) {
             break;
         }
     }
