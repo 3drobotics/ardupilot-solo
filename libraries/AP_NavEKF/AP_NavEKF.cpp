@@ -4170,15 +4170,19 @@ void NavEKF::readIMUData()
     // the imu sample time is used as a common time reference throughout the filter
     imuSampleTime_ms = hal.scheduler->millis();
 
-    if (ins.get_accel_health(0) && ins.get_accel_health(1)) {
-        // dual accel mode
+    if (ins.get_accel_health(0)) {
+        // use first IMU as it is less affected by vibration
         readDeltaVelocity(0, dVelIMU1, dtDelVel1);
-        readDeltaVelocity(1, dVelIMU2, dtDelVel2);
+        dtDelVel2 = dtDelVel1;
+        dVelIMU2 = dVelIMU1;
+    } else if (ins.get_accel_health(1)) {
+        // use second IMU if first not available
+        readDeltaVelocity(1, dVelIMU1, dtDelVel1);
+        dtDelVel2 = dtDelVel1;
+        dVelIMU2 = dVelIMU1;
     } else {
-        // single accel mode - one of the first two accelerometers are unhealthy
-        // read primary accelerometer into dVelIMU1 and copy to dVelIMU2
+        // If index 0 or 1 aren't avilable, then force use of the index correspinding to the primary sensor
         readDeltaVelocity(ins.get_primary_accel(), dVelIMU1, dtDelVel1);
-
         dtDelVel2 = dtDelVel1;
         dVelIMU2 = dVelIMU1;
     }
