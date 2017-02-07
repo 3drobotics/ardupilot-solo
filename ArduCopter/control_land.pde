@@ -75,7 +75,7 @@ static void land_gps_run()
     // if not auto armed or landed set throttle to zero and exit immediately
     if(!ap.auto_armed || ap.land_complete) {
         attitude_control.set_throttle_out_unstabilized(0,true,g.throttle_filt);
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
 
 #if LAND_REQUIRE_MIN_THROTTLE_TO_DISARM == ENABLED
         // disarm when the landing detector says we've landed and throttle is at minimum

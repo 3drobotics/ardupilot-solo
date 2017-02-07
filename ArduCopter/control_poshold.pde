@@ -125,7 +125,7 @@ static bool poshold_init(bool ignore_checks)
         poshold.pitch_mode = POSHOLD_LOITER;
         // set target to current position
         // only init here as we can switch to PosHold in flight with a velocity <> 0 that will be used as _last_vel in PosControl and never updated again as we inhibit Reset_I
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
     }else{
         // if not landed start in pilot override to avoid hard twitch
         poshold.roll_mode = POSHOLD_PILOT_OVERRIDE;
@@ -164,7 +164,7 @@ static void poshold_run()
 
     // if not auto armed set throttle to zero and exit immediately
     if(!ap.auto_armed) {
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
         attitude_control.set_throttle_out_unstabilized(0,true,g.throttle_filt);
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(g.rc_3.control_in)-throttle_average);
         return;
@@ -205,7 +205,7 @@ static void poshold_run()
 
     // if landed initialise loiter targets, set throttle to zero and exit
     if (ap.land_complete) {
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
         // move throttle to between minimum and non-takeoff-throttle to keep us on the ground
         attitude_control.set_throttle_out_unstabilized(get_throttle_pre_takeoff(g.rc_3.control_in),true,g.throttle_filt);
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(g.rc_3.control_in)-throttle_average);

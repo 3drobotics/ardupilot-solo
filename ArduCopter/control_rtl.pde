@@ -252,7 +252,7 @@ static void rtl_descent_run()
     if(!ap.auto_armed) {
         attitude_control.set_throttle_out_unstabilized(0,true,g.throttle_filt);
         // set target to current position
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
         return;
     }
 
@@ -326,7 +326,7 @@ static void rtl_land_run()
     if(!ap.auto_armed || ap.land_complete) {
         attitude_control.set_throttle_out_unstabilized(0,true,g.throttle_filt);
         // set target to current position
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
 
 #if LAND_REQUIRE_MIN_THROTTLE_TO_DISARM == ENABLED
         // disarm when the landing detector says we've landed and throttle is at minimum

@@ -289,7 +289,7 @@ static void auto_land_run()
     if(!ap.auto_armed || ap.land_complete) {
         attitude_control.set_throttle_out_unstabilized(0,true,g.throttle_filt);
         // set target to current position
-        wp_nav.init_loiter_target();
+        wp_nav.init_loiter_target(!ap.land_complete);
         return;
     }
 
