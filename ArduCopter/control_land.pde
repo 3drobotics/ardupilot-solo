@@ -224,8 +224,16 @@ static float get_land_descent_speed()
 #else
     bool sonar_ok = false;
 #endif
-    // if we are above 10m and the sonar does not sense anything perform regular alt hold descent
-    if (pos_control.get_pos_target().z >= pv_alt_above_origin(LAND_START_ALT) && !(sonar_ok && sonar_alt_health >= SONAR_ALT_HEALTH_MAX)) {
+
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+    // check if baros agree within 10 meters
+    bool baros_agree = fabsf(barometer.get_altitude(0) - barometer.get_altitude(1)) < 10;
+#else
+    bool baros_agree = true;
+#endif
+
+    // if we are above 10m, the sonar does not sense anything, and barometers agree then perform regular alt hold descent
+    if (pos_control.get_pos_target().z >= pv_alt_above_origin(LAND_START_ALT) && !(sonar_ok && sonar_alt_health >= SONAR_ALT_HEALTH_MAX) && baros_agree) {
         // if we are within the land ramp profile
         if (land_ramp && pos_control.get_pos_target().z <= land_ramp_xi){
             return -constrain_float(fabsf(land_ramp_vi + (land_ramp_vf-land_ramp_vi)*(pos_control.get_pos_target().z-land_ramp_xi)/(land_ramp_xf-land_ramp_xi)), land_ramp_vf, land_ramp_vi);
