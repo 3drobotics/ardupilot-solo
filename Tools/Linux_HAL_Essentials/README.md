@@ -1,7 +1,7 @@
 PRU PWM
 =======
 
-###Updating kernel
+### Updating kernel
 * Check your kernel version using `uname -r`
 * If you get 3.8.13bone56+ as output then you may skip Updating kernel.
 * For other kernel versions write following cmds in your BBB:
@@ -19,7 +19,7 @@ NOTE: For Ubuntu different scripts shall be used. E.g., for precise:
 
 ----
 
-###Setting Up PRU Compiler
+### Setting Up PRU Compiler
 * Download [PRU C Compiler v2.0.0B2 installer](http://software-dl.ti.com/codegen/non-esd/downloads/beta.htm)
 * Please check the path where you install PRU compiler.
 * Setting environment variable
@@ -31,7 +31,7 @@ source ~/.bashrc
 
 *note: semicolons in second command were intended*
 
-###Compiling and loading the code
+### Compiling and loading the code
 * just `make`
 * copy generated executable `pwmpru1` to `ardupilot/Tools/Linux_HAL_Essentials/`.
 * To load firmware use 

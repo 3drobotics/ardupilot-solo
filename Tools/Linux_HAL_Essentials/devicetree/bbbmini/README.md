@@ -1,4 +1,4 @@
-#Hardware
+# Hardware
 
 ## Load device tree
 To load the BBBMINI device tree type `startup.sh load`.
