@@ -52,6 +52,11 @@ static bool set_mode(uint8_t mode)
 
         case LOITER:
             success = loiter_init(ignore_checks);
+            // If we cannot enter loiter mode for any reason (it happens to be because we don't have a good position estimate)
+            // Fallback to althold
+            if (!success) {
+                success = althold_init(ignore_checks);
+            }
             break;
 
         case GUIDED:
