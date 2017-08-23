@@ -14,9 +14,15 @@ static void gps_glitch_on_event() {
     failsafe.gps_glitch = true;
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_GPS, ERROR_CODE_FAILSAFE_OCCURRED);
 
-    if (motors.armed() && mode_requires_RC(control_mode) && mode_requires_GPS(control_mode) && !failsafe.radio && !failsafe.ekf) {
-        if(set_mode(ALT_HOLD)) {
-            gps_glitch_switch_mode_on_resolve = true;
+    if (motors.armed() && mode_requires_GPS(control_mode) && !failsafe.radio && !failsafe.ekf) {
+        if (mode_requires_RC(control_mode)) {
+            if(set_mode(ALT_HOLD)) {
+                gps_glitch_switch_mode_on_resolve = true;
+            }
+        } else {
+            if(set_mode(LAND)) {
+                gps_glitch_switch_mode_on_resolve = true;
+            }
         }
     }
 }
